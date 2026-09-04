@@ -32,6 +32,19 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FabLab necesita la cámara para escanear el código Data Matrix de los elementos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FabLab necesita acceso a tus fotos para elegir una imagen del elemento.",
+          "cameraPermission": "FabLab necesita la cámara para tomar una foto del elemento."
+        }
       ]
     ],
     "experiments": {
