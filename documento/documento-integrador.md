@@ -116,37 +116,124 @@ que constituyen contenido curricular del programa.
 
 ---
 
-# Capítulo 2 — Marco teórico y estado del arte
+# Capítulo 2 — Estado del arte y marco teórico
 
-## 2.1 Línea de tiempo de los antecedentes (2016–2026)
+## 2.1 Estado del arte
 
-La evolución de la identificación automática aplicada a la gestión de
-inventarios, en el periodo relevante para este proyecto, puede organizarse en
-cuatro momentos:
+### 2.1.1 Criterio de selección de los antecedentes
 
-**2016–2018 — Consolidación del código bidimensional en entornos industriales.**
-El DataMatrix, normalizado desde 2006 en su segunda edición (ISO/IEC 16022:2006),
-se consolida como estándar de marcado directo de piezas (DPM, *Direct Part
-Marking*) en las industrias aeronáutica, automotriz y de dispositivos médicos,
-desplazando al código lineal en la identificación de componentes pequeños.
+Se revisaron trabajos publicados entre 2019 y 2025 que cumplieran al menos dos
+de los tres criterios siguientes: (a) gestión de inventario mediante código
+bidimensional, (b) captura desde dispositivo móvil, y (c) aplicación en un
+contexto institucional o de laboratorio. Se descartaron las soluciones
+comerciales cerradas, por no ser posible examinar sus decisiones de diseño.
 
-**2018–2020 — Trazabilidad obligatoria en sectores regulados.** La entrada en
-vigor de normativas de serialización farmacéutica en Europa y Estados Unidos
-consolida el uso de GS1 DataMatrix como portador de datos para trazabilidad
-unitaria. El efecto colateral relevante es la masificación de lectores capaces
-de decodificar el símbolo, incluidas las cámaras de teléfonos móviles.
+### 2.1.2 Antecedentes internacionales
 
-**2020–2023 — Desplazamiento del lector dedicado al dispositivo móvil.** La
-mejora de las cámaras y de las bibliotecas de visión por computador hace
-innecesario el terminal industrial para tareas de inventario de baja intensidad.
-La captura de inventario se convierte en una función de software sobre hardware
-de propósito general, lo que reduce drásticamente el costo de entrada para
-laboratorios y pymes.
+**E-Inventory en laboratorios universitarios (Universiti Teknikal Malaysia
+Melaka).** Aborda un escenario prácticamente idéntico al del presente proyecto:
+101 laboratorios que administraban su inventario de forma manual, con las
+consiguientes inexactitudes de registro. La solución combina una aplicación
+Android con base de datos en la nube y códigos de barras. Confirma que el
+problema diagnosticado en el FabLab no es una anomalía local sino un patrón
+recurrente en laboratorios académicos.
 
-**2023–2026 — Integración con arquitecturas móviles multiplataforma.** La
-madurez de marcos como React Native y Expo permite que un mismo desarrollo
-atienda Android, iOS y web. Es el escenario tecnológico en el que se inscribe
-este proyecto.
+**Sistema de inventario con código QR sobre Android (Rajamangala University of
+Technology Thanyaburi, Tailandia).** Desarrolla aplicación web y móvil
+complementarias para el Departamento de Ingeniería en Computación. Es relevante
+por su arquitectura dual —web para administración, móvil para captura en
+campo—, que coincide con la adoptada en este proyecto.
+
+**Desarrollo de aplicación móvil para gestión de inventario con tecnología de
+código de barras.** Es el antecedente más valioso por aportar medición
+cuantitativa de resultados, que la mayoría de los trabajos revisados omite:
+reporta un proceso de captura 43 % más rápido, 98,5 % de exactitud en el
+escaneo y una reducción del 72 % en errores de digitación humana. Estas cifras
+constituyen la referencia comparativa para los indicadores definidos en el
+capítulo 3 de este documento.
+
+### 2.1.3 Antecedentes latinoamericanos
+
+**Aplicación móvil integrada con código QR para control de inventario
+(Universidad César Vallejo, Perú, 2019).** Emplea metodología RUP y MySQL como
+motor de base de datos. Coincide con este proyecto en la elección del motor
+relacional, aunque difiere en la simbología y en no contemplar trazabilidad de
+movimientos entre ubicaciones.
+
+**Implementación de sistema de inventario (Universidad Nacional Abierta y a
+Distancia, Colombia).** Captura información de bienes físicos mediante códigos
+de barras o QR desde dispositivos móviles, con administración en tiempo real.
+Es el antecedente nacional más cercano en propósito.
+
+**Sistema web de gestión de inventarios con QR (Universidad Mayor de San
+Andrés, Bolivia).** Administra inventarios de materiales e insumos. Su alcance
+es exclusivamente web, sin componente móvil de captura.
+
+### 2.1.4 Antecedentes en entornos FabLab y makerspace
+
+El problema de inventariar componentes diminutos ha sido abordado
+específicamente en la comunidad maker, aunque predominantemente fuera de la
+literatura académica formal. Se documentan tres aproximaciones: sistemas
+basados en RFID para equipamiento mayor (impresoras 3D, cortadoras láser,
+fresadoras), etiquetas NFC para componentes electrónicos con respaldo en base
+de datos, y sistemas de códigos QR aplicados a contenedores y gavetas más que a
+unidades individuales. Existen asimismo plataformas comerciales de gestión de
+espacios maker que integran reserva de equipos y control de inventario.
+
+El patrón recurrente es significativo: **cuando el elemento es pequeño, la
+identificación se desplaza del objeto al contenedor**. Es precisamente la
+limitación que la elección de DataMatrix busca superar en este proyecto.
+
+### 2.1.5 Síntesis y vacío identificado
+
+| Antecedente | Simbología | Móvil | BD relacional | Traslados |
+|---|---|---|---|---|
+| E-Inventory (UTeM) | Código de barras | Sí | Sí (nube) | No |
+| RMUTT (Tailandia) | QR | Sí | Sí | No |
+| App con código de barras (medido) | Código de barras | Sí | Sí | No |
+| UCV (Perú, 2019) | QR | Sí | Sí (MySQL) | No |
+| UNAD (Colombia) | Barras / QR | Sí | Sí | No |
+| UMSA (Bolivia) | QR | No | Sí | No |
+| Makerspaces (RFID/NFC/QR) | Varias | Parcial | Variable | No |
+| **Este proyecto** | **DataMatrix** | **Sí** | **Sí (MySQL)** | **Sí** |
+
+De la revisión se desprenden tres vacíos que este proyecto atiende:
+
+1. **Simbología inadecuada para componentes diminutos.** La totalidad de los
+   antecedentes revisados emplea código de barras lineal o QR, ambos con
+   requisitos de área incompatibles con un componente electrónico de pocos
+   milímetros. Ninguno emplea DataMatrix.
+2. **Ausencia de trazabilidad de movimientos.** Los trabajos revisados
+   registran la ubicación actual del elemento, pero no su historia de
+   ubicaciones. En un laboratorio donde el material circula entre salas, la
+   pregunta relevante no es solo dónde está un elemento sino desde dónde llegó.
+3. **Modelo de ubicación plano.** Ninguno contempla una jerarquía de
+   contención de más de un nivel. El presente proyecto requiere
+   `edificio → sala` por cubrir dos unidades institucionales (FabLab y
+   ViveLab).
+
+### 2.1.6 Evolución tecnológica del periodo
+
+Como contexto de los antecedentes anteriores, la tecnología de identificación
+automática atravesó en el periodo cuatro momentos:
+
+**2016–2018.** El DataMatrix, normalizado desde 2006 en su segunda edición
+(ISO/IEC 16022:2006), se consolida como estándar de marcado directo de piezas
+(DPM, *Direct Part Marking*) en las industrias aeronáutica, automotriz y de
+dispositivos médicos.
+
+**2018–2020.** Las normativas de serialización farmacéutica en Europa y Estados
+Unidos consolidan GS1 DataMatrix como portador de datos para trazabilidad
+unitaria, con el efecto colateral de masificar los lectores capaces de
+decodificarlo.
+
+**2020–2023.** La mejora de las cámaras móviles y de las bibliotecas de visión
+por computador vuelve innecesario el terminal industrial para inventario de
+baja intensidad, reduciendo drásticamente el costo de entrada para laboratorios
+y pymes. Es la condición que hace viables los antecedentes de §2.1.2 y §2.1.3.
+
+**2023–2026.** La madurez de marcos multiplataforma como React Native y Expo
+permite que un mismo desarrollo atienda Android, iOS y web.
 
 ## 2.2 Bases teóricas
 
@@ -228,17 +315,26 @@ elemento a lo largo del tiempo.
 **Stock en tiempo real.** Estado del inventario consultable en el momento, sin
 necesidad de un proceso previo de consolidación manual.
 
-## 2.4 Estado del arte y decisiones de diseño
+## 2.4 Decisiones de diseño derivadas de la revisión
 
 ### 2.4.1 DataMatrix frente a QR y código lineal
 
 El QR posee mayor reconocimiento entre usuarios finales y mayor capacidad
-máxima, pero requiere tres patrones de localización cuadrados que consumen área
-útil. Para cargas útiles cortas —un identificador de inventario— DataMatrix
-produce un símbolo físicamente menor a igual tamaño de módulo. Dado que el
-requisito crítico es etiquetar componentes de pocos milímetros, la decisión
-favorece a DataMatrix. El código lineal queda descartado por requerir longitud
-horizontal incompatible con dichos componentes.
+máxima (unos 4.296 caracteres alfanuméricos frente a unos 2.335 del
+DataMatrix), pero requiere tres patrones de localización cuadrados que consumen
+área útil. La diferencia decisiva está en el tamaño físico mínimo legible: el
+DataMatrix se lee de forma fiable en símbolos de hasta 3 mm de lado, mientras
+que un QR requiere típicamente unos 20 mm para escaneo confiable con cámara de
+teléfono. A ello se suma la tolerancia al daño: el DataMatrix se decodifica con
+hasta un 50 % del símbolo deteriorado, frente a aproximadamente un 30 % en el
+QR.
+
+Dado que el requisito crítico es etiquetar componentes de pocos milímetros y que
+la capacidad máxima es irrelevante para una carga útil corta —un identificador
+de inventario—, la decisión favorece al DataMatrix. El código lineal queda
+descartado por requerir longitud horizontal incompatible con dichos
+componentes. Esta elección es, además, el elemento que diferencia al presente
+trabajo de todos los antecedentes revisados en §2.1.5.
 
 ### 2.4.2 DataMatrix frente a RFID
 
@@ -406,6 +502,32 @@ opera el inventario, que por el tamaño de la planta se aborda de forma censal.
 
 # Referencias
 
+## Antecedentes
+
+- Aplicación móvil integrada con código QR para el control de inventario en la
+  empresa "MD CENTROPLAC", Santa Anita, 2019. Universidad César Vallejo.
+  Recuperado de https://repositorio.ucv.edu.pe/handle/20.500.12692/44481
+- Implementación de un sistema de inventario. Universidad Nacional Abierta y a
+  Distancia (UNAD). Recuperado de
+  https://repository.unad.edu.co/bitstream/handle/10596/39168/do85ahu721.pdf
+- Aplicación móvil de apoyo para la gestión de inventarios mediante códigos de
+  barras y códigos QR. Instituto Politécnico Nacional (IPN). Recuperado de
+  https://tesis.ipn.mx/handle/123456789/20598
+- Sistema web de gestión de inventarios con QR. Universidad Mayor de San Andrés
+  (UMSA).
+- E-Inventory management system using android mobile application at Faculty of
+  Engineering Technology laboratory stores. Universiti Teknikal Malaysia
+  Melaka. Recuperado de https://www.academia.edu/106722951/
+- Inventory Management System Using QR Code on Android: a Case Study in
+  Computer Engineering Department. Rajamangala University of Technology
+  Thanyaburi. Recuperado de
+  https://www.researchgate.net/publication/369427687
+- Mobile application development for inventory management using barcode
+  technology. Recuperado de
+  https://www.researchgate.net/publication/399137277
+
+## Normas y especificaciones técnicas
+
 - ISO/IEC 16022:2006. *Information technology — Automatic identification and
   data capture techniques — Data Matrix bar code symbology specification*.
   Ginebra: ISO. Recuperado de https://www.iso.org/standard/44230.html
@@ -416,7 +538,10 @@ opera el inventario, que por el tamaño de la planta se aborda de forma censal.
   of GS1 DataMatrix*. Recuperado de
   https://www.gs1.org/docs/barcodes/GS1_DataMatrix_Guideline.pdf
 
-> **Pendiente de normalización APA.** Las referencias anteriores están
-> verificadas en su fuente pero deben ajustarse al formato APA 7 exigido, y debe
-> completarse la referenciación de los apartados 2.2.3 (Codd) y 2.2.4 (React
-> Native/Expo), para los que aún no se ha fijado la fuente citable.
+> **Pendiente de normalización APA.** Las fuentes están verificadas pero deben
+> ajustarse al formato APA 7 exigido: faltan autores y años en varios
+> antecedentes, que deben tomarse de la portada de cada documento original. Debe
+> completarse además la referenciación de §2.2.3 (Codd) y §2.2.4 (React
+> Native/Expo). Las cifras comparativas de §2.4.1 (3 mm / 20 mm, 50 % / 30 %)
+> provienen de documentación técnica de fabricantes de equipos de marcaje y
+> conviene respaldarlas con la norma o con fuente académica antes de la entrega.
