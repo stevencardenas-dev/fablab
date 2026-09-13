@@ -1,3 +1,6 @@
 # SQL generado por el importador (se regenera desde el xlsx)
 inventario.sql
 inventario-normalizado.sql
+
+# LibreOffice
+.~lock.*#
