@@ -1,0 +1,102 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>FabLab Takeaways</title>
+<style>
+:root{
+  --bg:#f7f6f3; --card:#ffffff; --ink:#1c1b19; --sub:#5b584f;
+  --line:#e6e3db; --accent:#2f6f4f; --accent-bg:#eaf3ec;
+  --warn:#9a5b12; --warn-bg:#fbf0e0;
+  --pending:#8a3b2b; --pending-bg:#fbeae5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17181a; --card:#202224; --ink:#eceae5; --sub:#a8a49a;
+    --line:#33352f; --accent:#7fc79c; --accent-bg:#1c2c22;
+    --warn:#e0a860; --warn-bg:#2c2114;
+    --pending:#e59683; --pending-bg:#2c1c17;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17181a; --card:#202224; --ink:#eceae5; --sub:#a8a49a;
+  --line:#33352f; --accent:#7fc79c; --accent-bg:#1c2c22;
+  --warn:#e0a860; --warn-bg:#2c2114;
+  --pending:#e59683; --pending-bg:#2c1c17;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; line-height:1.5;}
+.wrap{max-width:760px; margin:0 auto; padding:2.5rem 1.25rem 4rem;}
+header{margin-bottom:2rem;}
+h1{font-size:1.5rem; margin:0 0 .25rem; letter-spacing:-.01em;}
+.meta{color:var(--sub); font-size:.85rem;}
+h2{font-size:1.05rem; margin:2.5rem 0 .75rem; padding-bottom:.4rem; border-bottom:1px solid var(--line);}
+.card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; margin-bottom:.6rem;}
+ul{margin:.3rem 0; padding-left:1.2rem;}
+li{margin-bottom:.35rem;}
+.tag{display:inline-block; font-size:.7rem; font-weight:600; letter-spacing:.02em; text-transform:uppercase; padding:.15rem .5rem; border-radius:99px; margin-left:.4rem; vertical-align:middle;}
+.done{background:var(--accent-bg); color:var(--accent);}
+.pending{background:var(--pending-bg); color:var(--pending);}
+.note{background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:.6rem .8rem; font-size:.85rem; margin-top:1rem;}
+.small{color:var(--sub); font-size:.85rem;}
+code{background:var(--accent-bg); color:var(--accent); padding:.1rem .35rem; border-radius:5px; font-size:.85em;}
+</style>
+
+</head><body><div class="wrap">
+  <header>
+    <h1>Takeaways — entrevista del proyecto</h1>
+    <div class="meta">proyecto FabLab · 2026-09-04</div>
+  </header>
+
+  <h2>Inventario FabLab (con Matías)</h2>
+
+  <div class="card">
+    <strong>Stack confirmado</strong> <span class="tag done">ya implementado</span>
+    <ul>
+      <li>Frontend: React Native + Expo</li>
+      <li>Escaneo: Data Matrix (mejor que QR para piezas pequeñas)</li>
+      <li>Base de datos: MySQL</li>
+      <li>Backend: Spring</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <strong>Modelo de datos</strong>
+    <ul>
+      <li>Cada ítem físico necesita <strong>identificador único propio</strong> (no un código compartido por tipo) — para rastrear daño/ubicación por unidad.</li>
+      <li>Distinguir <strong>consumibles</strong> (se descuentan por cantidad) de <strong>activos fijos</strong> (mantienen identidad individual) <span class="tag pending">falta</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <strong>Alcance funcional sugerido por Matías</strong>
+    <ul>
+      <li>No replicar todo Excel — solo: agregar, registrar daño, cambiar ubicación/sala, buscar por ítem y por sala.</li>
+      <li>Importar/exportar <code>.xlsx</code> para conectar con el inventario que otro grupo ya lleva en Excel <span class="tag pending">falta</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <strong>Pendientes</strong> <span class="tag pending">bloqueante</span>
+    <ul>
+      <li>Backend real (MySQL + Spring) — hoy todo vive en <code>AsyncStorage</code> local, sin servidor.</li>
+      <li>Falta preguntarle a Matías qué motor/hosting usar para desplegar el backend.</li>
+    </ul>
+  </div>
+
+  <h2>Organización del Drive (con Carmenza)</h2>
+
+  <div class="card">
+    <ul>
+      <li>Archivo desordenado desde 2020; recién en 2023-1 empezó a tener algo de estructura.</li>
+      <li>Problemas de fondo: practicantes borran sus propios archivos 
+al salir, fotos/carpetas sin nombre, criterios cambiantes cada semestre.</li>
+      <li>Acceso ya otorgado: carpetas de 2022 (la más desordenada) y 2026 (la más ordenada).</li>
+      <li>Plan: estructurar por <strong>año → semestre → tipo</strong>, usando 2022 como caso base y replicando con variaciones menores en los demás años.</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    Sin plazo estricto — Secretaría dijo que no hace falta terminarlo 
+todo, solo dejar avance visible para que ellos puedan continuar.
+  </div>
+
+</div>
+</body></html>
