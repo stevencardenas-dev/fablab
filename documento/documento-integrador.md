@@ -5,30 +5,6 @@ Universidad Francisco de Paula Santander
 
 ---
 
-## Tabla de contenido
-
-- **Capítulo 1 — Definición del problema**
-  - 1.1 Planteamiento del problema
-  - 1.2 Formulación del problema
-  - 1.3 Objetivo general
-  - 1.4 Objetivos específicos
-  - 1.5 Justificación
-  - 1.6 Alcances
-  - 1.7 Limitaciones
-- **Capítulo 2 — Marco teórico y estado del arte**
-  - 2.1 Línea de tiempo de los antecedentes (2016–2026)
-  - 2.2 Bases teóricas
-  - 2.3 Marco conceptual
-  - 2.4 Estado del arte y decisiones de diseño
-- **Capítulo 3 — Marco metodológico**
-  - 3.1 Tipo de investigación
-  - 3.2 Población y muestra
-  - 3.3 Método: técnicas e instrumentos
-  - 3.4 Fases metodológicas
-  - 3.5 Limitaciones metodológicas
-- **Referencias**
-
----
 
 # Capítulo 1 — Definición del problema
 
