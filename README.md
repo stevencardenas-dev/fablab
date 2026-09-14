@@ -1,82 +1,177 @@
-# 🧰 Sistema de Inventario Fablab
+# 🧰 Sistema de Inventario Fablab UFPS
 
-Sistema de inventario desarrollado para el **Fablab**, cuyo objetivo es facilitar el registro, consulta y gestión de los diferentes elementos y recursos disponibles dentro del laboratorio.
+Sistema de gestión y control de inventario para el FabLab de la Universidad Francisco de Paula Santander, mediante identificación automática con códigos DataMatrix.
 
-La aplicación permitirá llevar un control organizado de los elementos del Fablab, como **sillas, mesas, computadores, equipos electrónicos, herramientas, materiales y otros recursos**, facilitando su identificación y administración.
+**Seminario Integrador II** — UFPS
 
-## 🎯 Objetivo
+## Equipo
 
-Desarrollar una aplicación móvil que permita gestionar de manera sencilla y organizada el inventario del Fablab, proporcionando información sobre los diferentes elementos registrados y permitiendo actualizar sus datos cuando sea necesario.
+- Kevin Steven Marin Cardenas
+- Juan David Llanos Castañeda
+- Gian Karlo Abril Fierro
+- Alvaro Sneider Portillo Mora
 
-A futuro, el sistema contará con un backend y una base de datos que permitirán centralizar y almacenar la información del inventario.
+## Arquitectura
 
-## 📱 Funcionalidades
+```
+┌──────────────┐    HTTP/REST    ┌───────────────┐    MySQL    ┌────────────┐
+│  App Expo    │ ◄──────────────► │  API Server   │ ◄─────────► │  MySQL 8   │
+│  (React      │   localhost:    │  (Node,       │  localhost: │  Docker    │
+│  Native)     │    3001/api)    │   mysql2)     │    13306    │            │
+└──────────────┘                 └───────────────┘             └────────────┘
+```
 
-Actualmente el proyecto se encuentra en desarrollo. Las funcionalidades previstas incluyen:
+- **App** — Expo/React Native (expo-router, 3 pantallas: Inicio, Inventario, Sala)
+- **API** — `server/index.mjs` — HTTP REST, envuelve `importer/api.mjs`
+- **BD** — MySQL 8 en Docker, esquema normalizado (edificios → salas → elementos + traslados)
 
-* 📋 Registro de elementos del inventario.
-* 🔎 Consulta de elementos.
-* ✏️ Edición y actualización de información.
-* 🗑️ Eliminación de elementos.
-* 📷 Escaneo de códigos **Data Matrix** para identificar elementos.
-* 🏷️ Asociación de un código único a cada elemento.
-* 📊 Visualización y organización del inventario.
-* 💻 Gestión del inventario desde una aplicación web en una etapa futura.
+## Inicio rápido
 
-## 🛠️ Tecnologías
+### 1. Base de datos (Docker)
 
-### Aplicación móvil
+```bash
+cd fablab
+docker compose up -d
+```
 
-* **React Native**
-* **Expo**
-* **TypeScript**
+### 2. Cargar datos (si es necesario)
 
-### Backend y base de datos
+```bash
+cd fablab/fablab-inventario
+node importer/gen-normalizado.mjs "/home/alvaro/CNC 2026(1).xlsx" > /tmp/inventario.sql
+docker exec -i fablab-mysql mysql -u root -pfablab fablab < /tmp/inventario.sql
+```
 
-> 🚧 Actualmente el proyecto **no cuenta con backend ni base de datos**. Estos componentes serán incorporados en futuras etapas del desarrollo.
+### 3. API Server
 
-## 🗂️ Tipos de elementos
+```bash
+cd fablab/fablab-inventario
+PORT=3001 node server/index.mjs
+```
 
-El sistema estará preparado para gestionar diferentes categorías de recursos, entre ellas:
+### 4. App
 
-* 🪑 Mobiliario
+```bash
+cd fablab/fablab-inventario
+npx expo start
+```
 
-  * Sillas
-  * Mesas
-  * Estantes
-* 💻 Equipos informáticos
+Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go.
 
-  * Computadores
-  * Monitores
-  * Periféricos
-* 🔌 Equipos electrónicos
+## URLs del demo
 
-  * Componentes electrónicos
-  * Fuentes de alimentación
-  * Instrumentos de medición
-* 🔧 Herramientas
-* 📦 Materiales
-* ⚙️ Otros elementos utilizados en el Fablab
+| | |
+|---|---|
+| App | `http://localhost:8083` |
+| API | `http://localhost:3001/api` |
+| MySQL | `localhost:13306` (usuario: `root`, contraseña: `fablab`, base: `fablab`) |
 
-## 🚀 Estado del proyecto
+## Endpoints de la API
 
-**En desarrollo 🚧**
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/salas` | Salas con edificio y conteo de elementos |
+| GET | `/api/salas/:id/elementos` | Elementos de una sala |
+| GET | `/api/elementos/:id/historial` | Historial de traslados |
+| POST | `/api/elementos` | Agregar elemento |
+| DELETE | `/api/elementos/:codigo` | Eliminar elemento |
+| POST | `/api/traslados` | Registrar traslado (transaccional) |
 
-Actualmente se está desarrollando la aplicación móvil utilizando React Native y Expo. La primera etapa está enfocada en construir la interfaz y las funcionalidades principales para la gestión del inventario.
+## Estructura del proyecto
 
-Las siguientes etapas contemplarán la implementación del backend, la base de datos, el escaneo de códigos Data Matrix y posteriormente una interfaz web para la administración del inventario desde un computador.
+```
+fablab/
+├── README.md                    ← Este archivo
+├── README-SERVER.md             ← Detalle del servidor
+├── docker-compose.yml           ← MySQL (Docker)
+├── documento/
+│   ├── documento-integrador.md  ← Documento académico (3 capítulos)
+│   └── documento-integrador.odt
+└── fablab-inventario/           ← App + API + BD (todo en un repo)
+    ├── src/
+    │   ├── app/                  ← Pantallas (expo-router)
+    │   │   ├── (tabs)/           ← Inicio (scan, add, search) + Inventario
+    │   │   └── sala/[nombre].tsx ← Detalle de sala
+    │   ├── components/           ← Scanner, DataMatrix, UI
+    │   ├── lib/
+    │   │   ├── inventory.ts      ← Conexión a API (reemplaza AsyncStorage)
+    │   │   └── inventory.test.ts ← Tests
+    │   └── constants/theme.ts
+    ├── server/
+    │   └── index.mjs            ← API REST
+    ├── importer/
+    │   ├── normalizado.mjs      ← Esquema normalizado (DDL + DML)
+    │   ├── api.mjs               ← Consultas MySQL para el frontend
+    │   ├── cli.mjs               ← CLI: xlsx → MySQL
+    │   ├── gen-normalizado.mjs  ← Genera SQL desde xlsx
+    │   ├── self-check.mjs       ← Validaciones sin MySQL
+    │   └── README.md
+    ├── public/                   ← PWA (manifest, sw.js, _redirects)
+    ├── server/index.mjs
+    ├── docker-compose.yml
+    ├── app.json                  ← Config Expo + PWA
+    ├── eas.json                  ← Build config
+    └── package.json
+```
 
-## 📌 Próximas etapas
+## Funcionalidades de la app
 
-1. Desarrollo de la interfaz móvil.
-2. Implementación del registro y gestión de elementos.
-3. Integración del escaneo de códigos Data Matrix.
-4. Desarrollo del backend.
-5. Implementación de la base de datos.
-6. Conexión de la aplicación móvil con el backend.
-7. Desarrollo de la plataforma web para administración.
-8. Implementación de funcionalidades adicionales de consulta y gestión.
+- **Escanear** — Lee códigos DataMatrix con la cámara
+- **Agregar** — Crea elementos con DataMatrix generado automáticamente, foto opcional, selección de sala
+- **Buscar** — Búsqueda por nombre (case-insensitive, substring)
+- **Inventario** — Lista de salas con conteo de elementos
+- **Sala** — Elementos de una sala, detalles, eliminar con confirmación
+- **PWA** — Instalable en pantalla de inicio del teléfono
 
-## 👨‍💻 Desarrollo
+## Base de datos
 
-Proyecto desarrollado como parte del trabajo de desarrollo y gestión tecnológica del **Fablab**.
+Esquema normalizado (4 tablas):
+
+| Tabla | Columnas clave | Relaciones |
+|---|---|---|
+| `edificios` | id, nombre | — |
+| `salas` | id, edificio_id, nombre | FK → edificios |
+| `elementos` | id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad | FK → salas |
+| `traslados` | id, elemento_id, sala_anterior_id, sala_nueva_id, fecha, nota | FK → elementos + salas |
+
+Datos cargados: **916 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
+
+## Pruebas
+
+```bash
+cd fablab/fablab-inventario
+npm test                        # 20/20 tests (Jest)
+node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
+node scripts/verify-datamatrix.mjs  # Verifica códigos DataMatrix
+```
+
+## Variables de entorno
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `MYSQL_HOST` | `localhost` | Host MySQL |
+| `MYSQL_PORT` | `3306` | Puerto |
+| `MYSQL_USER` | `root` | Usuario |
+| `MYSQL_PASSWORD` | `fablab` | Contraseña |
+| `MYSQL_DATABASE` | `fablab` | Base de datos |
+| `MYSQL_SOCKET` | — | Socket (alternativa) |
+| `PORT` | `3001` | Puerto del API server |
+| `EXPO_PUBLIC_API_URL` | `http://localhost:3001/api` | URL de la API para la app |
+
+## Desarrollo
+
+```bash
+cd fablab/fablab-inventario
+npm install
+npx expo start
+```
+
+Presiona `a` (Android), `i` (iOS) o `w` (web). Para web con PWA: `npx expo start --web`.
+
+## Push actual
+
+```
+git@github.com:stevencardenas-dev/fablab.git
+  main → documento + DDL
+  feature/inventario-scan → app conectada a MySQL + API + PWA
+```
