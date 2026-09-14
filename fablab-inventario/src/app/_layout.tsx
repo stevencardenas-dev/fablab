@@ -5,8 +5,12 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemeModeContext, ToggleThemeContext, type AppThemeMode } from '@/hooks/use-theme';
+import { registerServiceWorker } from '@/components/service-worker';
 
 SplashScreen.preventAutoHideAsync();
+
+// Registrar Service Worker para PWA (solo web)
+registerServiceWorker();
 
 export default function RootLayout() {
   const systemColorScheme = useColorScheme();

@@ -1,0 +1,19 @@
+{
+  "name": "FabLab UFPS",
+  "short_name": "FabLab",
+  "description": "Inventario del FabLab de la Universidad Francisco de Paula Santander",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#C8102E",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/images/icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "education"]
+}

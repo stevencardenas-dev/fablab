@@ -6,9 +6,9 @@ import { leerHoja, ddlDeHoja, dmlDeHoja, hojasDisponibles } from './schema.mjs';
 export function conexionDesdeEnv(env = process.env) {
   return {
     host: env.MYSQL_HOST || 'localhost',
-    port: env.MYSQL_PORT ? Number(env.MYSQL_PORT) : 3306,
+    port: env.MYSQL_PORT ? Number(env.MYSQL_PORT) : 13306,
     user: env.MYSQL_USER || 'root',
-    password: env.MYSQL_PASSWORD || '',
+    password: env.MYSQL_PASSWORD || 'fablab',
     database: env.MYSQL_DATABASE || 'fablab',
     socketPath: env.MYSQL_SOCKET || undefined,
     multipleStatements: true,

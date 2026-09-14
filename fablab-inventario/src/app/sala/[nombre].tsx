@@ -7,13 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { findByRoom, removeItem, type InventoryItem } from '@/lib/inventory';
+import { findByRoom, listarSalas, removeItem, type InventoryItem } from '@/lib/inventory';
 
-const fieldLabels: Record<keyof InventoryItem, string> = {
+const fieldLabels: Record<string, string> = {
   codigo: 'Código',
   detalle: 'Detalle',
   serial: 'Serial',
-  inventario: 'Sala',
+  inventario: 'N° Inventario',
   estado: 'Estado',
   observaciones: 'Observaciones',
   cantidad: 'Cantidad',
@@ -22,13 +22,20 @@ const fieldLabels: Record<keyof InventoryItem, string> = {
 
 export default function SalaScreen() {
   const { nombre } = useLocalSearchParams<{ nombre: string }>();
+  const salaId = Number(nombre);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [confirmCodigo, setConfirmCodigo] = useState<string | null>(null);
+  const [salaNombre, setSalaNombre] = useState<string>('');
 
   const load = useCallback(() => {
-    if (nombre) findByRoom(nombre).then(setItems);
-  }, [nombre]);
+    if (!Number.isFinite(salaId)) return;
+    findByRoom(salaId).then(setItems);
+    listarSalas().then((salas) => {
+      const s = salas.find((sl) => sl.id === salaId);
+      if (s) setSalaNombre(s.nombre);
+    });
+  }, [salaId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -62,7 +69,7 @@ export default function SalaScreen() {
             <ThemedText type="smallBold" style={styles.backLabel}>‹ Inventario</ThemedText>
           </Pressable>
 
-          <ThemedText type="title" style={styles.title}>{nombre}</ThemedText>
+          <ThemedText type="title" style={styles.title}>{salaNombre || nombre}</ThemedText>
 
           {items.length === 0 && (
             <ThemedText themeColor="textSecondary" style={styles.empty}>
@@ -157,8 +164,6 @@ const styles = StyleSheet.create({
   removeButtonConfirm: { backgroundColor: '#C8102E' },
   removeButtonLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14 },
   removeButtonLabelConfirm: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-  // 'fixed' escapes React Native Web's <Modal> portal quirks (it can mount inline
-  // instead of on <body>, breaking centering); 'absolute' covers the same area on native.
   modalBackdrop: { position: Platform.OS === 'web' ? ('fixed' as 'absolute') : 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: Spacing.four, zIndex: 1000 },
   modalCardWrapper: { width: '100%', maxWidth: 420, maxHeight: '85%', flexShrink: 1, display: 'flex' },
   modalCard: { borderRadius: 16, overflow: 'hidden', flex: 1, display: 'flex' },

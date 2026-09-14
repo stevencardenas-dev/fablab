@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
-import { addItem, findByCodigo, findByDetalle, generateCodigo, Rooms, type InventoryItem } from '@/lib/inventory';
+import { addItem, findByCodigo, findByDetalle, generateCodigo, listarSalas, buscarElementos, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -37,6 +37,13 @@ export default function HomeScreen() {
   const [scannedItem, setScannedItem] = useState<InventoryItem | null | undefined>(undefined);
   const [searchName, setSearchName] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[] | null>(null);
+  const [salas, setSalas] = useState<Room[]>([]);
+
+  useEffect(() => {
+    listarSalas().then((s) => {
+      if (s.length) setSalas(s);
+    });
+  }, []);
 
   function openPanel(panel: 'scan' | 'add' | 'search') {
     const next = openAction === panel ? null : panel;
@@ -66,7 +73,7 @@ export default function HomeScreen() {
   }
 
   async function handleSearch() {
-    setSearchResults(await findByDetalle(searchName));
+    setSearchResults(await buscarElementos(searchName));
   }
 
   async function handleTakePhoto() {
@@ -138,16 +145,17 @@ export default function HomeScreen() {
             <View style={styles.inputGroup}>
               <ThemedText type="smallBold" style={styles.inputLabel}>INVENTARIO</ThemedText>
               <View style={styles.roomChips}>
-                {Rooms.map((room) => (
+                {salas.map((sala) => (
                   <Pressable
-                    key={room}
+                    key={sala.id}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: element.inventario === room }}
-                    onPress={() => setElement({ ...element, inventario: room })}
-                    style={[styles.roomChip, element.inventario === room && styles.roomChipSelected]}>
-                    <ThemedText style={element.inventario === room ? styles.roomChipLabelSelected : styles.roomChipLabel}>{room}</ThemedText>
+                    accessibilityState={{ selected: element.inventario === sala.nombre }}
+                    onPress={() => setElement({ ...element, inventario: sala.nombre })}
+                    style={[styles.roomChip, element.inventario === sala.nombre && styles.roomChipSelected]}>
+                    <ThemedText style={element.inventario === sala.nombre ? styles.roomChipLabelSelected : styles.roomChipLabel}>{sala.nombre}</ThemedText>
                   </Pressable>
                 ))}
+                {!salas.length && <ThemedText themeColor="textSecondary" type="small">Cargando salas…</ThemedText>}
               </View>
             </View>
             {(['estado', 'observaciones', 'cantidad'] as const).map((field) => (
@@ -171,18 +179,50 @@ export default function HomeScreen() {
 
           <ActionButton icon="magnifyingglass" label="Buscar elemento" isOpen={openAction === 'search'} onPress={() => openPanel('search')} />
           {openAction === 'search' && <ActionPanel>
-            <ThemedText themeColor="textSecondary" style={styles.description}>Busca un elemento por su nombre.</ThemedText>
-            <FormInput label="NOMBRE" value={searchName} onChangeText={setSearchName} theme={theme} />
+            <ThemedText themeColor="textSecondary" style={styles.description}>Busca por código, nombre, serial, estado…</ThemedText>
+            <FormInput label="BUSCAR" value={searchName} onChangeText={setSearchName} theme={theme} />
             <PanelButton label="Buscar" onPress={handleSearch} />
-            {searchResults?.map((item) => (
-              <View key={item.codigo} style={styles.resultBox}>
-                {(['codigo', 'detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
-                  <ThemedText key={field} style={styles.resultLine}>{field.toUpperCase()}: {item[field] || '-'}</ThemedText>
-                ))}
-              </View>
-            ))}
+            {searchResults !== null && searchResults.length > 0 && (
+              <ThemedText style={styles.searchCount}>
+                {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
+              </ThemedText>
+            )}
+            {searchResults?.map((item) => {
+              const room = salas.find((s) => s.id === item.sala_id);
+              const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
+              return (
+                <View key={item.codigo} style={styles.searchCard}>
+                  <View style={styles.searchCardHeader}>
+                    <ThemedText type="smallBold" style={styles.searchCardCode}>{item.codigo || '-'}</ThemedText>
+                    {room && (
+                      <View style={styles.roomBadge}>
+                        <ThemedText style={styles.roomBadgeText}>{room.nombre}</ThemedText>
+                      </View>
+                    )}
+                  </View>
+                  <ThemedText style={styles.searchCardDetalle} numberOfLines={1}>{item.detalle || item.codigo || '-'}</ThemedText>
+                  <View style={styles.searchCardMeta}>
+                    <View style={[styles.estadoBadge, { backgroundColor: estadoBueno ? '#22c55e22' : '#ef444422' }]}>
+                      <ThemedText style={[styles.estadoText, { color: estadoBueno ? '#22c55e' : '#ef4444' }]}>
+                        {item.estado || 'Sin estado'}
+                      </ThemedText>
+                    </View>
+                    {item.serial && (
+                      <ThemedText themeColor="textSecondary" type="small">SN: {item.serial}</ThemedText>
+                    )}
+                    {item.cantidad && (
+                      <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
             {searchResults?.length === 0 && (
-              <ThemedText themeColor="textSecondary" style={styles.description}>Sin resultados.</ThemedText>
+              <View style={styles.searchEmpty}>
+                <ThemedText style={styles.searchEmptyIcon}>🔍</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para "{searchName}"</ThemedText>
+                <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
+              </View>
             )}
           </ActionPanel>}
         </View>
@@ -301,6 +341,20 @@ const styles = StyleSheet.create({
   roomChipLabelSelected: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   resultBox: { gap: Spacing.half, paddingTop: Spacing.two },
   resultLine: { fontSize: 14 },
+  searchCount: { marginTop: Spacing.two, alignSelf: 'flex-start', color: '#C8102E', fontSize: 13, fontWeight: '600' },
+  searchCard: { width: '100%', borderRadius: 10, borderWidth: 1, borderColor: '#C8102E22', padding: Spacing.three, gap: Spacing.one, marginTop: Spacing.one },
+  searchCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.one },
+  searchCardCode: { fontSize: 15, color: '#C8102E', letterSpacing: 0.5 },
+  roomBadge: { backgroundColor: '#C8102E15', borderRadius: 6, paddingHorizontal: Spacing.two, paddingVertical: 2 },
+  roomBadgeText: { fontSize: 11, color: '#C8102E', fontWeight: '600' },
+  searchCardDetalle: { fontSize: 15, fontWeight: '600' },
+  searchCardMeta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.half },
+  estadoBadge: { borderRadius: 6, paddingHorizontal: Spacing.two, paddingVertical: 2 },
+  estadoText: { fontSize: 11, fontWeight: '600' },
+  searchEmpty: { alignItems: 'center', paddingVertical: Spacing.four, gap: Spacing.one },
+  searchEmptyIcon: { fontSize: 32 },
+  searchEmptyText: { marginTop: Spacing.two, textAlign: 'center' },
+  searchEmptyHint: { textAlign: 'center' },
   panelButton: { minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
   panelButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   pressed: { opacity: 0.78 },

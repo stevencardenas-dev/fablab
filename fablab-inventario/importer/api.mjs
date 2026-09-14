@@ -34,7 +34,7 @@ export async function listarElementos(sala, cfg = conexionDesdeEnv()) {
     if (!salas.length) throw new Error(`La sala "${sala}" no existe`);
     if (salas.length > 1) throw new Error(`"${sala}" existe en mas de un edificio; use el id`);
     const [filas] = await conn.query(
-      `SELECT id, codigo, detalle, serial, inventario, estado, observaciones, cantidad
+      `SELECT id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad
        FROM elementos WHERE sala_id = ? ORDER BY id`,
       [salas[0].id],
     );
@@ -73,5 +73,34 @@ export async function historialElemento(elementoId, cfg = conexionDesdeEnv()) {
       JOIN salas n ON n.id = t.sala_nueva_id
       WHERE t.elemento_id = ? ORDER BY t.fecha, t.id`, [elementoId]);
     return filas;
+  });
+}
+
+// Agrega un elemento nuevo a la base. El codigo es único.
+export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    const [res] = await conn.query(
+      `INSERT INTO elementos (sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        elemento.sala_id,
+        elemento.codigo ?? null,
+        elemento.detalle ?? null,
+        elemento.serial ?? null,
+        elemento.inventario ?? null,
+        elemento.estado ?? null,
+        elemento.observaciones ?? null,
+        elemento.cantidad ?? null,
+      ],
+    );
+    return { id: res.insertId, ...elemento };
+  });
+}
+
+// Elimina un elemento por su codigo.
+export async function eliminarElemento(codigo, cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    const [res] = await conn.query('DELETE FROM elementos WHERE codigo = ?', [codigo]);
+    return { deleted: res.affectedRows > 0, codigo };
   });
 }

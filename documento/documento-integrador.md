@@ -1,10 +1,46 @@
-# Sistema de gestión y control de inventario para el FabLab UFPS mediante identificación automática con códigos DataMatrix
+::: {custom-style="CoverTitle"}
+Sistema de gestión y control de inventario para el FabLab UFPS mediante identificación automática con códigos DataMatrix
+:::
 
-**Seminario Integrador II**
-Universidad Francisco de Paula Santander
+::: {custom-style="CoverLabel"}
+Integrantes del equipo
+:::
 
----
+::: {custom-style="CoverText"}
+1152477 - Kevin Steven Marin Cardenas
+:::
 
+::: {custom-style="CoverText"}
+1152462 - Juan David Llanos Castañeda
+:::
+
+::: {custom-style="CoverText"}
+1152466 - Gian Karlo Abril Fierro
+:::
+
+::: {custom-style="CoverText"}
+1152497 - Alvaro Sneider Portillo Mora
+:::
+
+::: {custom-style="CoverLabel"}
+UNIVERSIDAD FRANCISCO DE PAULA SANTANDER
+:::
+
+::: {custom-style="CoverText"}
+Facultad de Ingeniería — Programa de Ingeniería de Sistemas
+:::
+
+::: {custom-style="CoverText"}
+Asignatura: Seminario Integrador II
+:::
+
+::: {custom-style="CoverLabel"}
+Cúcuta, Norte de Santander
+:::
+
+::: {custom-style="CoverBreak"}
+2026
+:::
 
 # Capítulo 1 — Definición del problema
 

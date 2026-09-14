@@ -21,7 +21,23 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "pwa": {
+        "manifest": "./public/manifest.json",
+        "splash": {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76,
+          "backgroundColor": "#208AEF"
+        },
+        "themeColor": "#C8102E",
+        "orientation": "portrait",
+        "icons": [
+          {
+            "src": "./assets/images/icon.png",
+            "sizes": "any"
+          }
+        ]
+      }
     },
     "plugins": [
       "expo-router",
