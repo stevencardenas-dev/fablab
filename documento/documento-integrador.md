@@ -1,47 +1,34 @@
-::: {custom-style="CoverTitle"}
-Sistema de gestión y control de inventario para el FabLab UFPS mediante identificación automática con códigos DataMatrix
+::: {custom-style="APATitle"}
+Sistema de Gestión y Control de Inventario para el FabLab UFPS Mediante Identificación Automática con Códigos DataMatrix
 :::
 
-::: {custom-style="CoverLabel"}
-Integrantes del equipo
+::: {custom-style="APAAuthors"}
+JUAN DAVID LLANOS CASTAÑEDA - 1152462
 :::
 
-::: {custom-style="CoverText"}
-1152477 - Kevin Steven Marin Cardenas
+::: {custom-style="APACenter"}
+ÁLVARO SNEIDER PORTILLO MORA - 1152497
 :::
 
-::: {custom-style="CoverText"}
-1152462 - Juan David Llanos Castañeda
+::: {custom-style="APAAuthors"}
+Programa de Ingeniería de Sistemas, Facultad de Ingeniería
 :::
 
-::: {custom-style="CoverText"}
-1152466 - Gian Karlo Abril Fierro
+::: {custom-style="APACenter"}
+Universidad Francisco de Paula Santander
 :::
 
-::: {custom-style="CoverText"}
-1152497 - Alvaro Sneider Portillo Mora
+::: {custom-style="APACenter"}
+Seminario Integrador II
 :::
 
-::: {custom-style="CoverLabel"}
-UNIVERSIDAD FRANCISCO DE PAULA SANTANDER
+::: {custom-style="APACenter"}
+Prof. Carlos Eduardo Pardo García
 :::
 
-::: {custom-style="CoverText"}
-Facultad de Ingeniería — Programa de Ingeniería de Sistemas
+::: {custom-style="APABreak"}
+Septiembre de 2026
 :::
-
-::: {custom-style="CoverText"}
-Asignatura: Seminario Integrador II
-:::
-
-::: {custom-style="CoverLabel"}
-Cúcuta, Norte de Santander
-:::
-
-::: {custom-style="CoverBreak"}
-2026
-:::
-
 # Capítulo 1 — Definición del problema
 
 ## 1.1 Planteamiento del problema
@@ -65,6 +52,13 @@ mano, lo que introduce errores de digitación y duplicados. En el libro analizad
 se encontraron registros del mismo elemento con códigos distintos, y la columna
 `CANTIDAD` mezcla valores numéricos (`12`), guiones (`-`) y la palabra
 `INCONTABLE`, lo que impide cualquier operación agregada confiable.
+
+Este hallazgo no es excepcional. La investigación sobre hojas de cálculo
+operativas documenta que el error es la norma y no la excepción: en auditorías
+de campo, entre el 86 % y el 91 % de las hojas examinadas contenían al menos un
+error, con tasas de error por celda de entre 1,1 % y 2,5 % (Panko, 2000). Un
+libro de inventario de varios cientos de filas, mantenido a mano durante años,
+cae de lleno en ese rango.
 
 **Componentes de tamaño reducido.** Un microcontrolador, un sensor o una
 resistencia no ofrecen superficie suficiente para una etiqueta legible con
@@ -111,6 +105,15 @@ información en un área bidimensional muy reducida, con corrección de errores
 Reed-Solomon que permite la lectura aun con el símbolo parcialmente dañado
 (Organización Internacional de Normalización, 2006). Esta densidad por unidad de área es lo que hace viable etiquetar
 componentes que un código lineal o un QR no permitirían marcar.
+
+**Reducción del error de captura.** La sustitución de la digitación por la
+lectura automática tiene efecto medido en contextos donde el error tiene
+consecuencias graves. Jessurun et al. (2021) evaluaron la introducción de
+dispensación con lectura de código de barras en un entorno hospitalario y
+registraron una caída de los errores de administración del 19,5 % al 15,8 %, y
+de los errores potencialmente dañinos del 3,0 % al 0,3 %. El mecanismo es el
+mismo que opera en este proyecto: eliminar el paso manual elimina la clase de
+error asociada a ese paso.
 
 **Integridad de los datos.** El paso de un archivo sin control de concurrencia a
 una base de datos relacional centralizada elimina la posibilidad de versiones
@@ -440,7 +443,7 @@ manipulada.
 > **Observación metodológica.** Al tratarse de un diseño **pre-experimental** —un
 > solo grupo, sin grupo de control ni asignación aleatoria— no permite descartar
 > por completo explicaciones alternativas como el efecto de aprendizaje del
-> operario. Se declara explícitamente como limitación en el apartado 3.5. Un
+> operario. Se declara explícitamente como limitación en el apartado 3.6. Un
 > diseño cuasi-experimental con un segundo laboratorio como control sería más
 > robusto, pero excede los recursos disponibles.
 
@@ -557,7 +560,30 @@ opera el inventario, que por el tamaño de la planta se aborda de forma censal.
    comparación con la línea base.
 7. **Análisis de resultados y conclusiones.**
 
-## 3.5 Limitaciones metodológicas
+## 3.5 Cronograma
+
+**Tabla 5**
+
+*Cronograma de ejecución por fase, semana, actividad y entregable*
+
+| Fase | Sem. | Actividad | Entregable | Estado |
+|:--|:--|:--|:--|:--|
+| 1. Diagnóstico | 1–2 | Análisis documental del inventario vigente | Ficha de análisis con las cuatro fallas | Ejecutada |
+| 2. Arquitectura de datos | 3–4 | Modelado relacional normalizado | Script DDL en 3FN | Ejecutada |
+| 3. Migración | 5–6 | Carga masiva y verificación de conteos | Base verificada: 916 elementos | Ejecutada |
+| 4. Identificación | 7–9 | Generación y lectura de DataMatrix | Módulo de generación e impresión | En curso |
+| 5. Gestión espacial | 10–11 | Reubicación e historial de traslados | Módulo de traslados consultable | En curso |
+| 6. Pruebas post-test | 12–13 | Medición de tiempos, errores y lectura | Registro pre-test / post-test | Pendiente |
+| 7. Análisis | 14–15 | Contraste contra la línea base | Resultados y conclusiones | Pendiente |
+
+*Nota.* La numeración de semanas es relativa al inicio del semestre académico.
+Las fases 1 a 3 están ejecutadas y verificadas; las fases 4 y 5 se encuentran en
+desarrollo simultáneo, dado que la interfaz de traslados depende del esquema de
+datos ya implementado pero no del módulo de lectura. Las fases 6 y 7 están
+condicionadas a que el sistema alcance despliegue operativo dentro del
+cronograma académico, según se declara en §3.6.
+
+## 3.6 Limitaciones metodológicas
 
 - El diseño es pre-experimental de un solo grupo; no aísla completamente el
   efecto de aprendizaje del operario respecto del efecto del sistema.
@@ -596,6 +622,14 @@ Institucional UCV. https://hdl.handle.net/20.500.12692/44481
 :::
 
 ::: {custom-style="Reference"}
+Jessurun, J. G., Hunfeld, N. G. M., Van Rosmalen, J., Van Dijk, M., & Van Den
+Bemt, P. M. L. A. (2021). Effect of automated unit dose dispensing with barcode
+scanning on medication administration errors: An uncontrolled before-and-after
+study. *International Journal for Quality in Health Care*, *33*(4), mzab142.
+https://doi.org/10.1093/intqhc/mzab142
+:::
+
+::: {custom-style="Reference"}
 Lora, W. J., Ahumada Barragan, D. D. y Muñoz Burbano, J. S. (2019).
 *Implementación de un sistema de inventario para bodegas a través de un
 aplicativo móvil nativo en Android* [Trabajo de grado, Universidad Nacional
@@ -620,6 +654,12 @@ Organización Internacional de Normalización. (2024). *Information technology �
 Automatic identification and data capture techniques — Data Matrix bar code
 symbology specification* (3.ª ed., ISO/IEC 16022:2024).
 https://www.iso.org/standard/80926.html
+:::
+
+::: {custom-style="Reference"}
+Panko, R. R. (2000). Spreadsheet errors: What we know. What we think we can do.
+*Proceedings of the Spreadsheet Risk Symposium, European Spreadsheet Risks
+Interest Group (EuSpRIG)*. https://arxiv.org/abs/0802.3457
 :::
 
 ::: {custom-style="Reference"}
