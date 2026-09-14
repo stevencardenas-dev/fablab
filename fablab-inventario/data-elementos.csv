@@ -1,0 +1,917 @@
+id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
+602,Almacen,FabLab,ALM-1,NULL,NULL,NULL,NULL,NULL,NULL
+603,Almacen,FabLab,ALM-2,NULL,NULL,NULL,NULL,NULL,NULL
+604,Almacen,FabLab,ALM-3,NULL,NULL,NULL,NULL,NULL,NULL
+605,Almacen,FabLab,ALM-4,NULL,NULL,NULL,NULL,NULL,NULL
+606,Almacen,FabLab,ALM-5,NULL,NULL,NULL,NULL,NULL,NULL
+607,Almacen,FabLab,ALM-6,NULL,NULL,NULL,NULL,NULL,NULL
+608,Almacen,FabLab,ALM-7,NULL,NULL,NULL,NULL,NULL,NULL
+609,Almacen,FabLab,ALM-8,NULL,NULL,NULL,NULL,NULL,NULL
+610,Almacen,FabLab,ALM-9,NULL,NULL,NULL,NULL,NULL,NULL
+611,Almacen,FabLab,ALM-10,NULL,NULL,NULL,NULL,NULL,NULL
+612,Almacen,FabLab,ALM-11,NULL,NULL,NULL,NULL,NULL,NULL
+613,Almacen,FabLab,ALM-12,NULL,NULL,NULL,NULL,NULL,NULL
+614,Almacen,FabLab,ALM-13,NULL,NULL,NULL,NULL,NULL,NULL
+615,Almacen,FabLab,ALM-14,NULL,NULL,NULL,NULL,NULL,NULL
+616,Almacen,FabLab,ALM-15,NULL,NULL,NULL,NULL,NULL,NULL
+617,Almacen,FabLab,ALM-16,NULL,NULL,NULL,NULL,NULL,NULL
+618,Almacen,FabLab,ALM-17,NULL,NULL,NULL,NULL,NULL,NULL
+619,Almacen,FabLab,ALM-18,NULL,NULL,NULL,NULL,NULL,NULL
+620,Almacen,FabLab,ALM-19,NULL,NULL,NULL,NULL,NULL,NULL
+621,Almacen,FabLab,ALM-20,NULL,NULL,NULL,NULL,NULL,NULL
+622,Almacen,FabLab,ALM-21,NULL,NULL,NULL,NULL,NULL,NULL
+623,Almacen,FabLab,ALM-22,NULL,NULL,NULL,NULL,NULL,NULL
+624,Almacen,FabLab,ALM-23,NULL,NULL,NULL,NULL,NULL,NULL
+625,Almacen,FabLab,ALM-24,NULL,NULL,NULL,NULL,NULL,NULL
+626,Almacen,FabLab,ALM-25,NULL,NULL,NULL,NULL,NULL,NULL
+627,Almacen,FabLab,ALM-26,NULL,NULL,NULL,NULL,NULL,NULL
+628,Almacen,FabLab,ALM-27,NULL,NULL,NULL,NULL,NULL,NULL
+629,Almacen,FabLab,ALM-28,NULL,NULL,NULL,NULL,NULL,NULL
+630,Almacen,FabLab,ALM-29,NULL,NULL,NULL,NULL,NULL,NULL
+631,Almacen,FabLab,ALM-30,NULL,NULL,NULL,NULL,NULL,NULL
+632,Almacen,FabLab,ALM-31,NULL,NULL,NULL,NULL,NULL,NULL
+633,Almacen,FabLab,ALM-32,NULL,NULL,NULL,NULL,NULL,NULL
+634,Almacen,FabLab,ALM-33,NULL,NULL,NULL,NULL,NULL,NULL
+635,Almacen,FabLab,ALM-34,NULL,NULL,NULL,NULL,NULL,NULL
+636,Almacen,FabLab,ALM-35,NULL,NULL,NULL,NULL,NULL,NULL
+637,Almacen,FabLab,ALM-36,NULL,NULL,NULL,NULL,NULL,NULL
+638,Almacen,FabLab,ALM-37,NULL,NULL,NULL,NULL,NULL,NULL
+639,Almacen,FabLab,ALM-38,NULL,NULL,NULL,NULL,NULL,NULL
+640,Almacen,FabLab,ALM-39,NULL,NULL,NULL,NULL,NULL,NULL
+641,Almacen,FabLab,ALM-40,NULL,NULL,NULL,NULL,NULL,NULL
+642,Almacen,FabLab,ALM-41,NULL,NULL,NULL,NULL,NULL,NULL
+643,Almacen,FabLab,ALM-42,NULL,NULL,NULL,NULL,NULL,NULL
+644,Almacen,FabLab,ALM-43,NULL,NULL,NULL,NULL,NULL,NULL
+645,Almacen,FabLab,ALM-44,NULL,NULL,NULL,NULL,NULL,NULL
+646,Almacen,FabLab,ALM-45,NULL,NULL,NULL,NULL,NULL,NULL
+647,Almacen,FabLab,ALM-46,NULL,NULL,NULL,NULL,NULL,NULL
+648,Almacen,FabLab,ALM-47,NULL,NULL,NULL,NULL,NULL,NULL
+649,Almacen,FabLab,ALM-48,NULL,NULL,NULL,NULL,NULL,NULL
+650,Almacen,FabLab,ALM-49,NULL,NULL,NULL,NULL,NULL,NULL
+651,Almacen,FabLab,ALM-50,NULL,NULL,NULL,NULL,NULL,NULL
+652,Almacen,FabLab,ALM-51,NULL,NULL,NULL,NULL,NULL,NULL
+653,Almacen,FabLab,ALM-52,NULL,NULL,NULL,NULL,NULL,NULL
+654,Almacen,FabLab,ALM-53,NULL,NULL,NULL,NULL,NULL,NULL
+655,Almacen,FabLab,ALM-54,NULL,NULL,NULL,NULL,NULL,NULL
+656,Almacen,FabLab,ALM-55,NULL,NULL,NULL,NULL,NULL,NULL
+657,Almacen,FabLab,ALM-56,NULL,NULL,NULL,NULL,NULL,NULL
+658,Almacen,FabLab,ALM-57,NULL,NULL,NULL,NULL,NULL,NULL
+659,Almacen,FabLab,ALM-58,NULL,NULL,NULL,NULL,NULL,NULL
+660,Almacen,FabLab,ALM-59,NULL,NULL,NULL,NULL,NULL,NULL
+661,Almacen,FabLab,ALM-60,NULL,NULL,NULL,NULL,NULL,NULL
+662,Almacen,FabLab,ALM-61,NULL,NULL,NULL,NULL,NULL,NULL
+663,Almacen,FabLab,ALM-62,NULL,NULL,NULL,NULL,NULL,NULL
+664,Almacen,FabLab,ALM-63,NULL,NULL,NULL,NULL,NULL,NULL
+665,Almacen,FabLab,ALM-64,NULL,NULL,NULL,NULL,NULL,NULL
+666,Almacen,FabLab,ALM-65,NULL,NULL,NULL,NULL,NULL,NULL
+667,Almacen,FabLab,ALM-66,NULL,NULL,NULL,NULL,NULL,NULL
+668,Almacen,FabLab,ALM-67,NULL,NULL,NULL,NULL,NULL,NULL
+669,Almacen,FabLab,ALM-68,NULL,NULL,NULL,NULL,NULL,NULL
+670,Almacen,FabLab,ALM-69,NULL,NULL,NULL,NULL,NULL,NULL
+671,Almacen,FabLab,ALM-70,NULL,NULL,NULL,NULL,NULL,NULL
+672,Almacen,FabLab,ALM-71,NULL,NULL,NULL,NULL,NULL,NULL
+673,Almacen,FabLab,ALM-72,NULL,NULL,NULL,NULL,NULL,NULL
+674,Almacen,FabLab,ALM-73,NULL,NULL,NULL,NULL,NULL,NULL
+675,Almacen,FabLab,ALM-74,NULL,NULL,NULL,NULL,NULL,NULL
+676,Almacen,FabLab,ALM-75,NULL,NULL,NULL,NULL,NULL,NULL
+677,Almacen,FabLab,ALM-76,NULL,NULL,NULL,NULL,NULL,NULL
+678,Almacen,FabLab,ALM-77,NULL,NULL,NULL,NULL,NULL,NULL
+679,Almacen,FabLab,ALM-78,NULL,NULL,NULL,NULL,NULL,NULL
+680,Almacen,FabLab,ALM-79,NULL,NULL,NULL,NULL,NULL,NULL
+681,Almacen,FabLab,ALM-80,NULL,NULL,NULL,NULL,NULL,NULL
+682,Almacen,FabLab,ALM-81,NULL,NULL,NULL,NULL,NULL,NULL
+683,Almacen,FabLab,ALM-82,NULL,NULL,NULL,NULL,NULL,NULL
+684,Almacen,FabLab,ALM-83,NULL,NULL,NULL,NULL,NULL,NULL
+685,Almacen,FabLab,ALM-84,NULL,NULL,NULL,NULL,NULL,NULL
+686,Almacen,FabLab,ALM-85,NULL,NULL,NULL,NULL,NULL,NULL
+687,Almacen,FabLab,ALM-86,NULL,NULL,NULL,NULL,NULL,NULL
+688,Almacen,FabLab,ALM-87,NULL,NULL,NULL,NULL,NULL,NULL
+689,Almacen,FabLab,ALM-88,NULL,NULL,NULL,NULL,NULL,NULL
+690,Almacen,FabLab,ALM-89,NULL,NULL,NULL,NULL,NULL,NULL
+691,Almacen,FabLab,ALM-90,NULL,NULL,NULL,NULL,NULL,NULL
+692,Almacen,FabLab,ALM-91,NULL,NULL,NULL,NULL,NULL,NULL
+693,Almacen,FabLab,ALM-92,NULL,NULL,NULL,NULL,NULL,NULL
+694,Almacen,FabLab,ALM-93,NULL,NULL,NULL,NULL,NULL,NULL
+695,Almacen,FabLab,ALM-94,NULL,NULL,NULL,NULL,NULL,NULL
+696,Almacen,FabLab,ALM-95,NULL,NULL,NULL,NULL,NULL,NULL
+697,Almacen,FabLab,ALM-96,NULL,NULL,NULL,NULL,NULL,NULL
+698,Almacen,FabLab,ALM-97,NULL,NULL,NULL,NULL,NULL,NULL
+699,Almacen,FabLab,ALM-98,NULL,NULL,NULL,NULL,NULL,NULL
+700,Almacen,FabLab,ALM-99,NULL,NULL,NULL,NULL,NULL,NULL
+1,CNC,FabLab,NULL,FOAMI NEGRO 1.15 x 1.30,NULL,NULL,NULL,12,NULL
+2,CNC,FabLab,NULL,DESECHOS DE LAMINA DE MADERA O TABLO PAN,NULL,NULL,NULL,-,NULL
+3,CNC,FabLab,NULL,FOAMI NEGRO 0,765 x 1.30,NULL,NULL,NULL,6,NULL
+4,CNC,FabLab,NULL,LAMINA AZUL,NULL,NULL,NULL,4,NULL
+5,CNC,FabLab,NULL,LAMINA BLANCA,NULL,NULL,NULL,4,NULL
+6,CNC,FabLab,NULL,LAMINA DE MADERA 1.22X 0.913 X 0.05,NULL,NULL,NULL,1,NULL
+7,CNC,FabLab,NULL,LAMINA DE MADERA 1.22X 0.81 X 0.09,NULL,NULL,NULL,1,NULL
+8,CNC,FabLab,NULL,LAMINA DE MELAMINA DELGADA COLOR BLANCO 1.22 X 0.925 X 0.04,NULL,NULL,NULL,8,NULL
+9,CNC,FabLab,NULL,LAMINA DE MELAMINA DELGADA COLOR MARRON OSCURO 1.22 X 0.925 X 0.04,NULL,NULL,NULL,8,NULL
+10,CNC,FabLab,NULL,LAMINA NEGRA,NULL,NULL,NULL,4,NULL
+11,CNC,FabLab,NULL,LAMINAS DE CARTON,NULL,NULL,NULL,36,NULL
+12,CNC,FabLab,NULL,LAMINAS DE MADERA COMPLETA - MELAMINA GRABADA VERDE,NULL,NULL,NULL,8,NULL
+13,CNC,FabLab,NULL,PAPEL CARTON BLANCO ROLLO,NULL,NO TIENE,NULL,41,NULL
+14,CNC,FabLab,NULL,TELA QUIRURGICA BLANCO,NULL,NO TIENE,NULL,1,NULL
+15,CNC,FabLab,NULL,PULIDORA STANLEY AMARILLA,NULL,NULL,NULL,1,NULL
+16,CNC,FabLab,NULL,ROLLO FOAMI RUSTICO BLANCO,NULL,NULL,NULL,6,NULL
+17,CNC,FabLab,NULL,TABLA DE MADERA 0,97 X 0,195 X 0,045,NULL,NULL,NULL,21,NULL
+18,CNC,FabLab,NULL,TABLERO 2.39 X 1.19 M,NULL,NULL,NULL,NULL,NULL
+19,CNC,FabLab,NULL,TAPETE SUBLIMINADO COLOR MADERA CLARO 2 X 2,03,NULL,NULL,NULL,1,NULL
+20,CNC,FabLab,NULL,TAPETE SUBLIMINADO COLOR MADERA MEDIO 2 X 2,015,NULL,NULL,NULL,1,NULL
+21,CNC,FabLab,NULL,TAPETE SUBLIMINADO COLOR MADERA OSCURO 2 X 1,365,NULL,NULL,NULL,1,NULL
+22,CNC,FabLab,NULL,TAPETE SUBLIMINADO COLOR MADERA OSCURO 1,40 X 0,6,NULL,NULL,NULL,1,NULL
+23,CNC,FabLab,NULL,CUERINA,NULL,NULL,NULL,1,NULL
+24,CNC,FabLab,NULL,TAPIZADO AZUL 198.5 X 195.5,NULL,NULL,NULL,1,NULL
+25,CNC,FabLab,NULL,TAPIZADO PLATEADO 2 X 2,NULL,NULL,NULL,1,NULL
+26,CNC,FabLab,NULL,TAPIZADO ROJO 121 X 2 m,NULL,NULL,NULL,1,NULL
+27,CNC,FabLab,NULL,TELA QUIRURGICA NEGRA,NULL,NULL,NULL,1,NULL
+28,CNC,FabLab,NULL,VARIEDAD DE RECORTES,NULL,NULL,NULL,INCONTABLE,NULL
+29,CNC,FabLab,NULL,ACRILICO BLANCO,NULL,NULL,NULL,2,NULL
+30,CNC,FabLab,CNC-01,Silla metalica CNC-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+31,CNC,FabLab,CNC-02,Silla metalica CNC-02,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+32,CNC,FabLab,CNC-03,Silla metalica CNC-03,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+33,CNC,FabLab,CNC-04,Silla metalica CNC-04,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+34,CNC,FabLab,CNC-05,Silla giratoria azul  SG-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+35,CNC,FabLab,CNC-06,Silla giratoria azul  SG-02,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+36,CNC,FabLab,CNC-07,Silla giratoria negra SN-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+37,CNC,FabLab,CNC-08,Silla negra fija,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+38,CNC,FabLab,CNC-09,Pinza de corte diagonal azul XCELITE,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+39,CNC,FabLab,CNC-10,Careta de soldar negra CS-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+40,CNC,FabLab,CNC-11,Careta de soldar negra CS-02,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+41,CNC,FabLab,CNC-12,Careta de soldar negra CS-03,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+42,CNC,FabLab,CNC-13,Careta de soldar negra CS-04,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+43,CNC,FabLab,CNC-14,Careta de soldar negra CS-05,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+44,CNC,FabLab,CNC-15,Careta de soldar negra CS-06,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+45,CNC,FabLab,CNC-16,Careta de soldar negra CS-07,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+46,CNC,FabLab,CNC-17,Careta de soldar negra CS-08,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+47,CNC,FabLab,CNC-18,Careta de soldar negra CS-09,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+48,CNC,FabLab,CNC-19,Careta de soldar negra CS-10,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+49,CNC,FabLab,CNC-20,Bisturi  gris B-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+50,CNC,FabLab,CNC-21,Bisturi  gris B-02,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+51,CNC,FabLab,CNC-22,Bisturi  gris B-03,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+52,CNC,FabLab,CNC-23,Bisturi azul BA-01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+53,CNC,FabLab,CNC-24,Bolsa aserrin,NULL,NULL,NULL,1,Sin rotulo de inventario
+54,CNC,FabLab,CNC-25,Llave combinada Stanley #13,80-223,NULL,Buen estado,1,Sin rotulo de inventario
+55,CNC,FabLab,CNC-26,Llave combinada Stanley #14,80-224,NULL,Buen estado,1,Sin rotulo de inventario
+56,CNC,FabLab,CNC-27,Llave combinada Stanley #15,80-225,NULL,Buen estado,1,Sin rotulo de inventario
+57,CNC,FabLab,CNC-28,Llave combinada Stanley #17,80-229,NULL,Buen estado,1,Sin rotulo de inventario
+58,CNC,FabLab,CNC-29,Llave fija SATA 13-15,CY3,NULL,Buen estado,1,Sin rotulo de inventario
+59,CNC,FabLab,CNC-30,Llave fija SATA 14-17,CY3,NULL,Buen estado,1,Sin rotulo de inventario
+60,CNC,FabLab,CNC-31,Llave inglesa STANLEY,87-431,NULL,Buen estado,1,Sin rotulo de inventario
+61,CNC,FabLab,CNC-32,Alicate de corte diagonal amarillo Stanley,NULL,NULL,NULL,1,Sin rotulo de inventario
+62,CNC,FabLab,CNC-33,Pinza amarilla,NULL,NULL,NULL,1,Sin rotulo de inventario
+63,CNC,FabLab,CNC-34,Atornillador precision negra WERA,118068,NULL,Buen estado,1,Sin rotulo de inventario
+64,CNC,FabLab,CNC-35,Aire tipo casette,75327-0039M16-C00RSQ,NULL,NULL,NULL,Sin rotulo de inventario
+65,CNC,FabLab,CNC-36,Broca espada MAKITA 5/8,D-24561,NULL,Buen estado,1,Sin rotulo de inventario
+66,CNC,FabLab,CNC-37,Fresa Bauker Corte Recto 3/8(9,52 mm)-01,R1201,NULL,NULL,1,Sin rotulo de inventario
+67,CNC,FabLab,CNC-38,Fresa Bauker Corte Recto 3/8(9,52 mm)-02,R1201,NULL,NULL,1,Sin rotulo de inventario
+68,CNC,FabLab,CNC-39,Fresa Bauker Corte Recto 1/4(6,35 mm)-03,R1211,NULL,NULL,1,Sin rotulo de inventario
+69,CNC,FabLab,CNC-40,Fresa Bauker Corte Recto 1/4(6,35 mm)-04,R1211,NULL,NULL,1,Sin rotulo de inventario
+70,CNC,FabLab,CNC-41,Fresa Bauker Media CaÃ±a 1/2(12,7mm),R3101,NULL,NULL,1,Sin rotulo de inventario
+71,CNC,FabLab,CNC-42,Fresa Bauker Ranura en V 90Â°,R7101,NULL,NULL,1,Sin rotulo de inventario
+72,CNC,FabLab,CNC-43,Calibrador digital truper 6mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+73,CNC,FabLab,CNC-44,Lupa Magnflying Glass,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+74,CNC,FabLab,CNC-45,Flexometro Redflag,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+75,CNC,FabLab,CNC-46,Formone Redline   6mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+76,CNC,FabLab,CNC-47,Formone Redline  12mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+77,CNC,FabLab,CNC-48,Formone Redline  19mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+78,CNC,FabLab,CNC-49,Formone Redline  25mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+79,CNC,FabLab,CNC-50,Fresa recta filo DISCOVER 1/8,521049400,NULL,Buen estado,1,Sin rotulo de inventario
+80,CNC,FabLab,CNC-51,Remachadora amarilla STANLEY,STHT69646,NULL,Buen estado,1,Sin rotulo de inventario
+81,CNC,FabLab,CNC-52,Tijera hojalatera corte derecho verde REDLINE,14A6131,NULL,Buen estado,1,Sin rotulo de inventario
+82,CNC,FabLab,CNC-53,Tijera hojalatera corte derecho Amarilla  REDLINE,14A6111,NULL,Buen estado,1,Sin rotulo de inventario
+83,CNC,FabLab,CNC-54,Tijera hojalatera corte derecho Roja  REDLINE,14A6121,NULL,Buen estado,1,Sin rotulo de inventario
+84,CNC,FabLab,CNC-55,Segueta 12" blanca Uberman,24TPI/DPP,NULL,Buen estado,1,Sin rotulo de inventario
+85,CNC,FabLab,CNC-56,Serrucho 18" negro Uberman,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+86,CNC,FabLab,CNC-57,Grapadora Uberman,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+87,CNC,FabLab,CNC-58,Martillo negro Uberman,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+88,CNC,FabLab,CNC-59,Pistola de aire caliente Naranga BLACK DECKER,HG1500-B3,NULL,Buen estado,1,Sin rotulo de inventario
+89,CNC,FabLab,CNC-60,Filamento 3D Rollo,CFIXPLA-9,OP 2024041952,Buen estado,1,NULL
+90,CNC,FabLab,CNC-61,Desoldador Proskit,PK-366NA,NULL,Buen estado,1,Sin rotulo de inventario
+91,CNC,FabLab,CNC-62,Carrreta de soldadura estaÃ±o,TS-500,NULL,Buen estado,1,Sin rotulo de inventario
+92,CNC,FabLab,CNC-63,Corta frio de corte diagonal de precision Xcelite,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+93,CNC,FabLab,CNC-64,Jueg de llaves Allen tipo navaja SATA-01,9121,NULL,Buen estado,1,Sin rotulo de inventario
+94,CNC,FabLab,CNC-65,Jueg de llaves Allen tipo navaja SATA-02,9121,NULL,Buen estado,1,Sin rotulo de inventario
+95,CNC,FabLab,CNC-66,Adaptador T naranja Titanium,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+96,CNC,FabLab,CNC-67,Destornillador pala Uberman pequeÃ±o,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+97,CNC,FabLab,CNC-68,Destornillador pala Uberman grande,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+98,CNC,FabLab,CNC-69,Destornillador estria  Uberman grande,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+99,CNC,FabLab,CNC-70,Destornillador estria  Uberman pequeÃ±o,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+100,CNC,FabLab,CNC-71,Juego de herramientas STANLEY,STMT71651,NULL,Buen estado,1,Sin rotulo de inventario
+101,CNC,FabLab,CNC-72,Juego de herramientas REDLINE,V20201112,NULL,Buen estado,1,Sin rotulo de inventario
+102,CNC,FabLab,CNC-73,Protector auditivo Samurai,NULL,NULL,Buen estado,2,Sin rotulo de inventario
+103,CNC,FabLab,CNC-74,Caja herramienta Pulidora Bauker 820,PO#1014135,NULL,Buen estado,1,Sin rotulo de inventario
+104,CNC,FabLab,CNC-75,Enfriador de agua Chilller,CW-3000,NULL,Buen estado,1,Sin rotulo de inventario
+105,CNC,FabLab,CNC-76,Enfriador de agua Chilller,CW-5000,NULL,Buen estado,1,Sin rotulo de inventario
+106,CNC,FabLab,CNC-77,KIT PULIDORA MOTOTOOL BAUKER,po#10141345,NULL,Buen estado,1,Sin rotulo de inventario
+107,CNC,FabLab,CNC-78,Kit taladro percutor Bauker-01,ID600E KIT-90,NULL,Buen estado,1,Sin rotulo de inventario
+108,CNC,FabLab,CNC-79,Kit taladro percutor Bauker-02,ID600E KIT-90,NULL,Buen estado,1,Sin rotulo de inventario
+109,CNC,FabLab,CNC-80,Cortadora Bauker SB350S VERDE,SB350S,166002 591 001 00,Buen estado,1,NULL
+110,CNC,FabLab,CNC-81,Amoladora de banco STANLEY amarilla,27533,NULL,Buen estado,1,Sin rotulo de inventario
+111,CNC,FabLab,CNC-82,Prensa de banco roja,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+112,CNC,FabLab,CNC-83,Cortadora Monofab Naranja,ZEP 2612,NULL,Buen estado,1,Sin rotulo de inventario
+113,CNC,FabLab,CNC-84,ExtensiÃ³n electrica naranja,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+114,CNC,FabLab,CNC-85,Gafas proteccion oscuras,VICZ287+U6L3S,NULL,Buen estado,1,Sin rotulo de inventario
+115,CNC,FabLab,CNC-86,Gafas proteccion transparentes,NULL,NULL,Buen estado,6,Sin rotulo de inventario
+116,CNC,FabLab,CNC-87,Gafa protecciÃ³n azul marca KIM,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+117,CNC,FabLab,CNC-88,Estanteria metalica de 6 entrepaÃ±os gris,NULL,NULL,Buen estado,9,Sin rotulo de inventario
+118,CNC,FabLab,CNC-89,Impresora Plotter Roland,NET0714,NULL,Buen estado,1,Sin rotulo de inventario
+119,CNC,FabLab,CNC-90,Cortadora Laser INGEACOL,20211609003,NULL,Buen estado,1,Sin rotulo de inventario
+120,CNC,FabLab,CNC-91,Router de Mesa azul MINI 6090,210185,NULL,Buen estado,1,Sin rotulo de inventario
+121,CNC,FabLab,CNC-92,Monitor  DELL P2419H -01,3P2MRS2,167002  101  4670  01,Buen estado,1,NULL
+122,CNC,FabLab,CNC-93,TECLADO DELL KB216T -01,11f-OMSP-A04,NULL,Buen estado,1,Sin rotulo de inventario
+123,CNC,FabLab,CNC-94,Mouse DELL MS116 NEGRO -01,CN-OC4JKP-PRC00-11N-0291,167002  101  4675  03,Buen estado,1,NULL
+124,CNC,FabLab,CNC-95,CPU Service TAG -01,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+125,CNC,FabLab,CNC-96,MONITOR DELL P2419H -02,6P9XRS2,167002  101  4675  01,Buen estado,1,NULL
+126,CNC,FabLab,CNC-97,Teclado DELL KB216T -02,11F-0OP8-A04,167002  101  4670  02,Buen estado,1,NULL
+127,CNC,FabLab,CNC-98,Mouse DELL MS116 NEGRO -02,CN-0C4JKP-PRC00-11N-0292,167002   101  4668  03,Buen estado,1,NULL
+128,CNC,FabLab,CNC-99,CPU Service TAG -02,HFLWRB3,NULL,Buen estado,1,Sin rotulo de inventario
+129,CNC,FabLab,CNC-100,Mouse Genius,NULL,NULL,NULL,1,NULL
+130,CNC,FabLab,CNC-101,Mouse DELL MS116 NEGRO -03,NULL,NULL,NULL,1,NULL
+131,CNC,FabLab,CNC-102,Teclado DELL KB216T -03,11f-OPDY-A04,167002  101  4668  02,Buen estado,1,NULL
+132,CNC,FabLab,CNC-103,CPU Service TAG -03,2GLWRB3,NULL,Buen estado,1,Sin rotulo de inventario
+133,CNC,FabLab,CNC-104,MONITOR DELL P2419H -03,DTK2D23,167002  101   4669  01,Buen estado,1,NULL
+134,CNC,FabLab,CNC-105,Teclado DELL KB216T -04,11F-0OPB-A04,167002  101  4674  02,Buen estado,1,NULL
+135,CNC,FabLab,CNC-106,Mouse DELL MS116 NEGRO -04,CN-ODMV3P-CH400-OCH-OD3V-A01,NULL,Buen estado,1,Sin rotulo de inventario
+136,CNC,FabLab,CNC-107,CPU Service TAG -04,92LWRB3,NULL,Buen estado,1,Sin rotulo de inventario
+137,CNC,FabLab,CNC-108,Tornillo A2-70,NULL,NULL,NULL,3,NULL
+138,CNC,FabLab,CNC-109,Tornilo 6.8,NULL,NULL,NULL,5,NULL
+139,CNC,FabLab,CNC-110,Tornillo YZ 4.8,NULL,NULL,NULL,4,NULL
+140,CNC,FabLab,CNC-111,Tornillo Goloso,NULL,NULL,NULL,11,NULL
+141,CNC,FabLab,CNC-112,Tornillo de cabeza hexagonal,NULL,NULL,NULL,12,NULL
+142,CNC,FabLab,CNC-113,Espatula negra 38mm,NULL,NULL,NULL,1,NULL
+143,CNC,FabLab,CNC-114,Bateria Newline BN-01,3000VA,167002  103   1395  00,Buen estado,1,NULL
+144,CNC,FabLab,CNC-115,Bateria Newline BN-02,3000VA,167002  103  1379  00,Buen estado,1,NULL
+145,CNC,FabLab,CNC-116,Bateria Newline BN-03,3000VA,167002  103  1394  00,Buen estado,1,NULL
+146,CNC,FabLab,CNC-117,CPU service tag,B3LWRB3,167002  101  4670  00,Sin uso,1,NULL
+147,CNC,FabLab,CNC-118,Mascara de doble filtro 3M,NULL,NULL,NULL,1,NULL
+148,CNC,FabLab,CNC-119,Mesa centro 2.40x1.50,NULL,NULL,NULL,1,NULL
+149,CNC,FabLab,CNC-120,Mesa de almacenamiento,NULL,NULL,NULL,1,NULL
+150,CNC,FabLab,CNC-121,Mesa 1.50 X 74,NULL,NULL,NULL,1,NULL
+151,CNC,FabLab,CNC-122,Mesa  2.25 X 60,NULL,NULL,NULL,1,NULL
+152,CNC,FabLab,CNC-123,Mesa pequeÃ±a 1.66 X 1.0,NULL,NULL,NULL,1,NULL
+153,CNC,FabLab,CNC-124,Cartucho impresiÃ³n HP LaserJET,0252003G13V1BB7F36,NULL,NULL,NULL,NULL
+154,CNC,FabLab,CNC-125,Acrilico naranga,NULL,NULL,NULL,1,NULL
+155,CNC,FabLab,CNC-126,Acrilicos azules,NULL,NULL,NULL,2,NULL
+156,CNC,FabLab,CNC-127,Acrilicos transparentes,NULL,NULL,NULL,0,NULL
+157,CNC,FabLab,CNC-128,Acrilico blanco,NULL,NULL,NULL,2,NULL
+158,CNC,FabLab,CNC-129,Pincel #10,NULL,NULL,NULL,1,NULL
+159,CNC,FabLab,CNC-130,Pincel #8,NULL,NULL,NULL,1,NULL
+160,CNC,FabLab,CNC-131,Tablero blanco 2.39x1.19,NULL,NULL,NULL,2,NULL
+161,CNC,FabLab,CNC-132,Camara de seguridad HIKVISION H1,E94672252,167001  209  143,NULL,1,NULL
+162,CNC,FabLab,CNC-133,Camara de seguridad HIKVISION H2,E94671907,167001  209  133,NULL,1,NULL
+163,CNC,FabLab,CNC-134,Pliego carton 1.50mts x 1mt,NULL,NULL,NULL,19,NULL
+164,CNC,FabLab,CNC-135,Lamina mdf blanca 1.22x0.92,NULL,NULL,NULL,8,NULL
+165,CNC,FabLab,CNC-136,Lamina mdf negra 1.22x0.92,NULL,NULL,NULL,8,NULL
+166,CNC,FabLab,NULL,Lamina mdf natural 1.22x0.82,NULL,NULL,NULL,2,NULL
+167,CNC,FabLab,NULL,Lamina mdf rayada 1.22x0.94,NULL,NULL,NULL,7,NULL
+168,CNC,FabLab,NULL,Papel bond 1mtsx0,73,NULL,NULL,NULL,43,NULL
+169,CNC,FabLab,NULL,LAMINA AZUL,NULL,NULL,NULL,4,NULL
+170,CNC,FabLab,NULL,LAMINA BLANCA,NULL,NULL,NULL,4,NULL
+171,CNC,FabLab,NULL,Audifonos negros SONY,NULL,NULL,NULL,NULL,NULL
+474,Coworking,FabLab,CW-19,TV Samsung S-01,SN 09NZ3CAR100133A,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+475,Coworking,FabLab,CW-20,TV Samsung S-02,SN 09NZ23CAR1002040,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+476,Coworking,FabLab,CW-21,TV Samsung S-03,SN 09NZ3CAR100223A,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+477,Coworking,FabLab,CW-22,Aire tipo casette LG,0M 1M00PF  012TADRJ0770,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+478,Coworking,FabLab,CW-23,Videobeam LG Powerlite,L400U,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+479,Coworking,FabLab,CW-24,Silla plastica azul SA-1,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+480,Coworking,FabLab,CW-25,Silla plastica azul SA-2,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+481,Coworking,FabLab,CW-26,Silla plastica azul SA-3,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+482,Coworking,FabLab,CW-27,Silla plastica azul SA-4,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+483,Coworking,FabLab,CW-28,Silla plastica azul SA-5,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+484,Coworking,FabLab,CW-29,Silla plastica azul SA-6,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+485,Coworking,FabLab,CW-30,Silla plastica azul SA-7,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+486,Coworking,FabLab,CW-31,Silla plastica azul SA-8,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+487,Coworking,FabLab,CW-32,Silla plastica azul SA-9,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+488,Coworking,FabLab,CW-33,Silla plastica naranja  SN-1,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+489,Coworking,FabLab,CW-34,Silla plastica naranja  SN-2,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+490,Coworking,FabLab,CW-35,Silla plastica naranja  SN-3,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+491,Coworking,FabLab,CW-36,Silla plastica naranja  SN-4,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+492,Coworking,FabLab,CW-37,Silla plastica naranja  SN-5,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+493,Coworking,FabLab,CW-38,Silla plastica naranja  SN-6,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+494,Coworking,FabLab,CW-39,Silla plastica naranja  SN-7,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+495,Coworking,FabLab,CW-40,Silla plastica naranja  SN-8,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+496,Coworking,FabLab,CW-41,Silla plastica naranja  SN-9,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+497,Coworking,FabLab,CW-42,Silla plastica naranja  SN-10,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+498,Coworking,FabLab,CW-43,Silla plastica roja SN-1,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+499,Coworking,FabLab,CW-44,Silla plastica roja SN-2,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+500,Coworking,FabLab,CW-45,Silla plastica roja SN-3,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+501,Coworking,FabLab,CW-46,Silla plastica roja SN-4,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+502,Coworking,FabLab,CW-47,Silla plastica roja SN-5,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+503,Coworking,FabLab,CW-48,Silla plastica roja SN-6,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+504,Coworking,FabLab,CW-49,Silla plastica roja SN-7,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+505,Coworking,FabLab,CW-50,Silla plastica roja SN-8,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+506,Coworking,FabLab,CW-51,Silla plastica roja SN-9,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+507,Coworking,FabLab,CW-52,Silla plastica verde SV-1,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+508,Coworking,FabLab,CW-53,Silla plastica verde SV-2,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+509,Coworking,FabLab,CW-54,Silla plastica verde SV-3,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+510,Coworking,FabLab,CW-55,Silla plastica verde SV-4,PD -2101355,NULL,BUEN ESTADO,1,ROTULO INV. REPETIDO
+511,Coworking,FabLab,CW-56,Silla plastica verde SV-5,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+512,Coworking,FabLab,CW-57,Silla plastica verde SV-6,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+513,Coworking,FabLab,CW-58,Silla plastica verde SV-7,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+514,Coworking,FabLab,CW-59,Silla plastica verde SV-8,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+515,Coworking,FabLab,CW-60,Silla plastica verde SV-9,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+516,Coworking,FabLab,CW-61,Butaco metalico rojo br-1,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+517,Coworking,FabLab,CW-62,Butaco metalico rojo br-2,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+518,Coworking,FabLab,CW-63,Butaco metalico rojo br-3,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+519,Coworking,FabLab,CW-64,Butaco metalico rojo br-4,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+520,Coworking,FabLab,CW-65,Butaco gris  Bg-1,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+521,Coworking,FabLab,CW-66,Butaco gris  Bg-2,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+522,Coworking,FabLab,CW-67,Silla giratoria azul,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+523,Coworking,FabLab,CW-68,Telon de proyecciÃ³n para videobeam,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+524,Coworking,FabLab,CW-69,Monitor Dell P2419H,Service TAG GOZ6993,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+525,Coworking,FabLab,CW-70,CPU DELL,1GLWRB3,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+526,Coworking,FabLab,CW-71,Teclado DELL KB216T,-CH400-0CH,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+527,Coworking,FabLab,CW-72,Mouse DELL MS116 NEGRO,CN-0DMV3P-CH400-0CH-0D3P,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+528,Coworking,FabLab,CW-73,Mesa de trabajo grande 2.40M X 1.20 M,NULL,NULL,BUEN ESTADO,4,SIN ROTULO DE INVENTARIO
+529,Coworking,FabLab,CW-74,Mesa de trabajo roja  1.50x0.75,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+530,Coworking,FabLab,CW-75,Mesa de trabajo pequeÃ±a  1.20 MX 0.6 M,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+531,Coworking,FabLab,CW-76,Tablero blanco,NULL,NULL,BUEN ESTADO,2,SIN ROTULO DE INVENTARIO
+532,Coworking,FabLab,CW-77,Persiana blanco 2.46 mt ancho,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+533,Coworking,FabLab,CW-78,Persiana blanco 3.46 mt ancho,NULL,NULL,BUEN ESTADO,1,NULL
+534,Coworking,FabLab,CW-79,Camara de seguridad HIKVISION H1,E96671727,167001  209  146,BUEN ESTADO,1,NULL
+348,Impresion 3D,FabLab,IMP3D-1,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . AMARILLA,NULL,NULL,NULL,1,NULL
+349,Impresion 3D,FabLab,IMP3D-2,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . NARANJA,NULL,NULL,NULL,1,NULL
+350,Impresion 3D,FabLab,IMP3D-3,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . ROJA,NULL,NULL,NULL,1,NULL
+351,Impresion 3D,FabLab,IMP3D-4,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . VERDE,NULL,NULL,NULL,1,NULL
+352,Impresion 3D,FabLab,IMP3D-5,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . AZUL,NULL,NULL,NULL,1,NULL
+353,Impresion 3D,FabLab,IMP3D-6,MESA DE 60 CMX 2.40 M,NULL,NULL,NULL,9,NULL
+354,Impresion 3D,FabLab,IMP3D-7,MESA RECTANGULAR PARA TRABAJO 1.50X 2 M,NULL,NULL,NULL,1,NULL
+355,Impresion 3D,FabLab,IMP3D-8,MESA PEQUEÃ‘A PARA MAQUINA MAQUINA 3D,NULL,NULL,NULL,1,NULL
+356,Impresion 3D,FabLab,IMP3D-9,Butaco metalico amarillo BMA-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+357,Impresion 3D,FabLab,IMP3D-10,Butaco metalico amarillo BMA-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+358,Impresion 3D,FabLab,IMP3D-11,Butaco metalico amarillo BMA-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+359,Impresion 3D,FabLab,IMP3D-12,Butaco metalico amarillo BMA-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+360,Impresion 3D,FabLab,IMP3D-13,Butaco metalico azul   BMAZ-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+361,Impresion 3D,FabLab,IMP3D-14,Butaco metalico azul   BMAZ-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+362,Impresion 3D,FabLab,IMP3D-15,Butaco metalico azul   BMAZ-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+363,Impresion 3D,FabLab,IMP3D-16,Butaco metalico azul   BMAZ-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+364,Impresion 3D,FabLab,IMP3D-17,Butaco metalico naranja BMN-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+365,Impresion 3D,FabLab,IMP3D-18,Butaco metalico naranja BMN-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+366,Impresion 3D,FabLab,IMP3D-19,Butaco metalico naranja BMN-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+367,Impresion 3D,FabLab,IMP3D-20,Butaco metalico naranja BMN-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+368,Impresion 3D,FabLab,IMP3D-21,Butaco metalico rojo    BMR-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+369,Impresion 3D,FabLab,IMP3D-22,Butaco metalico rojo    BMR-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+370,Impresion 3D,FabLab,IMP3D-23,Butaco metalico rojo    BMR-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+371,Impresion 3D,FabLab,IMP3D-24,Butaco metalico rojo    BMR-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+372,Impresion 3D,FabLab,IMP3D-25,Butaco metalico verde BMV-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+373,Impresion 3D,FabLab,IMP3D-26,Butaco metalico verde BMV-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+374,Impresion 3D,FabLab,IMP3D-27,Butaco metalico verde BMV-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+375,Impresion 3D,FabLab,IMP3D-28,Butaco metalico verde BMV-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+376,Impresion 3D,FabLab,IMP3D-29,Butaco Metalico gris  BMG-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+377,Impresion 3D,FabLab,IMP3D-30,Butaco Metalico gris  BMG-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+378,Impresion 3D,FabLab,IMP3D-31,Butaco Metalico gris  BMG-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+379,Impresion 3D,FabLab,IMP3D-32,Butaco Metalico gris  BMG-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+380,Impresion 3D,FabLab,IMP3D-33,Silla gris plastica SG-01,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+381,Impresion 3D,FabLab,IMP3D-34,Silla gris plastica SG-02,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+382,Impresion 3D,FabLab,IMP3D-35,Silla gris plastica SG-03,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+383,Impresion 3D,FabLab,IMP3D-36,Silla gris plastica SG-04,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+384,Impresion 3D,FabLab,IMP3D-37,Silla gris plastica SG-05,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+385,Impresion 3D,FabLab,IMP3D-38,Silla gris plastica SG-06,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+386,Impresion 3D,FabLab,IMP3D-39,Silla gris plastica SG-07,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+387,Impresion 3D,FabLab,IMP3D-40,Silla gris plastica SG-08,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+388,Impresion 3D,FabLab,IMP3D-41,Silla gris plastica SG-09,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+389,Impresion 3D,FabLab,IMP3D-42,Silla gris plastica SG-10,NULL,NULL,BUEN ESTADO,1,Rotulo igual para todas las sillas
+390,Impresion 3D,FabLab,IMP3D-43,Silla negra cojinada SN-01,NULL,166501 141 851  03-5,BUEN ESTADO,1,NULL
+391,Impresion 3D,FabLab,IMP3D-44,Silla negra cojinada SN-02,NULL,166501 141 851 03-15,BUEN ESTADO,1,NULL
+392,Impresion 3D,FabLab,IMP3D-45,Silla negra cojinada SN-03,NULL,166501 141 851 03-6,BUEN ESTADO,1,NULL
+393,Impresion 3D,FabLab,IMP3D-46,Silla negra cojinada SN-04,NULL,166501 141 851 03-12,BUEN ESTADO,1,NULL
+394,Impresion 3D,FabLab,IMP3D-47,Silla negra cojinada SN-05,NULL,166501 141 851 03-10,BUEN ESTADO,1,NULL
+395,Impresion 3D,FabLab,IMP3D-48,Silla negra cojinada SN-06,NULL,166501 141 851 03-13,BUEN ESTADO,1,NULL
+396,Impresion 3D,FabLab,IMP3D-49,Silla negra cojinada SN-07,NULL,166501 141 851 03-3,BUEN ESTADO,1,NULL
+397,Impresion 3D,FabLab,IMP3D-50,Silla negra cojinada SN-08,NULL,166501 141 851 03-1,BUEN ESTADO,1,NULL
+398,Impresion 3D,FabLab,IMP3D-51,Silla negra cojinada SN-09,NULL,166501 141 851 03-4,BUEN ESTADO,1,NULL
+399,Impresion 3D,FabLab,IMP3D-52,Silla negra cojinada SN-10,NULL,166501 141 851 03-8,BUEN ESTADO,1,NULL
+400,Impresion 3D,FabLab,IMP3D-53,Silla negra cojinada SN-11,NULL,166501 141 851 03-11,BUEN ESTADO,1,NULL
+401,Impresion 3D,FabLab,IMP3D-54,Silla negra cojinada SN-12,NULL,166501 141 851 03-7,BUEN ESTADO,1,NULL
+402,Impresion 3D,FabLab,IMP3D-55,Monitor Dell P2419H-01,BP2MRS2,167002  101  4673  01,BUEN ESTADO,1,NULL
+403,Impresion 3D,FabLab,IMP3D-56,Mouse Dell MS116 Negro -01,CN-0C4JKP-PRC00-11N-02A2,167002  101  4664  03,BUEN ESTADO,1,NULL
+404,Impresion 3D,FabLab,IMP3D-57,CPU Dell SERVICE TAG 23LWRB3 -01,F2LWRB3,167002 101  4673  00,BUEN ESTADO,1,NULL
+405,Impresion 3D,FabLab,IMP3D-58,Teclado DELL KB216T -01,11FOMTD-A04,167002 101  4662  02,BUEN ESTADO,1,NULL
+406,Impresion 3D,FabLab,IMP3D-59,TABLET DE DIBUJO WACOM (VIVELAB) -01,S/N 6HAH001754,167002  101 4663  01,BUEN ESTADO,1,Sin rotulo de inventario
+407,Impresion 3D,FabLab,IMP3D-60,Monitor Dell P2419H -02,6VK2D23,167002  101 4663  01,BUEN ESTADO,1,NULL
+408,Impresion 3D,FabLab,IMP3D-61,Mouse Dell MS116 Negro -02,CN-0C4JKP-PRC00-11N-0294,167002  101  4663  03,BUEN ESTADO,1,NULL
+409,Impresion 3D,FabLab,IMP3D-62,CPU Dell SERVICE TAG 23LWRB3 -02,43LWRB3,167002  101  4663  00,BUEN ESTADO,1,NULL
+410,Impresion 3D,FabLab,IMP3D-63,Teclado DELL KB216T -02,11F-0P44-A04,167002  101  4663  02,BUEN ESTADO,1,NULL
+411,Impresion 3D,FabLab,IMP3D-64,TABLET DE DIBUJO WACOM (VIVELAB) -02,S/N 6HAH001497,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+412,Impresion 3D,FabLab,IMP3D-65,Monitor Dell P2419H -03,BVK2D23,167002  101  4662  01,BUEN ESTADO,1,NULL
+413,Impresion 3D,FabLab,IMP3D-66,Mouse Dell MS116 Negro -03,CN-0C4JP-PRC00-11N-0290,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+414,Impresion 3D,FabLab,IMP3D-67,CPU Dell SERVICE TAG 23LWRB3 -03,53LWRB3,167002  101  4664  00,BUEN ESTADO,1,NULL
+415,Impresion 3D,FabLab,IMP3D-68,Teclado DELL KB216T -03,11F-0MT6-A04,167002  101  4664  02,BUEN ESTADO,1,NULL
+416,Impresion 3D,FabLab,IMP3D-69,TABLET DE DIBUJO WACOM (VIVELAB) -03,S/N 6HAH001496,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+417,Impresion 3D,FabLab,IMP3D-70,Monitor Dell P2419H -04,7VK2D23,167002  101  4665  02,BUEN ESTADO,1,NULL
+418,Impresion 3D,FabLab,IMP3D-71,Mouse Dell MS116 Negro -04,CN-0C4JP-PRC00-11N-029V,167002  101  4662  03,BUEN ESTADO,1,NULL
+419,Impresion 3D,FabLab,IMP3D-72,CPU Dell SERVICE TAG 23LWRB3 -04,72LWRB3,167002  101  4665  00,BUEN ESTADO,1,NULL
+420,Impresion 3D,FabLab,IMP3D-73,Teclado DELL KB216T -04,11F-OMTE-A04,167002  101  4665  02,BUEN ESTADO,1,NULL
+421,Impresion 3D,FabLab,IMP3D-74,TABLET DE DIBUJO WACOM (VIVELAB) -04,S/N 6HAH001731,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+422,Impresion 3D,FabLab,IMP3D-75,Monitor Dell P2419H -05,BTK2D23,167002  101  4666  01,BUEN ESTADO,1,NULL
+423,Impresion 3D,FabLab,IMP3D-76,Mouse Dell MS116 Negro -05,CN-0C4JP-PRC00-11N-0297,NULL,BUEN ESTADO,1,NULL
+424,Impresion 3D,FabLab,IMP3D-77,CPU Dell SERVICE TAG 23LWRB3 -05,73LWRB3,167002  101  4666  00,BUEN ESTADO,1,NULL
+425,Impresion 3D,FabLab,IMP3D-78,Teclado DELL KB216T -05,11F-0MTE-A04,167002  101  4666  02,BUEN ESTADO,1,NULL
+426,Impresion 3D,FabLab,IMP3D-79,TABLET DE DIBUJO WACOM (VIVELAB) -05,S/N 6HAH001461,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+427,Impresion 3D,FabLab,IMP3D-80,Monitor Dell P2419H -06,CTK2D23,167002  101  4668  01,BUEN ESTADO,1,NULL
+428,Impresion 3D,FabLab,IMP3D-81,Mouse Dell MS116 Negro -06,CN-0C4JP-PRC00-11N-02AB,NULL,BUEN ESTADO,1,NULL
+429,Impresion 3D,FabLab,IMP3D-82,CPU Dell SERVICE TAG 23LWRB3 -06,83LWRB3,167002  101  4667  00,BUEN ESTADO,1,NULL
+430,Impresion 3D,FabLab,IMP3D-83,Teclado DELL KB216T -06,11F-09EI-A04,167002  101  4667  02,BUEN ESTADO,1,NULL
+431,Impresion 3D,FabLab,IMP3D-84,TABLET DE DIBUJO WACOM (VIVELAB) -06,S/N 6HAH001461,NULL,NULL,1,Sin rotulo de inventario
+432,Impresion 3D,FabLab,IMP3D-85,Monitor Dell P2419H -07,5VK2D23,167002  101  4662  01,NULL,1,NULL
+433,Impresion 3D,FabLab,IMP3D-86,Mouse Dell MS116 Negro -07,CN-0DMV3P-CH400-0CH-0D44-AD01,NULL,NULL,1,NULL
+434,Impresion 3D,FabLab,IMP3D-87,CPU Dell SERVICE TAG 23LWRB3 -07,23LWRB3,167002  101  4662  00,NULL,1,NULL
+435,Impresion 3D,FabLab,IMP3D-88,Teclado DELL KB216T -07,11F-0PGJ-A04,167002  101  4673  02,NULL,1,NULL
+436,Impresion 3D,FabLab,IMP3D-89,TABLET DE DIBUJO WACOM (VIVELAB) -07,S/N 6HAH001501,NULL,NULL,1,Sin rotulo de inventario
+437,Impresion 3D,FabLab,IMP3D-90,Monitor Dell P2419H -08,8P2MRS2,167002  101  4669  01,NULL,1,NULL
+438,Impresion 3D,FabLab,IMP3D-91,Mouse Dell MS116 Negro -08,CN-0C4JKP-PRC00-11N-028W,167002  101  4669 03,NULL,1,NULL
+439,Impresion 3D,FabLab,IMP3D-92,CPU Dell SERVICE TAG 23LWRB3 -08,B2LWRB3,167002  101  4669  00,NULL,1,NULL
+440,Impresion 3D,FabLab,IMP3D-93,Teclado DELL KB216T -08,11F-OPE3-A04,167002  101  4671  02,NULL,1,NULL
+441,Impresion 3D,FabLab,IMP3D-94,TABLET DE DIBUJO WACOM (VIVELAB) -08,S/N 6HAH001755,NULL,NULL,1,Sin rotulo de inventario
+442,Impresion 3D,FabLab,IMP3D-95,Monitor Dell P2419H -09,7P9XRS2,167002  101  4671  01,NULL,1,NULL
+443,Impresion 3D,FabLab,IMP3D-96,Mouse Dell MS116 Negro -09,CN-0C4JKP-PRC00-11N-0299,NULL,NULL,1,NULL
+444,Impresion 3D,FabLab,IMP3D-97,CPU Dell SERVICE TAG 23LWRB3 -09,C2LWRB3,167002  101  4671  00,NULL,1,NULL
+445,Impresion 3D,FabLab,IMP3D-98,Teclado DELL KB216T -09,11F-0PE2-A04,167002 101  4669  02,NULL,1,NULL
+446,Impresion 3D,FabLab,IMP3D-99,TABLET DE DIBUJO WACOM (VIVELAB) -09,S/N 6HAH001463,NULL,NULL,1,Sin rotulo de inventario
+447,Impresion 3D,FabLab,IMP3D-100,Monitor Dell P2419H -10,9N9XRS2,167002  101 4672  01,NULL,1,NULL
+448,Impresion 3D,FabLab,IMP3D-101,Mouse Dell MS116 Negro -10,CN-0C4JKP-PRC00-11N-02DH,NULL,NULL,1,NULL
+449,Impresion 3D,FabLab,IMP3D-102,CPU Dell SERVICE TAG 23LWRB3 -10,C3LWRB3,167002  101  4672 00,NULL,1,NULL
+450,Impresion 3D,FabLab,IMP3D-103,Teclado DELL KB216T -10,11F-0OPG-A04,167002  101  4672  02,NULL,1,NULL
+451,Impresion 3D,FabLab,IMP3D-104,TABLET DE DIBUJO WACOM (VIVELAB) -10,S/N 6HAH001502,NULL,NULL,1,Sin rotulo de inventario
+452,Impresion 3D,FabLab,IMP3D-105,Monitor Dell P2419H -11,CXNN993,NULL,NULL,1,Sin rotulo de inventario
+453,Impresion 3D,FabLab,IMP3D-106,Mouse Dell MS116 Negro -11,CN-0C4JKP-PRC00-11N-0298,167002  101  4673  03,NULL,1,NULL
+454,Impresion 3D,FabLab,IMP3D-107,CPU Dell SERVICE TAG 23LWRB3 -11,5GLWRB3,NULL,NULL,1,Sin rotulo de inventario
+455,Impresion 3D,FabLab,IMP3D-108,Teclado DELL KB216T -11,11F-0MSM-A04,NULL,NULL,1,Sin rotulo de inventario
+456,Impresion 3D,FabLab,IMP3D-109,TABLET DE DIBUJO WACOM (VIVELAB) -11,S/N 6HAH001504,NULL,NULL,1,Sin rotulo de inventario
+457,Impresion 3D,FabLab,IMP3D-110,Escaner 3D Shining,EinScanSE,167002  227  002  00,NULL,1,NULL
+458,Impresion 3D,FabLab,IMP3D-111,Equipo de impresora 3D markforged + Maletin negro,EinScanSE-B-GJBA271A12,167002  306  005,NULL,1,NULL
+459,Impresion 3D,FabLab,IMP3D-112,Equipo de impresora Ultramaker blanca,BPP-033841-112855,167002  306  003,NULL,1,NULL
+460,Impresion 3D,FabLab,IMP3D-113,Equipo de impresora 3D Forlabs Naranja,NULL,167002  306  004,NULL,1,NULL
+461,Impresion 3D,FabLab,IMP3D-114,Equipo de impresora 3D Ender 01,P202J10L09858,167002  306  007  00,NULL,1,NULL
+462,Impresion 3D,FabLab,IMP3D-115,Equipo de impresora 3D Ender 02,P202010L01312,167002  306  008  00,NULL,1,NULL
+463,Impresion 3D,FabLab,IMP3D-116,Equipo de impresora 3D Ender 03,P202J10L09870,167002  306  009  00,NULL,1,NULL
+464,Impresion 3D,FabLab,IMP3D-117,Equipo de impresora 3D Ender 04,P202010L01310,167002  306  006  00,NULL,1,NULL
+465,Impresion 3D,FabLab,IMP3D-118,Aire tipo casette LG,0M1M00E4  012TAACBR464,NULL,NULL,1,Sin rotulo de inventario
+466,Impresion 3D,FabLab,IMP3D-119,Telon de proyecccion para Videobeam,NULL,NULL,NULL,1,Sin rotulo de inventario
+467,Impresion 3D,FabLab,IMP3D-120,Tablero blanco 2.39x1.19,NULL,NULL,NULL,2,Sin rotulo de inventario
+468,Impresion 3D,FabLab,IMP3D-121,Estabilizador negro newline 01,SN-ALP2192055,167002  103  1381 00,NULL,1,NULL
+469,Impresion 3D,FabLab,IMP3D-122,Estabilizador negro newline 02,NULL,167002  103  1380  00,NULL,1,NULL
+470,Impresion 3D,FabLab,IMP3D-123,Estabilizador negro newline 03,SN-ALP2188739,167002  103  1393  00,NULL,1,NULL
+471,Impresion 3D,FabLab,IMP3D-124,Estabilizador negro newline 04,SN-ALP2192044,167002   103  1382  00,NULL,1,NULL
+472,Impresion 3D,FabLab,IMP3D-125,Camara de seguridad HIKVISION 1,E94672014,167001  209  134,NULL,1,NULL
+473,Impresion 3D,FabLab,IMP3D-126,Camara de seguridad HIKVISION 2,E94671780,167001  209  145,NULL,1,NULL
+172,IoT,FabLab,IOT-01,Aire tipo casette,75327-012-003980,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+173,IoT,FabLab,IOT-02,Alicate,IEC 60900,NULL,BUEN ESTADO,1,SIN ROTULO INVENTARIO
+174,IoT,FabLab,IOT-03,Arduino CNC SHIELD V3,NULL,NULL,NULL,1,SIN ROTULO INVENTARIO
+175,IoT,FabLab,IOT-04,Bateria de lipo MARCA ZIPPY,NULL,NULL,NULL,0,SIN ROTULO INVENTARIO
+176,IoT,FabLab,IOT-05,BaterÃ­as  DJI MODELO 423496,NULL,NULL,NULL,2,SIN ROTULO INVENTARIO
+177,IoT,FabLab,IOT-06,BisturÃ­,NULL,NULL,NULL,0,SIN ROTULO INVENTARIO
+178,IoT,FabLab,IOT-07,Brazo con lupa,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+179,IoT,FabLab,IOT-08,Cable arduino,NULL,NULL,NULL,1,SIN ROTULO DE INVENTARIO
+180,IoT,FabLab,IOT-09,Cargador DJI NEGRO,MP 1608EI063774,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+181,IoT,FabLab,IOT-10,Corta frio marca PRO,NULL,NULL,NULL,0,SIN ROTULO DE INVENTARIO
+182,IoT,FabLab,IOT-11,Desoldadores  PROSKIT,NULL,NULL,NULL,0,SIN ROTULO DE INVENTARIO
+183,IoT,FabLab,IOT-12,Destornillador de estria,NULL,NULL,NULL,0,SIN ROTULO DE INVENTARIO
+184,IoT,FabLab,IOT-13,Destornillador de pala,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+185,IoT,FabLab,IOT-14,Destornillador miniestria,NULL,NULL,NULL,0,SIN ROTULO DE INVENTARIO
+186,IoT,FabLab,IOT-15,Destornillador mini pala,NULL,NULL,NULL,1,SIN ROTULO DE INVENTARIO
+187,IoT,FabLab,IOT-16,EstaciÃ³n de soldadura,TS-228,166001 236 002 00,BUEN ESTADO,1,NULL
+188,IoT,FabLab,IOT-17,Estacion metereologica  (ARMADA),NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+189,IoT,FabLab,IOT-18,Estanteria metalica de 7 niveles,NULL,NULL,BUEN ESTADO,6,SIN ROTULO DE INVENTARIO
+190,IoT,FabLab,IOT-19,Estanteria metalica de vidrio  2 M X 0.98 M,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+191,IoT,FabLab,IOT-20,Fuente de poder DC Power supply,C21 1405 129,166001 635 004 00,BUEN ESTADO,1,NULL
+192,IoT,FabLab,IOT-21,Impresion 3D ventilador azul,NULL,NULL,NULL,1,Sin rotulo de inventario
+193,IoT,FabLab,IOT-22,Juego de motor con llanta,NULL,NULL,NULL,0,Sin rotulo de inventario
+194,IoT,FabLab,IOT-23,Kit armable tetris,NULL,NULL,NULL,0,Sin rotulo de inventario
+195,IoT,FabLab,IOT-24,Kit robotica armado,NULL,NULL,NULL,0,Sin rotulo de inventario
+196,IoT,FabLab,IOT-25,Lapiz cautin   y soporte wacon,NULL,NULL,NULL,1,Sin rotulo de inventario
+197,IoT,FabLab,IOT-26,Llave ajustable,NULL,NULL,NULL,0,Sin rotulo de inventario
+198,IoT,FabLab,IOT-29,Mesa de area de trabajo  2.40 X 60,NULL,NULL,NULL,1,Sin rotulo de inventario
+199,IoT,FabLab,IOT-30,Modulo estaciÃ³n metereologica con cable negro,NULL,NULL,NULL,0,Sin rotulo de inventario
+200,IoT,FabLab,IOT-31,Monitor  DELL P2419H,CN-0G8TVH-QDC00-0CR-5NZB-A16,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+201,IoT,FabLab,IOT-32,Mouse  DELL MS116 NEGRO,CN-0DMY3P-CH400-0CH-0D48-A01,167002 101 4674 03,BUEN ESTADO,1,NULL
+202,IoT,FabLab,IOT-33,Multimetro,NULL,NULL,NULL,0,NULL
+203,IoT,FabLab,IOT-34,PC DELL VOSTRO CPU SERVICE TAG JDLWRB3,JDLWRB3,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+204,IoT,FabLab,IOT-35,Pelacables,NULL,NULL,NULL,0,Sin rotulo de inventario
+205,IoT,FabLab,IOT-36,Pinza de corte diagonal,NULL,NULL,NULL,1,Sin rotulo de inventario
+206,IoT,FabLab,IOT-37,Pinza punta de acero grande,NULL,NULL,NULL,0,Sin rotulo de inventario
+207,IoT,FabLab,IOT-38,Pinza punta de acero pequeÃ±a,NULL,NULL,NULL,0,Sin rotulo de inventario
+208,IoT,FabLab,IOT-39,Placa con modelo de acelerador,NULL,NULL,NULL,1,Sin rotulo de inventario
+209,IoT,FabLab,IOT-40,Ponchadora REDLINE,INSUL CRIMPER 10-22,NULL,NULL,1,Sin rotulo de inventario
+210,IoT,FabLab,IOT-41,Proyecto de arduino con accesorios,NULL,NULL,NULL,1,Sin rotulo de inventario
+211,IoT,FabLab,IOT-44,Soldadura de rollo,NULL,NULL,NULL,NULL,Sin rotulo de inventario
+212,IoT,FabLab,IOT-45,Tablero 2.39 X 1.19 M,NULL,NULL,NULL,2,Sin rotulo de inventario
+213,IoT,FabLab,IOT-46,Tablet WACOM,6HAH001505,NULL,NULL,0,Sin rotulo de inventario
+214,IoT,FabLab,IOT-47,Teclado DELL KB216T,CN-0F2JV2-L0300-11F-0MSI-A04,167002 101 4696 02,BUEN ESTADO,1,NULL
+215,IoT,FabLab,IOT-48,Telon de proyeccion para Videobeam,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
+216,IoT,FabLab,IOT-49,Videobeam  EPSON POWERLITE L400U BLANCO,NULL,NULL,NULL,0,Sin rotulo de inventario
+217,IoT,FabLab,IOT-50,Voltimetro  39 CT,NULL,NULL,NULL,0,Sin rotulo de inventario
+218,IoT,FabLab,IOT-51,Silla metalica Gris IOT-01,NULL,NULL,MAL ESTADO,1,COJIN SAFADO, SIN NUM INV.
+219,IoT,FabLab,IOT-52,Silla metalica Gris IOT-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+220,IoT,FabLab,IOT-53,Silla metalica Gris IOT-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+221,IoT,FabLab,IOT-54,Silla metalica Gris IOT-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+222,IoT,FabLab,IOT-55,Silla metalica Gris IOT-05,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+223,IoT,FabLab,IOT-56,Silla metalica Gris IOT-06,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+224,IoT,FabLab,IOT-57,Silla metalica Gris IOT-07,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+225,IoT,FabLab,IOT-58,Silla metalica Gris IOT-08,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+226,IoT,FabLab,IOT-59,Silla metalica Gris IOT-09,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+227,IoT,FabLab,IOT-60,Silla metalica Gris IOT-10,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+228,IoT,FabLab,IOT-61,Silla metalica Gris IOT-11,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+229,IoT,FabLab,IOT-62,Silla metalica Gris IOT-12,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+230,IoT,FabLab,IOT-63,Silla metalica Gris IOT-13,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+231,IoT,FabLab,IOT-64,Silla metalica Gris IOT-14,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+232,IoT,FabLab,IOT-65,Silla metalica Gris IOT-15,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+233,IoT,FabLab,IOT-66,Silla metalica Gris IOT-16,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+234,IoT,FabLab,IOT-67,Silla metalica Gris IOT-17,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+235,IoT,FabLab,IOT-68,Silla madera marron IOT-01,NULL,166501   144   617,BUEN ESTADO,1,NULL
+236,IoT,FabLab,IOT-69,Silla madera marron IOT-02,NULL,166501   144   625,BUEN ESTADO,1,NULL
+237,IoT,FabLab,IOT-70,Silla madera marron IOT-03,NULL,166501   144  629,BUEN ESTADO,1,NULL
+238,IoT,FabLab,IOT-71,Silla madera marron IOT-04,NULL,166501   144  618,BUEN ESTADO,1,NULL
+239,IoT,FabLab,IOT-72,Silla madera marron IOT-05,NULL,166501   144  612,BUEN ESTADO,1,NULL
+240,IoT,FabLab,IOT-73,Silla madera marron IOT-06,NULL,166501   144  615,BUEN ESTADO,1,NULL
+241,IoT,FabLab,IOT-74,Silla madera marron IOT-07,NULL,166501   144  621,BUEN ESTADO,1,NULL
+242,IoT,FabLab,IOT-75,Silla madera marron IOT-08,NULL,166501   144  623,BUEN ESTADO,1,NULL
+243,IoT,FabLab,IOT-76,Silla madera marron IOT-09,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+244,IoT,FabLab,IOT-77,Silla madera marron IOT-10,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+245,IoT,FabLab,IOT-78,Silla madera marron IOT-11,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+246,IoT,FabLab,IOT-79,Silla madera marron IOT-12,NULL,NULL,BUEN ESTADO,NULL,Sin rotulo inventario
+247,IoT,FabLab,IOT-79,Mesa de trabajo 1.50x2.40 M-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+248,IoT,FabLab,IOT-80,Mesa de trabajo 1.50x2.40 M-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+249,IoT,FabLab,IOT-81,Mesa de trabajo 1.50x2.40 M-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+250,IoT,FabLab,IOT-82,Mesa de trabajo 1.50x2.40 M-04,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+251,IoT,FabLab,IOT-83,Mesa escritorio 1.20x0.60,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+252,IoT,FabLab,IOT-84,Pizarra digital tomi,10959,NULL,BUEN ESTADO,1,Sin rotulo inventario
+253,IoT,FabLab,IOT-85,Destornillador de precision amarillo,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+254,IoT,FabLab,IOT-86,Camara de seguridad HIKVISION H1,E94671697,167001  209  142,BUEN ESTADO,1,NULL
+255,IoT,FabLab,IOT-87,Camara de seguridad HIKVISION H2,E94672346,167001  209  144,BUEN ESTADO,1,NULL
+535,Recepcion,FabLab,REC-06,CABLE DE BLANCO DE IPAD,NULL,NULL,NULL,1,NULL
+536,Recepcion,FabLab,REC-07,CABLE NEGRO DE IMPRESORA,NULL,NULL,NULL,1,NULL
+537,Recepcion,FabLab,REC-08,CABLE NEGRO USB MACHO Y HEMBRA O UNA EXTENCION,NULL,NULL,NULL,1,NULL
+538,Recepcion,FabLab,REC-09,CARGADOR DE COMPUTADOR COLOR NEGRO,NULL,NULL,NULL,1,NULL
+539,Recepcion,FabLab,REC-10,CHAQUETA DE BRIGADISTA ROJA Y AZUL,NULL,NULL,NULL,2,NULL
+540,Recepcion,FabLab,REC-11,CINTA TESA,NULL,NULL,NULL,1,NULL
+541,Recepcion,FabLab,REC-12,DIVISION METALICA DE VIDRIO DE 2MX 2,70X2,10 DE FONDO,NULL,NULL,NULL,1,NULL
+542,Recepcion,FabLab,REC-13,EXTENSION USB 2.0 HDMI,NULL,NULL,NULL,1,NULL
+543,Recepcion,FabLab,REC-14,NOTAS ADHESIVAS,NULL,NULL,NULL,1,NULL
+544,Recepcion,FabLab,REC-15,PAPELERIA (RESMAS DE PAPEL, AZ, ETC.),NULL,NULL,NULL,1,NULL
+545,Recepcion,FabLab,REC-16,PAPELERIA CUADERNO Y,NULL,NULL,NULL,1,NULL
+546,Recepcion,FabLab,REC-17,PORTATIL COLOR NEGRO COMPUMAX DE COMPUTADORES PARA EDUCAR SIN 2 TECLAS,NULL,NULL,NULL,1,NULL
+547,Recepcion,FabLab,REC-18,Aire tipo casette r-01,9M1M009Q  912TAULH3502,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+548,Recepcion,FabLab,REC-19,Aire tipo casette r-02,9J1M00HWE  909TACXAT707,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+549,Recepcion,FabLab,REC-20,TV  SAMSUNG  55",09NZ3CAR204064B,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+550,Recepcion,FabLab,REC-21,Monitor Dell P2919H,TAG 78QN  993,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+551,Recepcion,FabLab,REC-22,CPU Service TAG,F3LWRB3,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+552,Recepcion,FabLab,REC-23,Teclado DELL KB216T,SN OF 2JV2 LO300,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+553,Recepcion,FabLab,REC-24,Mouse DELL MS116 NEGRO,CN 0DMV3P  CH400  0CH  0D3F A01,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+554,Recepcion,FabLab,REC-25,Silla giratoria negra,NULL,166501  361  015  00,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+555,Recepcion,FabLab,REC-26,Impresora HP LaserJet Pro M203dw BLANCA,VNB5J13097,167002  102  901  00,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+556,Recepcion,FabLab,REC-27,Extintor rojo R-01,FU11AC-01/2022,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+557,Recepcion,FabLab,REC-28,Extintor rojo R-02,H1150 BFR V3 45L 10/23005 45,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+558,Recepcion,FabLab,REC-29,Control tv Samsung Negro R-01,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+559,Recepcion,FabLab,REC-30,Control tv Samsung Negro R-02,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+560,Recepcion,FabLab,REC-31,Control tv Samsung Negro R-03,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+561,Recepcion,FabLab,REC-32,Control Aire LG R-01,AKB74075602,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+562,Recepcion,FabLab,REC-33,Control Aire LG R-02,AKB73455711,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+563,Recepcion,FabLab,REC-34,Control Aire LG R-03,AKB73455711,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+564,Recepcion,FabLab,REC-35,Control Aire LG R-04,AKB73455711,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+565,Recepcion,FabLab,REC-36,Control Aire LG R-05,AKB73455711,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+566,Recepcion,FabLab,REC-37,Adaptador corriente USB,E222768,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+567,Recepcion,FabLab,REC-38,Control proyector enrollable epson PE-01,CR2450 31VDC,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+568,Recepcion,FabLab,REC-39,Control proyector enrollable epson PE-02,CR2450 301V,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+569,Recepcion,FabLab,REC-40,Bisturi verde,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+570,Recepcion,FabLab,REC-41,Borrador tablero,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+571,Recepcion,FabLab,REC-42,Control gamepad VR10 NEGRO,232425215,315 004  01,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+572,Recepcion,FabLab,REC-43,Binoculares azules,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+573,Recepcion,FabLab,REC-44,Cable negro HDMI,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+574,Recepcion,FabLab,REC-45,Perforadora marca triton,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+575,Recepcion,FabLab,REC-46,Grapadora  rapid,24/6&26/6,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+576,Recepcion,FabLab,REC-47,Gavinete aereo GV-01,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+577,Recepcion,FabLab,REC-48,Gavinete aereo GV-02,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+578,Recepcion,FabLab,REC-49,Monitor DELL Service TAG,2KY6993,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+579,Recepcion,FabLab,REC-50,CPU Service TAG,H2LWRB3,167002 101 4675 00,BUEN ESTADO,1,NULL
+580,Recepcion,FabLab,REC-51,Mouse DELL MS116 NEGRO,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+581,Recepcion,FabLab,REC-52,Teclado DELL KB216T,CN-OF2JV2-LO30,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+582,Recepcion,FabLab,REC-53,Impresora EPSON L5590,NCH 3107 OF2008,167002 102 1008 00,BUEN ESTADO,1,NULL
+583,Recepcion,FabLab,REC-54,Silla giratoria negra,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+584,Recepcion,FabLab,REC-55,Puesto de trabajo con archivo 3 gavetas 01,NULL,NULL,NULL,1,NULL
+585,Recepcion,FabLab,REC-56,Puesto de trabajo con archivo 3 gavetas 02,NULL,NULL,NULL,1,NULL
+586,Recepcion,FabLab,REC-57,Tijeras gris,NULL,NULL,NULL,2,NULL
+587,Recepcion,FabLab,REC-58,Tijeras negra,NULL,NULL,NULL,1,NULL
+588,Recepcion,FabLab,REC-59,Tijera amarilla,NULL,NULL,NULL,1,NULL
+589,Recepcion,FabLab,REC-60,Figuras impresiones 3D,NULL,NULL,NULL,NULL,NULL
+590,Recepcion,FabLab,REC-61,Silla fija negra 01,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+591,Recepcion,FabLab,REC-62,Silla fija negra 02,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+592,Recepcion,FabLab,REC-63,Termo cafe imusa rosado,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+593,Recepcion,FabLab,REC-64,Termo cafe imusa verde,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+594,Recepcion,FabLab,REC-65,Control aire acondicionado LG,AKB74075607,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+595,Recepcion,FabLab,REC-66,Camara de seguridad HIKVISION H1,E94671899,167001  209  141,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+596,Recepcion,FabLab,REC-67,Camara de seguridad HIKVISION H2,E94672037,167001  209  131,BUEN ESTADO,1,SIN ROTULO DE INVENTARO
+597,Recepcion,FabLab,REC-68,Camara de seguridad HIKVISION H3,E94671708,167001  209  135,BUEN ESTADO,1,NULL
+598,Recepcion,FabLab,REC-69,Camara de seguridad HIKVISION H4,E94671698,167001  209  136,BUEN ESTADO,1,NULL
+599,Recepcion,FabLab,REC-70,Camara de seguridad HIKVISION H5,E94671587,167001 209  140,BUEN ESTADO,1,NULL
+600,Recepcion,FabLab,REC-71,Camara de seguridad HIKVISION H6 AULA 1,E94671638,167001  209  139,BUEN ESTADO,1,NULL
+601,Recepcion,FabLab,REC-72,Camara de seguridad HIKVISION H7 AULA 2,E94671719,167001  209  132,BUEN ESTADO,1,NULL
+256,RV y Drones,FabLab,RV-D1,Silla negra perforada RV-1,NULL,166,501,142,099,BUEN ESTADO,1,NULL
+257,RV y Drones,FabLab,RV-D2,Silla negra perforada RV-2,NULL,166,501,131,279,BUEN ESTADO,1,NULL
+258,RV y Drones,FabLab,RV-D3,Silla negra perforada RV-3,NULL,166,501,131,283,BUEN ESTADO,1,NULL
+259,RV y Drones,FabLab,RV-D4,Silla negra perforada RV-4,NULL,166,501,131,274,BUEN ESTADO,1,NULL
+260,RV y Drones,FabLab,RV-D5,Silla negra perforada RV-5,NULL,166,501,131,273,BUEN ESTADO,1,NULL
+261,RV y Drones,FabLab,RV-D6,Silla negra perforada RV-6,NULL,166,501,142,111,000,BUEN ESTADO,1,NULL
+262,RV y Drones,FabLab,RV-D7,Silla negra perforada RV-7,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+263,RV y Drones,FabLab,RV-D8,Silla negra perforada RV-8,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+264,RV y Drones,FabLab,RV-D9,Silla gris espuma  RV-1,NULL,166501 141 851 03-9,BUEN ESTADO,1,NULL
+265,RV y Drones,FabLab,RV-D10,Silla gris espuma  RV-2,NULL,166501 141 851 03-2,BUEN ESTADO,1,NULL
+266,RV y Drones,FabLab,RV-D11,Silla gris espuma  RV-3,NULL,166501 141 851 51,BUEN ESTADO,1,NULL
+267,RV y Drones,FabLab,RV-D12,Silla en madera negra RV-1,NULL,166,501,143,255,MAL ESTADO,1,Sin rotulo inventario
+268,RV y Drones,FabLab,RV-D13,Silla en madera negra RV-2,NULL,166,501,143,265,BUEN ESTADO,1,NULL
+269,RV y Drones,FabLab,RV-D14,Silla en madera negra RV-3,NULL,166,501,143,248,BUEN ESTADO,1,NULL
+270,RV y Drones,FabLab,RV-D15,Silla en madera negra RV-4,NULL,166,501,143,192,BUEN ESTADO,1,NULL
+271,RV y Drones,FabLab,RV-D16,Silla en madera negra RV-5,NULL,166,501,143,251,BUEN ESTADO,1,NULL
+272,RV y Drones,FabLab,RV-D17,Silla en madera negra RV-6,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+273,RV y Drones,FabLab,RV-D18,Silla marron en espuma RV-1,NULL,166501 140 166 00,MAL ESTADO,1,Sin rotulo inventario
+274,RV y Drones,FabLab,RV-D19,Silla marron en espuma RV-2,NULL,NULL,MAL ESTADO,1,Espaldar daÃ±ado
+275,RV y Drones,FabLab,RV-D20,Silla marron en espuma RV-3,NULL,166501 140 167 00,BUEN ESTADO,1,NULL
+276,RV y Drones,FabLab,RV-D21,Silla marron en espuma RV-4,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+277,RV y Drones,FabLab,RV-D22,Silla marron en espuma RV-5,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+278,RV y Drones,FabLab,RV-D23,Silla marron en espuma RV-6,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+279,RV y Drones,FabLab,RV-D24,Silla negra sin cojineria RV-1,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+280,RV y Drones,FabLab,RV-D25,Silla negra sin cojineria RV-2,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+281,RV y Drones,FabLab,RV-D26,Silla negra sin cojineria RV-3,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+282,RV y Drones,FabLab,RV-D27,Silla negra con cojineria RV-1,NULL,166501 142 1099 00,BUEN ESTADO,1,Sin rotulo inventario
+283,RV y Drones,FabLab,RV-D28,Silla negra con cojineria RV-2,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
+284,RV y Drones,FabLab,RV-D29,Estante de drones 1,75 X 2.40,NULL,NULL,NULL,1,NULL
+285,RV y Drones,FabLab,RV-D30,Monitor DELL P2419H,HKNN993,NULL,NULL,1,Sin rotulo de inventario
+286,RV y Drones,FabLab,RV-D31,Teclado DELL KB216T,11F-0PGI-A04,167002  101  4675  02,Buen estado,1,NULL
+287,RV y Drones,FabLab,RV-D32,Mouse DELL MS116 negro,CN-0DMV3P-CH400-0CH-0D48-A01,NULL,Buen estado,1,Sin rotulo de inventario
+288,RV y Drones,FabLab,RV-D33,CPU Dell precision power,5MK7DN2,NULL,Buen estado,1,Sin rotulo de inventario
+289,RV y Drones,FabLab,RV-D34,Aire tipo casette,9M1M009Q 912TAN3H3803,NULL,Buen estado,1,Sin rotulo de inventario
+290,RV y Drones,FabLab,RV-D35,Tableros blancos 2,39x1.19,NULL,NULL,Buen estado,2,Sin rotulo de inventario
+291,RV y Drones,FabLab,RV-D36,Telon de proyecciÃ³n para Videobeam,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+292,RV y Drones,FabLab,RV-D37,Videobeam EPSON,NULL,167001  162  556  00,Buen estado,1,NULL
+293,RV y Drones,FabLab,RV-D38,Mesa equipo de computaciÃ³n 1.20mt x0.60mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+294,RV y Drones,FabLab,RV-D39,Mesa 1.20mt x1.20mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+295,RV y Drones,FabLab,RV-D40,Mesa 1.35mts x 1mt,NULL,NULL,Buen estado,2,Sin rotulo de inventario
+296,RV y Drones,FabLab,RV-D41,Mesa 1.66 x1mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+297,RV y Drones,FabLab,RV-D42,Estante gris 6 niveles,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+298,RV y Drones,FabLab,RV-D43,Closet madera 2mt x 1mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+299,RV y Drones,FabLab,RV-D44,Estante de drones 1,75 X 2.40,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+300,RV y Drones,FabLab,RV-D45,Gafa de realidad virtual BOBOVR,NULL,167002  315  004  00,Buen estado,1,NULL
+301,RV y Drones,FabLab,RV-D46,Bateria Dron Blanco Phantom  1,0DQAHBT03301JA,167002  226  004  02,Buen estado,1,NULL
+302,RV y Drones,FabLab,RV-D47,Bateria Dron Blanco Phantom  2,0DQAH7R03201V2,167002  226  004  04,Buen estado,1,NULL
+303,RV y Drones,FabLab,RV-D48,Bateria Dron Blanco Phantom  3,0DQAH7M03201UU,NULL,Buen estado,1,Sin rotulo de inventario
+304,RV y Drones,FabLab,RV-D49,Bateria Dron Blanco Phantom  4,0DQAHBT033301HD,NULL,Buen estado,1,Sin rotulo de inventario
+305,RV y Drones,FabLab,RV-D50,Bateria DJI Negra 1,0DNAH7183101X0,167002  226  003  03,Buen estado,1,Sin rotulo de inventario
+306,RV y Drones,FabLab,RV-D51,Bateria DJI Negra 2,0DNAH3T8310B6W,NULL,Buen estado,1,Sin rotulo de inventario
+307,RV y Drones,FabLab,RV-D52,Bateria DJI Negra 3,0DNAH3T8310B6L,NULL,Buen estado,1,Sin rotulo de inventario
+308,RV y Drones,FabLab,RV-D53,Control de Dron blanca DJI,0YUSH5LRC505K4,167002  226  003  01,Buen estado,1,Sin rotulo de inventario
+309,RV y Drones,FabLab,RV-D54,Dron blanco Phanton,S/N 0V2SH7RRA30192,167002  226  003  00,Buen estado,1,Sin rotulo de inventario
+310,RV y Drones,FabLab,RV-D55,Control de dron negro Mavic 2,,,167002  226  005  01,Buen estado,1,Sin rotulo de inventario
+311,RV y Drones,FabLab,RV-D56,Dron Mavic 2,S/N 298CH4FR04A43F,167002  226  005  00,Buen estado,1,Sin rotulo de inventario
+312,RV y Drones,FabLab,RV-D57,Bateria DJI gris dron mavic 2  DJI 1,0P2AH8F53401WY,167002  226  005  03,Buen estado,1,NULL
+313,RV y Drones,FabLab,RV-D58,Bateria DJI gris dron mavic 2  DJI 2,161AH463602GT,NULL,Buen estado,1,Sin rotulo de inventario
+314,RV y Drones,FabLab,RV-D59,Cargador Dron DJI Negro,13XQGCH1230P6Q,167002  226  005  02,Buen estado,1,Sin rotulo de inventario
+315,RV y Drones,FabLab,RV-D60,Luz estroboscopica M2E Beacon,1D6DH42R0C774L,NULL,Buen estado,1,Sin rotulo de inventario
+316,RV y Drones,FabLab,RV-D61,Foco doble LED M2E Sporlight,1D5DH3U01BZFQF,NULL,Buen estado,1,Sin rotulo de inventario
+317,RV y Drones,FabLab,RV-D62,Altavoz megafono M2E Speaker,1D7DH4901AN061,NULL,Buen estado,1,Sin rotulo de inventario
+318,RV y Drones,FabLab,RV-D63,Cargador DJI Negro pequeÃ±o,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+319,RV y Drones,FabLab,RV-D64,Dron DJI Ultra light gris,NULL,167002  226  024  00,Buen estado,1,Sin rotulo de inventario
+320,RV y Drones,FabLab,RV-D65,Control dron DJI Ultra ligh gris,5HAZL9R004LMLR,NULL,Buen estado,1,Sin rotulo de inventario
+321,RV y Drones,FabLab,RV-D66,Bateria gris dron DJI Ultra ligh gris D1,52XXL9BDG2042C,NULL,Buen estado,1,Sin rotulo de inventario
+322,RV y Drones,FabLab,RV-D67,Bateria gris dron DJI Ultra ligh gris D2,52XXL97DG203MQ,NULL,Buen estado,1,Sin rotulo de inventario
+323,RV y Drones,FabLab,RV-D68,Bateria gris dron DJI Ultra ligh gris D3,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+324,RV y Drones,FabLab,RV-D69,Centro de cargas baterias dron DJI ultra ligh gris,52WKL950120329,NULL,Buen estado,1,Sin rotulo de inventario
+325,RV y Drones,FabLab,RV-D70,Cable HDMI azul,NULL,NULL,NULL,1,NULL
+326,RV y Drones,FabLab,RV-D75,Gafa de realidad virtual OCULUS QUEST2-02,NULL,167002 316 003  00,Buen estado,1,NULL
+327,RV y Drones,FabLab,RV-D76,Controlador touch dafa de realidad virtual-03,NULL,167002 316 003 01,Buen estado,1,NULL
+328,RV y Drones,FabLab,RV-D77,Controlador touch gafa de realidad virtual-04,NULL,167002 316 003 02,Buen estado,1,NULL
+329,RV y Drones,FabLab,RV-D78,Cargador gafas de realidad virtual Oculus Quest 2-02,NULL,167002 316 001 03,Buen estado,1,NULL
+330,RV y Drones,FabLab,RV-D79,Gafa de realidad virtual OCULUS QUETS2-03,NULL,167002  316  001  00,Buen estado,1,Sin rotulo de inventario
+331,RV y Drones,FabLab,RV-D80,Controlador touch gafa de realidad virtual-05,NULL,167002 316 001 01,Buen estado,1,NULL
+332,RV y Drones,FabLab,RV-D81,Controlador touch gafa de realidad virtual-06,NULL,167002 316 001 02,Buen estado,1,NULL
+333,RV y Drones,FabLab,RV-D82,Cargador gafas de realidad virtual Oculus Quest 2-03,NULL,167002 316 007 02,Buen estado,1,NULL
+334,RV y Drones,FabLab,RV-D83,Gafa de realidad virtual OCULUS QUETS2-03,NULL,167002  316  006  00,Buen estado,1,NULL
+335,RV y Drones,FabLab,RV-D84,Controlador touch gafa de realidad virtual-05,NULL,167002  316  006  01,Buen estado,1,NULL
+336,RV y Drones,FabLab,RV-D85,Controlador touch gafa de realidad virtual-06,NULL,167002  316  006  02,Buen estado,1,NULL
+337,RV y Drones,FabLab,RV-D86,Cargador gafas de realidad virtual Oculus Quest 2-03,NULL,167002  316  006  03,Buen estado,1,NULL
+338,RV y Drones,FabLab,RV-D87,Gafa de realidad virtual OCULUS QUETS2-04,NULL,167002  316  008  00,Buen estado,1,NULL
+339,RV y Drones,FabLab,RV-D88,Controlador touch gafa de realidad virtual-05,NULL,167002  316  008  01,Buen estado,1,NULL
+340,RV y Drones,FabLab,RV-D89,Controlador touch gafa de realidad virtual-06,NULL,167002  316  008  02,Buen estado,1,NULL
+341,RV y Drones,FabLab,RV-D90,Cargador gafas de realidad virtual Oculus Quest 2-03,NULL,167002  316  002  03,Buen estado,1,NULL
+342,RV y Drones,FabLab,RV-D91,Camara de seguridad HIKVISION 1,E96672034,167001  209  138,Buen estado,1,NULL
+343,RV y Drones,FabLab,RV-D92,Camara de seguridad HIKVISION 2,E94671889,167001  209  137,Buen estado,1,Sin rotulo de inventario
+344,RV y Drones,FabLab,RV-D93,NULL,NULL,NULL,NULL,NULL,NULL
+345,RV y Drones,FabLab,RV-D94,NULL,NULL,NULL,NULL,NULL,NULL
+346,RV y Drones,FabLab,RV-D95,NULL,NULL,NULL,NULL,NULL,NULL
+347,RV y Drones,FabLab,RV-D96,NULL,NULL,NULL,NULL,NULL,NULL
+819,Aula 303,ViveLab,VL-303-01,NULL,NULL,NULL,NULL,NULL,NULL
+820,Aula 303,ViveLab,VL-303-02,NULL,NULL,NULL,NULL,NULL,NULL
+821,Aula 303,ViveLab,VL-303-03,NULL,NULL,NULL,NULL,NULL,NULL
+822,Aula 303,ViveLab,VL-303-04,NULL,NULL,NULL,NULL,NULL,NULL
+823,Aula 303,ViveLab,VL-303-05,NULL,NULL,NULL,NULL,NULL,NULL
+824,Aula 303,ViveLab,VL-303-06,NULL,NULL,NULL,NULL,NULL,NULL
+825,Aula 303,ViveLab,VL-303-07,NULL,NULL,NULL,NULL,NULL,NULL
+826,Aula 303,ViveLab,VL-303-08,NULL,NULL,NULL,NULL,NULL,NULL
+827,Aula 303,ViveLab,VL-303-09,NULL,NULL,NULL,NULL,NULL,NULL
+828,Aula 303,ViveLab,VL-303-10,NULL,NULL,NULL,NULL,NULL,NULL
+829,Aula 303,ViveLab,VL-303-11,NULL,NULL,NULL,NULL,NULL,NULL
+830,Aula 303,ViveLab,VL-303-12,NULL,NULL,NULL,NULL,NULL,NULL
+831,Aula 303,ViveLab,VL-303-13,NULL,NULL,NULL,NULL,NULL,NULL
+832,Aula 303,ViveLab,VL-303-14,NULL,NULL,NULL,NULL,NULL,NULL
+833,Aula 303,ViveLab,VL-303-15,NULL,NULL,NULL,NULL,NULL,NULL
+834,Aula 303,ViveLab,VL-303-16,NULL,NULL,NULL,NULL,NULL,NULL
+835,Aula 303,ViveLab,VL-303-17,NULL,NULL,NULL,NULL,NULL,NULL
+836,Aula 303,ViveLab,VL-303-18,NULL,NULL,NULL,NULL,NULL,NULL
+837,Aula 303,ViveLab,VL-303-19,NULL,NULL,NULL,NULL,NULL,NULL
+838,Aula 303,ViveLab,VL-303-20,NULL,NULL,NULL,NULL,NULL,NULL
+839,Aula 303,ViveLab,VL-303-21,NULL,NULL,NULL,NULL,NULL,NULL
+840,Aula 303,ViveLab,VL-303-22,NULL,NULL,NULL,NULL,NULL,NULL
+841,Aula 303,ViveLab,VL-303-23,NULL,NULL,NULL,NULL,NULL,NULL
+842,Aula 303,ViveLab,VL-303-24,NULL,NULL,NULL,NULL,NULL,NULL
+843,Aula 303,ViveLab,VL-303-25,NULL,NULL,NULL,NULL,NULL,NULL
+844,Aula 303,ViveLab,VL-303-26,NULL,NULL,NULL,NULL,NULL,NULL
+845,Aula 303,ViveLab,VL-303-27,NULL,NULL,NULL,NULL,NULL,NULL
+846,Aula 303,ViveLab,VL-303-28,NULL,NULL,NULL,NULL,NULL,NULL
+847,Aula 303,ViveLab,VL-303-29,NULL,NULL,NULL,NULL,NULL,NULL
+848,Aula 303,ViveLab,VL-303-30,NULL,NULL,NULL,NULL,NULL,NULL
+849,Aula 303,ViveLab,VL-303-31,NULL,NULL,NULL,NULL,NULL,NULL
+850,Aula 303,ViveLab,VL-303-32,NULL,NULL,NULL,NULL,NULL,NULL
+851,Aula 303,ViveLab,VL-303-33,NULL,NULL,NULL,NULL,NULL,NULL
+852,Aula 303,ViveLab,VL-303-34,NULL,NULL,NULL,NULL,NULL,NULL
+853,Aula 303,ViveLab,VL-303-35,NULL,NULL,NULL,NULL,NULL,NULL
+854,Aula 303,ViveLab,VL-303-36,NULL,NULL,NULL,NULL,NULL,NULL
+855,Aula 303,ViveLab,VL-303-37,NULL,NULL,NULL,NULL,NULL,NULL
+856,Aula 303,ViveLab,VL-303-38,NULL,NULL,NULL,NULL,NULL,NULL
+857,Aula 303,ViveLab,VL-303-39,NULL,NULL,NULL,NULL,NULL,NULL
+858,Aula 303,ViveLab,VL-303-40,NULL,NULL,NULL,NULL,NULL,NULL
+859,Aula 303,ViveLab,VL-303-41,NULL,NULL,NULL,NULL,NULL,NULL
+860,Aula 303,ViveLab,VL-303-42,NULL,NULL,NULL,NULL,NULL,NULL
+861,Aula 303,ViveLab,VL-303-43,NULL,NULL,NULL,NULL,NULL,NULL
+862,Aula 303,ViveLab,VL-303-44,NULL,NULL,NULL,NULL,NULL,NULL
+863,Aula 303,ViveLab,VL-303-45,NULL,NULL,NULL,NULL,NULL,NULL
+864,Aula 303,ViveLab,VL-303-46,NULL,NULL,NULL,NULL,NULL,NULL
+865,Aula 303,ViveLab,VL-303-47,NULL,NULL,NULL,NULL,NULL,NULL
+866,Aula 303,ViveLab,VL-303-48,NULL,NULL,NULL,NULL,NULL,NULL
+867,Aula 303,ViveLab,VL-303-49,NULL,NULL,NULL,NULL,NULL,NULL
+868,Aula 304,ViveLab,VL-304-1,NULL,NULL,NULL,NULL,NULL,NULL
+869,Aula 304,ViveLab,VL-304-2,NULL,NULL,NULL,NULL,NULL,NULL
+870,Aula 304,ViveLab,VL-304-3,NULL,NULL,NULL,NULL,NULL,NULL
+871,Aula 304,ViveLab,VL-304-4,NULL,NULL,NULL,NULL,NULL,NULL
+872,Aula 304,ViveLab,VL-304-5,NULL,NULL,NULL,NULL,NULL,NULL
+873,Aula 304,ViveLab,VL-304-6,NULL,NULL,NULL,NULL,NULL,NULL
+874,Aula 304,ViveLab,VL-304-7,NULL,NULL,NULL,NULL,NULL,NULL
+875,Aula 304,ViveLab,VL-304-8,NULL,NULL,NULL,NULL,NULL,NULL
+876,Aula 304,ViveLab,VL-304-9,NULL,NULL,NULL,NULL,NULL,NULL
+877,Aula 304,ViveLab,VL-304-10,NULL,NULL,NULL,NULL,NULL,NULL
+878,Aula 304,ViveLab,VL-304-11,NULL,NULL,NULL,NULL,NULL,NULL
+879,Aula 304,ViveLab,VL-304-12,NULL,NULL,NULL,NULL,NULL,NULL
+880,Aula 304,ViveLab,VL-304-13,NULL,NULL,NULL,NULL,NULL,NULL
+881,Aula 304,ViveLab,VL-304-14,NULL,NULL,NULL,NULL,NULL,NULL
+882,Aula 304,ViveLab,VL-304-15,NULL,NULL,NULL,NULL,NULL,NULL
+883,Aula 304,ViveLab,VL-304-16,NULL,NULL,NULL,NULL,NULL,NULL
+884,Aula 304,ViveLab,VL-304-17,NULL,NULL,NULL,NULL,NULL,NULL
+885,Aula 304,ViveLab,VL-304-18,NULL,NULL,NULL,NULL,NULL,NULL
+886,Aula 304,ViveLab,VL-304-19,NULL,NULL,NULL,NULL,NULL,NULL
+887,Aula 304,ViveLab,VL-304-20,NULL,NULL,NULL,NULL,NULL,NULL
+888,Aula 304,ViveLab,VL-304-21,NULL,NULL,NULL,NULL,NULL,NULL
+889,Aula 304,ViveLab,VL-304-22,NULL,NULL,NULL,NULL,NULL,NULL
+890,Aula 304,ViveLab,VL-304-23,NULL,NULL,NULL,NULL,NULL,NULL
+891,Aula 304,ViveLab,VL-304-24,NULL,NULL,NULL,NULL,NULL,NULL
+892,Aula 304,ViveLab,VL-304-25,NULL,NULL,NULL,NULL,NULL,NULL
+893,Aula 304,ViveLab,VL-304-26,NULL,NULL,NULL,NULL,NULL,NULL
+894,Aula 304,ViveLab,VL-304-27,NULL,NULL,NULL,NULL,NULL,NULL
+895,Aula 304,ViveLab,VL-304-28,NULL,NULL,NULL,NULL,NULL,NULL
+896,Aula 304,ViveLab,VL-304-29,NULL,NULL,NULL,NULL,NULL,NULL
+897,Aula 304,ViveLab,VL-304-30,NULL,NULL,NULL,NULL,NULL,NULL
+898,Aula 304,ViveLab,VL-304-31,NULL,NULL,NULL,NULL,NULL,NULL
+899,Aula 304,ViveLab,VL-304-32,NULL,NULL,NULL,NULL,NULL,NULL
+900,Aula 304,ViveLab,VL-304-33,NULL,NULL,NULL,NULL,NULL,NULL
+901,Aula 304,ViveLab,VL-304-34,NULL,NULL,NULL,NULL,NULL,NULL
+902,Aula 304,ViveLab,VL-304-35,NULL,NULL,NULL,NULL,NULL,NULL
+903,Aula 304,ViveLab,VL-304-36,NULL,NULL,NULL,NULL,NULL,NULL
+904,Aula 304,ViveLab,VL-304-37,NULL,NULL,NULL,NULL,NULL,NULL
+905,Aula 304,ViveLab,VL-304-38,NULL,NULL,NULL,NULL,NULL,NULL
+906,Aula 304,ViveLab,VL-304-39,NULL,NULL,NULL,NULL,NULL,NULL
+907,Aula 304,ViveLab,VL-304-40,NULL,NULL,NULL,NULL,NULL,NULL
+908,Aula 304,ViveLab,VL-304-41,NULL,NULL,NULL,NULL,NULL,NULL
+909,Aula 304,ViveLab,VL-304-42,NULL,NULL,NULL,NULL,NULL,NULL
+910,Aula 304,ViveLab,VL-304-43,NULL,NULL,NULL,NULL,NULL,NULL
+911,Aula 304,ViveLab,VL-304-44,NULL,NULL,NULL,NULL,NULL,NULL
+912,Aula 304,ViveLab,VL-304-45,NULL,NULL,NULL,NULL,NULL,NULL
+913,Aula 304,ViveLab,VL-304-46,NULL,NULL,NULL,NULL,NULL,NULL
+914,Aula 304,ViveLab,VL-304-47,NULL,NULL,NULL,NULL,NULL,NULL
+915,Aula 304,ViveLab,VL-304-48,NULL,NULL,NULL,NULL,NULL,NULL
+916,Aula 304,ViveLab,VL-304-49,NULL,NULL,NULL,NULL,NULL,NULL
+770,Bodega,ViveLab,VLB-01,Control aire acondicionado Trane,YT1F,70357-03-46,2,NULL,1,NULL
+771,Bodega,ViveLab,VLB-02,Servidor-Rack de comunicaciones 17U,NULL,7357-02-93,NULL,1,NULL
+772,Bodega,ViveLab,VLB-03,UPS DE 3KVA,NULL,70357-03-94,NULL,1,NULL
+773,Bodega,ViveLab,VLB-04,Banco de Baterias -1,NULL,70357-03-94.5,NULL,1,NULL
+774,Bodega,ViveLab,VLB-05,Banco de Baterias -2,NULL,70357-03-94.3,NULL,1,NULL
+775,Bodega,ViveLab,VLB-06,UPS DE 3KVA -2,NULL,70357-03-94.4,NULL,1,NULL
+776,Bodega,ViveLab,VLB-07,Banco de Baterias -3,NULL,70357-03-94.1,NULL,1,NULL
+777,Bodega,ViveLab,VLB-08,Letrero TV (Al aire),NULL,NULL,NULL,1,NULL
+778,Bodega,ViveLab,VLB-09,Cargador Toshiba,T13100057088A03,NULL,NULL,NULL,NULL
+779,Bodega,ViveLab,VLB-10,Cable gris,NULL,NULL,NULL,1,NULL
+780,Bodega,ViveLab,VLB-11,Telon azul de grabaciÃ³n,NULL,NULL,NULL,1,NULL
+781,Bodega,ViveLab,VLB-12,Portabanner retractil gris,NULL,NULL,NULL,1,NULL
+782,Bodega,ViveLab,VLB-13,Cajon blanco,NULL,NULL,NULL,1,NULL
+783,Bodega,ViveLab,VLB-14,EstaciÃ³n de acoplamiento para discos duros MARCA SATA,NULL,NULL,NULL,1,NULL
+784,Bodega,ViveLab,VLB-15,Tablet Wacon 1,6HAH001510,70357-01-60.56,NULL,1,NULL
+785,Bodega,ViveLab,VLB-16,Tablet Wacon 2,6HAH001508,70357-01-76.24,NULL,1,NULL
+786,Bodega,ViveLab,VLB-17,Tablet Wacon 3,6HAH001507,70357-01-60.1,NULL,1,NULL
+787,Bodega,ViveLab,VLB-18,Tablet Wacon 4,64AH001499,70357-01-76.16,NULL,1,NULL
+788,Bodega,ViveLab,VLB-19,Tablet Wacon 5,6HAH001500,70357-01-76.12,NULL,1,NULL
+789,Bodega,ViveLab,VLB-20,Tablet Wacon 6,6HAH001464,70357-01-60.60,NULL,1,NULL
+790,Bodega,ViveLab,VLB-21,Tablet Wacon 7,6HAH001506,70357-01-60,NULL,1,NULL
+791,Bodega,ViveLab,VLB-22,Tablet Wacon 8,6HAH001534,70357-01-76.36,NULL,1,NULL
+792,Bodega,ViveLab,VLB-23,Lapiz optico para tablet wacon 1,NULL,NULL,NULL,1,NULL
+793,Bodega,ViveLab,VLB-24,Lapiz optico para tablet wacon 2,NULL,NULL,NULL,1,NULL
+794,Bodega,ViveLab,VLB-25,Lapiz optico para tablet wacon 3,NULL,NULL,NULL,1,NULL
+795,Bodega,ViveLab,VLB-26,Lapiz optico para tablet wacon 4,NULL,NULL,NULL,1,NULL
+796,Bodega,ViveLab,VLB-27,Lapiz optico para tablet wacon 5,NULL,NULL,NULL,1,NULL
+797,Bodega,ViveLab,VLB-28,Lapiz optico para tablet wacon 6,NULL,NULL,NULL,1,NULL
+798,Bodega,ViveLab,VLB-29,Lapiz optico para tablet wacon 7,NULL,NULL,NULL,1,NULL
+799,Bodega,ViveLab,VLB-30,Lapiz optico para tablet wacon 8,NULL,NULL,NULL,1,NULL
+800,Bodega,ViveLab,VLB-31,Cable cargador tablet 1,NULL,NULL,NULL,1,NULL
+801,Bodega,ViveLab,VLB-32,Cable cargador tablet 2,NULL,NULL,NULL,1,NULL
+802,Bodega,ViveLab,VLB-33,Cable cargador tablet 3,NULL,NULL,NULL,1,NULL
+803,Bodega,ViveLab,VLB-34,Cable cargador tablet 4,NULL,NULL,NULL,1,NULL
+804,Bodega,ViveLab,VLB-35,Cable cargador tablet 5,NULL,NULL,NULL,1,NULL
+805,Bodega,ViveLab,VLB-36,Cable cargador tablet 6,NULL,NULL,NULL,1,NULL
+806,Bodega,ViveLab,VLB-37,Cable cargador tablet 7,NULL,NULL,NULL,1,NULL
+807,Bodega,ViveLab,VLB-38,Cable cargador tablet 8,NULL,NULL,NULL,1,NULL
+808,Bodega,ViveLab,VLB-39,Proyecto 4 reflectores,NULL,NULL,NULL,1,NULL
+809,Bodega,ViveLab,VLB-40,Kit de hombro camara de video,NULL,NULL,NULL,1,NULL
+810,Bodega,ViveLab,VLB-41,Licuadora,NULL,NULL,NULL,1,NULL
+811,Bodega,ViveLab,VLB-42,VHS Turbo DRIVE,VR455,NULL,NULL,NULL,NULL
+812,Bodega,ViveLab,VLB-43,NULL,NULL,NULL,NULL,NULL,NULL
+813,Bodega,ViveLab,VLB-44,NULL,NULL,NULL,NULL,NULL,NULL
+814,Bodega,ViveLab,VLB-45,NULL,NULL,NULL,NULL,NULL,NULL
+815,Bodega,ViveLab,VLB-46,NULL,NULL,NULL,NULL,NULL,NULL
+816,Bodega,ViveLab,VLB-47,NULL,NULL,NULL,NULL,NULL,NULL
+817,Bodega,ViveLab,VLB-48,NULL,NULL,NULL,NULL,NULL,NULL
+818,Bodega,ViveLab,VLB-49,NULL,NULL,NULL,NULL,NULL,NULL
+701,Lab Imagen (305),ViveLab,VLI-01,Foco de iluminacion continua,NULL,70357-03-33,NULL,1,NULL
+702,Lab Imagen (305),ViveLab,VLI-02,Panel de luz led cotinuo RAIDEN,NULL,NULL,NULL,1,NULL
+703,Lab Imagen (305),ViveLab,VLI-03,Caja de luz IMPACT,NULL,NULL,NULL,1,NULL
+704,Lab Imagen (305),ViveLab,VLI-04,Luz de estufio estilo monoligth IMPACT,NULL,NULL,NULL,1,NULL
+705,Lab Imagen (305),ViveLab,VLI-05,Tripode IMPACT,NULL,NULL,NULL,1,NULL
+706,Lab Imagen (305),ViveLab,VLI-06,Panel de luz led profesional Ikan RAYDEN (Modelo RW5),NULL,NULL,NULL,1,NULL
+707,Lab Imagen (305),ViveLab,VLI-07,Parlantes LOGITECH,NULL,NULL,NULL,2,NULL
+708,Lab Imagen (305),ViveLab,VLI-08,Monitor y grabador de campo profesional Shogun Flame,NULL,NULL,NULL,1,NULL
+709,Lab Imagen (305),ViveLab,VLI-09,Bateria recaragable de iones de litio SONY-01 (NP-F750),NULL,NULL,NULL,1,NULL
+710,Lab Imagen (305),ViveLab,VLI-10,Bateria recaragable de iones de litio SONY-02 (NP-F750),NULL,NULL,NULL,1,NULL
+711,Lab Imagen (305),ViveLab,VLI-11,Cable de alimentacion DC para automovil,NULL,NULL,NULL,1,NULL
+712,Lab Imagen (305),ViveLab,VLI-12,Grabadora de audio profesional Tascam DR-40,NULL,70357-01-42,NULL,1,NULL
+713,Lab Imagen (305),ViveLab,VLI-13,Cable de audio balanceado XLR,NULL,NULL,NULL,1,NULL
+714,Lab Imagen (305),ViveLab,VLI-14,Caja de uidad de estado solido SSD SATA de 2.5 KINGSTOM HYPERX SAVAGE,NULL,NULL,NULL,1,NULL
+715,Lab Imagen (305),ViveLab,VLI-15,Adaptador de corriente AC/DC,NULL,NULL,NULL,1,NULL
+716,Lab Imagen (305),ViveLab,VLI-16,Extension naranja,NULL,70357-03-44.14,NULL,1,NULL
+717,Lab Imagen (305),ViveLab,VLI-17,Conjunto de viseras/paraviseras desmontables con montura circular,NULL,NULL,NULL,1,NULL
+718,Lab Imagen (305),ViveLab,VLI-18,Tripode negro IKAN-01,NULL,NULL,NULL,1,NULL
+719,Lab Imagen (305),ViveLab,VLI-19,Tripode negro IKAN-02,NULL,NULL,NULL,1,NULL
+720,Lab Imagen (305),ViveLab,VLI-20,Punta de pertiga para microfono con su soporte amortiguador,NULL,70357-01-40,NULL,1,NULL
+721,Lab Imagen (305),ViveLab,VLI-21,Aire acondicionado TRANE-01,NULL,70357-03--92.2,NULL,1,NULL
+722,Lab Imagen (305),ViveLab,VLI-22,Aire acondicionado TRANE-02,NULL,70357-03-79.2,NULL,1,NULL
+723,Lab Imagen (305),ViveLab,VLI-23,Control aire acondicionado-01,NULL,70357-03--92.2,NULL,1,NULL
+724,Lab Imagen (305),ViveLab,VLI-24,Control aire acondicionado-02,NULL,70357-03-79.2,NULL,1,NULL
+725,Lab Imagen (305),ViveLab,VLI-25,Silla giratoria amarilla,NULL,70357-04-68,NULL,1,NULL
+726,Lab Imagen (305),ViveLab,VLI-26,Impresora FS-1016MFP KYOCERA,NULL,NULL,NULL,1,NULL
+727,Lab Imagen (305),ViveLab,VLI-27,Computador sistema operativo IOS APPLE,70357-01-75,70357-01-75,NULL,1,NULL
+728,Lab Imagen (305),ViveLab,VLI-28,Teclado JANUS,JSKBCOMBON1601007204,NULL,NULL,1,NULL
+729,Lab Imagen (305),ViveLab,VLI-29,Mouse negro,NULL,70357-01-84.3,NULL,1,NULL
+730,Lab Imagen (305),ViveLab,VLI-30,Lapiz optico WACON,NULL,NULL,NULL,1,NULL
+731,Lab Imagen (305),ViveLab,VLI-31,Tableta digilitizadora WACON,6HAH001465,70357-01-60.40,NULL,1,NULL
+732,Lab Imagen (305),ViveLab,VLI-32,Cable USB negro,NULL,NULL,NULL,1,NULL
+733,Lab Imagen (305),ViveLab,VLI-33,Cable de extension de corriente C13/C14,NULL,NULL,NULL,1,NULL
+734,Lab Imagen (305),ViveLab,VLI-34,Teclado inalambrico APPLE,NULL,NULL,NULL,1,NULL
+735,Lab Imagen (305),ViveLab,VLI-35,Monitor JANUS,J2015LE17010602433,NULL,NULL,1,NULL
+736,Lab Imagen (305),ViveLab,VLI-36,Mouse optico APPLE blanco,NULL,70357-01-75.3,NULL,1,NULL
+737,Lab Imagen (305),ViveLab,VLI-37,Grapadora EAGLE gris,NULL,NULL,NULL,1,NULL
+738,Lab Imagen (305),ViveLab,VLI-38,Kit microfono inalambrico portatil SENNHEISER-01,NULL,70357-01-38.2,NULL,1,NULL
+739,Lab Imagen (305),ViveLab,VLI-39,Kit microfono inalambrico portatil SENNHEISER-02,NULL,70357-01-38.1,NULL,1,NULL
+740,Lab Imagen (305),ViveLab,VLI-40,Sistema de supervicion y apagado remoto para equipos de impresion 3D,NULL,NULL,NULL,1,NULL
+741,Lab Imagen (305),ViveLab,VLI-41,Cargador de pilas ENERGIZER,NULL,NULL,NULL,1,NULL
+742,Lab Imagen (305),ViveLab,VLI-42,Kit de soporte multifuncional-01,NULL,NULL,NULL,1,NULL
+743,Lab Imagen (305),ViveLab,VLI-43,Kit de soporte multifuncional-02,NULL,NULL,NULL,1,NULL
+744,Lab Imagen (305),ViveLab,VLI-44,Cargador negro,NULL,NULL,NULL,1,NULL
+745,Lab Imagen (305),ViveLab,VLI-45,Cable HDMI azul,NULL,NULL,NULL,1,NULL
+746,Lab Imagen (305),ViveLab,VLI-46,Cable de red azul (Patch cord) con conectores RJ45,NULL,NULL,NULL,1,NULL
+747,Lab Imagen (305),ViveLab,VLI-47,Cable de poder de alimentacion negro estandar C13,NULL,NULL,NULL,1,NULL
+748,Lab Imagen (305),ViveLab,VLI-48,USB tipo-A para tipo B,NULL,NULL,NULL,1,NULL
+749,Lab Imagen (305),ViveLab,VLI-49,Estante metalico gris con 3 cajones,NULL,NULL,NULL,1,NULL
+750,Lab Imagen (305),ViveLab,VLI-50,Mesa de escritorio color cafe,NULL,NULL,NULL,1,NULL
+751,Lab Imagen (305),ViveLab,VLI-51,Cajon  amarillo,NULL,NULL,NULL,1,NULL
+752,Lab Imagen (305),ViveLab,VLI-52,Televisor LED HD 55",NULL,NULL,NULL,1,NULL
+753,Lab Imagen (305),ViveLab,VLI-53,Control aire acondicionado-03,NULL,70357-03-46.2,NULL,NULL,NULL
+754,Lab Imagen (305),ViveLab,VLI-54,Aire acondicionado TRANE-03,NULL,70357-03-46.2,NULL,NULL,NULL
+755,Lab Imagen (305),ViveLab,VLI-55,NULL,NULL,NULL,NULL,NULL,NULL
+756,Lab Imagen (305),ViveLab,VLI-56,NULL,NULL,NULL,NULL,NULL,NULL
+757,Lab Imagen (305),ViveLab,VLI-57,NULL,NULL,NULL,NULL,NULL,NULL
+758,Lab Imagen (305),ViveLab,VLI-58,NULL,NULL,NULL,NULL,NULL,NULL
+759,Lab Imagen (305),ViveLab,VLI-59,NULL,NULL,NULL,NULL,NULL,NULL
+760,Lab Imagen (305),ViveLab,VLI-60,NULL,NULL,NULL,NULL,NULL,NULL
+761,Lab Imagen (305),ViveLab,VLI-61,NULL,NULL,NULL,NULL,NULL,NULL
+762,Lab Imagen (305),ViveLab,VLI-62,NULL,NULL,NULL,NULL,NULL,NULL
+763,Lab Imagen (305),ViveLab,VLI-63,NULL,NULL,NULL,NULL,NULL,NULL
+764,Lab Imagen (305),ViveLab,VLI-64,NULL,NULL,NULL,NULL,NULL,NULL
+765,Lab Imagen (305),ViveLab,VLI-65,NULL,NULL,NULL,NULL,NULL,NULL
+766,Lab Imagen (305),ViveLab,VLI-66,NULL,NULL,NULL,NULL,NULL,NULL
+767,Lab Imagen (305),ViveLab,VLI-67,NULL,NULL,NULL,NULL,NULL,NULL
+768,Lab Imagen (305),ViveLab,VLI-68,NULL,NULL,NULL,NULL,NULL,NULL
+769,Lab Imagen (305),ViveLab,VLI-69,NULL,NULL,NULL,NULL,NULL,NULL
