@@ -147,18 +147,17 @@ async function handleReq(req, res) {
       return json(res, 200, result);
     }
 
-    // GET /api/export/elementos[.csv|.json]  →  inventario completo con sala y edificio
-    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export' && parts[2] === 'elementos') {
-      const filas = await exportarElementos(conexionDesdeEnv());
-      if (parts[3] === 'csv') return csv(res, 'elementos.csv', filas);
-      return json(res, 200, filas);
-    }
-
-    // GET /api/export/traslados[.csv|.json]  →  historial de traslados con nombres de sala
-    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export' && parts[2] === 'traslados') {
-      const filas = await exportarTraslados(conexionDesdeEnv());
-      if (parts[3] === 'csv') return csv(res, 'traslados.csv', filas);
-      return json(res, 200, filas);
+    // GET /api/export/elementos.csv|.json y /api/export/traslados.csv|.json
+    // (la extensión llega pegada al segmento: /api/export/elementos.csv → parts[2] = "elementos.csv")
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export') {
+      const destino = /^(elementos|traslados)\.(csv|json)$/.exec(parts[2] || '');
+      if (destino) {
+        const filas = destino[1] === 'elementos'
+          ? await exportarElementos(conexionDesdeEnv())
+          : await exportarTraslados(conexionDesdeEnv());
+        if (destino[2] === 'csv') return csv(res, `${destino[1]}.csv`, filas);
+        return json(res, 200, filas);
+      }
     }
 
     // DELETE /api/elementos/:codigo  →  eliminar elemento por código
