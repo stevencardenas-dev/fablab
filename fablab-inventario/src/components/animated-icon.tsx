@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -11,6 +11,15 @@ const DURATION = 600;
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+
+  // Red de seguridad: si el callback de la animación no dispara setVisible
+  // (ha fallado en nativo), el overlay queda montado con opacity 0 y
+  // absoluteFill/zIndex 1000, bloqueando TODOS los toques de la app.
+  // Lo desmontamos por tiempo, nos importe lo que haya pasado con la animación.
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(false), DURATION + 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!visible) return null;
 

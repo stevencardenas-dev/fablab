@@ -3,6 +3,22 @@
 Pasa el inventario de FabLab de xlsx a una base MySQL. El DDL se deriva de la
 estructura de cada hoja y el DML de su contenido, como se pidio: una hoja = una sala = una tabla.
 
+## Atajo en un paso (Docker)
+
+`scripts/seed.mjs` hace las dos cosas de `gen-normalizado.mjs` + `mysql <` en un
+solo comando, contra el contenedor `fablab-mysql`, y con `--default-character-set
+=utf8mb4` para que los acentos no salgan mojibake:
+
+```bash
+npm run seed -- "CNC 2026.xlsx"                          # hojas de HOJAS presentes
+npm run seed -- "CNC 2026.xlsx" --hojas "CNC 2026,ALMACEN 2026"
+npm run seed -- "CNC 2026.xlsx" --listar                 # ver hojas sin importar
+npm run seed -- "CNC 2026.xlsx" --sql-only               # solo imprimir el SQL
+npm run seed -- "CNC 2026.xlsx" --sin-docker             # MySQL local por TCP
+```
+
+Igual que los demas importadores: SIEMPRE vacia la base (DROP TABLE) antes de cargar.
+
 ## Uso
 
 ```bash

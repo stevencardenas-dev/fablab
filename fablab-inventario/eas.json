@@ -7,11 +7,15 @@
     "preview": {
       "android": {
         "buildType": "apk"
-      }
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://fablab-api-sr1q.onrender.com/api"
+      },
+      "distribution": "internal"
     },
     "production": {
       "android": {
-        "buildType": "bundle"
+        "buildType": "app-bundle"
       },
       "ios": {
         "buildConfiguration": "Release"

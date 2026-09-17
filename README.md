@@ -36,11 +36,25 @@ docker compose up -d
 
 ### 2. Cargar datos (si es necesario)
 
+Un solo comando (contra el contenedor `fablab-mysql`, con utf8mb4 para que
+los acentos no salgan mojibake):
+
+```bash
+cd fablab/fablab-inventario
+npm run seed -- "CNC 2026.xlsx"                    # importa todas las hojas
+npm run seed -- "CNC 2026.xlsx" --hojas "CNC 2026,ALMACEN 2026"
+npm run seed -- "CNC 2026.xlsx" --listar           # ver hojas sin importar
+```
+
+O a mano (dos pasos):
+
 ```bash
 cd fablab/fablab-inventario
 node importer/gen-normalizado.mjs "/home/alvaro/CNC 2026(1).xlsx" > /tmp/inventario.sql
-docker exec -i fablab-mysql mysql -u root -pfablab fablab < /tmp/inventario.sql
+docker exec -i fablab-mysql mysql --default-character-set=utf8mb4 -u root -pfablab fablab < /tmp/inventario.sql
 ```
+
+Más opciones en `fablab-inventario/importer/README.md`.
 
 ### 3. API Server
 

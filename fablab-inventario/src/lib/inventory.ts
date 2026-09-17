@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // --- Tipos ---
 
 export type InventoryItem = {
+  id?: number; // id en la BD (lo genera la API; los items locales pueden no tenerlo)
   codigo: string;
   detalle: string;
   serial: string;
@@ -22,12 +23,14 @@ export type Room = {
 };
 
 // --- Configuración de conexión ---
-// Web (navegador): deriva del host actual (192.168.0.2:8083 → 192.168.0.2:3001/api)
+// Web (navegador): usa EXPO_PUBLIC_API_URL si está definida (build estático
+// desplegado, p.ej. en Render), y si no deriva del host actual
+// (192.168.0.2:8083 → 192.168.0.2:3001/api) para el dev server local.
 // Native (Expo Go): usa EXPO_PUBLIC_API_URL o localhost/api
 const WEB_BASE = typeof window !== 'undefined' && window.location
   ? window.location.origin.replace(/:(\d+)$/, ':3001/api')
   : '';
-const API_BASE = WEB_BASE || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || WEB_BASE || 'http://localhost:3001/api';
 
 // --- Helpers de API ---
 
