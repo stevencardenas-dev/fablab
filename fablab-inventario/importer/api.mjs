@@ -97,6 +97,57 @@ export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
   });
 }
 
+// Modifica los campos editables de un elemento por id. El codigo NO se toca
+// (es el identificador impreso en el Data Matrix); mover de sala es un traslado.
+const CAMPOS_EDITABLES = ['detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'];
+
+export async function actualizarElemento(id, campos, cfg = conexionDesdeEnv()) {
+  const set = CAMPOS_EDITABLES.filter((c) => campos[c] !== undefined);
+  if (!set.length) throw new Error(`Campos editables: ${CAMPOS_EDITABLES.join(', ')}`);
+  return conectar(cfg, async (conn) => {
+    const [res] = await conn.query(
+      `UPDATE elementos SET ${set.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+      [...set.map((c) => campos[c]), id],
+    );
+    if (!res.affectedRows) throw new Error(`El elemento ${id} no existe`);
+    const [[elemento]] = await conn.query(
+      'SELECT id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad FROM elementos WHERE id = ?',
+      [id],
+    );
+    return { updated: true, elemento };
+  });
+}
+
+// --- Export completo (CSV/JSON) ---
+// Elementos con su sala y edificio; traslados con codigo de elemento y nombres de sala.
+
+export async function exportarElementos(cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    const [filas] = await conn.query(`
+      SELECT el.id, el.codigo, el.detalle, el.serial, el.inventario, el.estado,
+             el.observaciones, el.cantidad, s.nombre AS sala, e.nombre AS edificio
+      FROM elementos el
+      LEFT JOIN salas s ON s.id = el.sala_id
+      LEFT JOIN edificios e ON e.id = s.edificio_id
+      ORDER BY e.nombre, s.nombre, el.id`);
+    return filas;
+  });
+}
+
+export async function exportarTraslados(cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    const [filas] = await conn.query(`
+      SELECT t.id, t.fecha, el.codigo, el.detalle,
+             a.nombre AS sala_anterior, n.nombre AS sala_nueva, t.nota
+      FROM traslados t
+      JOIN elementos el ON el.id = t.elemento_id
+      LEFT JOIN salas a ON a.id = t.sala_anterior_id
+      JOIN salas n ON n.id = t.sala_nueva_id
+      ORDER BY t.fecha, t.id`);
+    return filas;
+  });
+}
+
 // Elimina un elemento por su codigo.
 export async function eliminarElemento(codigo, cfg = conexionDesdeEnv()) {
   return conectar(cfg, async (conn) => {

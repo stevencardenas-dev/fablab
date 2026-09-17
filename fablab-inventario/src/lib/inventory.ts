@@ -97,6 +97,19 @@ export async function removeItem(codigo: string): Promise<void> {
   }
 }
 
+// Modifica un elemento existente (por id). El codigo no se edita — es lo que
+// está impreso en el Data Matrix; cambiar de sala se hace con registrarTraslado.
+export async function updateItem(id: number, campos: Partial<Omit<InventoryItem, 'id' | 'codigo' | 'sala_id' | 'foto'>>): Promise<InventoryItem> {
+  const res = await fetch(`${API_BASE}/elementos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(campos),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: elementos/${id}`);
+  const data = await res.json();
+  return data.elemento as InventoryItem;
+}
+
 export async function findByCodigo(codigo: string): Promise<InventoryItem | undefined> {
   try {
     const salas = await get<Room[]>('/salas');
@@ -214,6 +227,12 @@ export async function historialElemento(elementoId: number): Promise<Array<{ id:
   } catch {
     return [];
   }
+}
+
+// --- Export de inventario y traslados ---
+// Devuelve la URL pública del API (CSV abre descarga directa; JSON también).
+export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'json' = 'csv'): string {
+  return `${API_BASE}/export/${qué}.${formato}`;
 }
 
 // --- Sin ubicación (fallback UI) ---

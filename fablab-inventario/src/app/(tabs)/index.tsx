@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState, useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,7 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
-import { addItem, findByCodigo, findByDetalle, generateCodigo, listarSalas, buscarElementos, type InventoryItem, type Room } from '@/lib/inventory';
+import { addItem, findByCodigo, findByDetalle, generateCodigo, listarSalas, buscarElementos, registrarTraslado, updateItem, exportarUrl, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -30,7 +30,8 @@ export default function HomeScreen() {
   const theme = useTheme();
   const themeMode = useThemeMode();
   const toggleTheme = useToggleTheme();
-  const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | null>(null);
+  const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | 'export' | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [element, setElement] = useState<InventoryItem>(newElement);
   const [addError, setAddError] = useState<string | null>(null);
   const [savedCodigo, setSavedCodigo] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export default function HomeScreen() {
     });
   }, []);
 
-  function openPanel(panel: 'scan' | 'add' | 'search') {
+  function openPanel(panel: 'scan' | 'add' | 'search' | 'export') {
     const next = openAction === panel ? null : panel;
     setOpenAction(next);
     setScannedItem(undefined);
@@ -53,6 +54,7 @@ export default function HomeScreen() {
     setSearchName('');
     setAddError(null);
     setSavedCodigo(null);
+    setEditingId(null);
     if (next === 'add') setElement(newElement());
   }
 
@@ -105,9 +107,14 @@ export default function HomeScreen() {
             {scannedItem === null && <ThemedText themeColor="textSecondary" style={styles.description}>No se encontró ningún elemento con ese código.</ThemedText>}
             {scannedItem && (
               <View style={styles.resultBox}>
-                {(['codigo', 'detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
-                  <ThemedText key={field} style={styles.resultLine}>{field.toUpperCase()}: {scannedItem[field] || '-'}</ThemedText>
-                ))}
+                <ThemedText type="smallBold" style={styles.codeLabel}>{scannedItem.codigo}</ThemedText>
+                <ItemEditor
+                  key={scannedItem.codigo}
+                  item={scannedItem}
+                  salas={salas}
+                  theme={theme}
+                  onSaved={(updated) => setScannedItem(updated)}
+                />
               </View>
             )}
           </ActionPanel>}
@@ -190,6 +197,7 @@ export default function HomeScreen() {
             {searchResults?.map((item, idx) => {
               const room = salas.find((s) => s.id === item.sala_id);
               const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
+              const itemId = item.id; // narrowing se pierde en callbacks → const local
               return (
                 <View key={item.id ?? item.codigo ?? `sr-${idx}`} style={styles.searchCard}>
                   <View style={styles.searchCardHeader}>
@@ -214,6 +222,26 @@ export default function HomeScreen() {
                       <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
                     )}
                   </View>
+                  {itemId != null && (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setEditingId(editingId === itemId ? null : itemId)}
+                      style={styles.editToggle}>
+                      <ThemedText style={styles.editToggleLabel}>{editingId === itemId ? 'Cerrar' : 'Editar / Trasladar'}</ThemedText>
+                    </Pressable>
+                  )}
+                  {editingId === item.id && (
+                    <ItemEditor
+                      key={`${item.id}-${item.codigo}`}
+                      item={item}
+                      salas={salas}
+                      theme={theme}
+                      onSaved={(updated) => {
+                        setSearchResults((current) => (current ?? []).map((it) => (it.id === updated.id ? updated : it)));
+                        setEditingId(null);
+                      }}
+                    />
+                  )}
                 </View>
               );
             })}
@@ -224,6 +252,29 @@ export default function HomeScreen() {
                 <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
               </View>
             )}
+          </ActionPanel>}
+
+          <ActionButton icon="export" label="Exportar inventario" isOpen={openAction === 'export'} onPress={() => openPanel('export')} />
+          {openAction === 'export' && <ActionPanel>
+            <ThemedText themeColor="textSecondary" style={styles.description}>
+              Descarga el inventario completo o el historial de traslados. El CSV abre directo en Excel (con acentos correctos); el JSON es para otros programas.
+            </ThemedText>
+            <View style={styles.exportRow}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'csv'))} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonLabel}>Inventario (CSV)</ThemedText>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'csv'))} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonLabel}>Traslados (CSV)</ThemedText>
+              </Pressable>
+            </View>
+            <View style={styles.exportRow}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'json'))} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonGhostLabel}>Inventario (JSON)</ThemedText>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'json'))} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonGhostLabel}>Traslados (JSON)</ThemedText>
+              </Pressable>
+            </View>
           </ActionPanel>}
         </View>
         </ScrollView>
@@ -256,8 +307,8 @@ function MoonIcon({ color }: { color: string }) {
   );
 }
 
-function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass'; label: string; isOpen: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
+function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass' | 'export'; label: string; isOpen: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : icon === 'export' ? <ExportIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
 }
 
 function ScanIcon() {
@@ -284,6 +335,107 @@ function SearchIcon() {
       <Circle cx="11" cy="11" r="6" stroke="#FFFFFF" strokeWidth="2" />
       <Line x1="20" y1="20" x2="15.5" y2="15.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
     </Svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none" accessibilityLabel="Exportar">
+      <Path d="M12 3v12M12 3l-4 4M12 3l4 4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+ );
+}
+
+const EDIT_FIELDS = ['detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const;
+
+// Formulario de edición + traslado para un elemento existente. Se usa desde el
+// resultado del escaneo y desde las tarjetas de búsqueda.
+function ItemEditor({ item, salas, theme, onSaved }: {
+  item: InventoryItem;
+  salas: Room[];
+  theme: ReturnType<typeof useTheme>;
+  onSaved: (updated: InventoryItem) => void;
+}) {
+  const [draft, setDraft] = useState<InventoryItem>(item);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const currentSala = salas.find((s) => s.id === item.sala_id);
+  const otrasSalas = salas.filter((s) => s.id !== item.sala_id);
+
+  async function handleSave() {
+    if (!item.id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateItem(item.id, {
+        detalle: draft.detalle,
+        serial: draft.serial,
+        inventario: draft.inventario,
+        estado: draft.estado,
+        observaciones: draft.observaciones,
+        cantidad: draft.cantidad,
+      });
+      onSaved({ ...updated, sala_id: item.sala_id });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleTraslado(salaId: number) {
+    if (!item.id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await registrarTraslado({ elementoId: item.id, salaNuevaId: salaId });
+      onSaved({ ...item, sala_id: salaId });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo trasladar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View style={styles.editor}>
+      {EDIT_FIELDS.map((field) => (
+        <FormInput
+          key={field}
+          label={field.toUpperCase()}
+          value={draft[field] ?? ''}
+          onChangeText={(value) => setDraft({ ...draft, [field]: value })}
+          theme={theme}
+        />
+      ))}
+      <Pressable accessibilityRole="button" onPress={handleSave} disabled={saving} style={({ pressed }) => [styles.panelButton, pressed && styles.pressed]}>
+        <ThemedText style={styles.panelButtonLabel}>{saving ? 'Guardando…' : 'Guardar cambios'}</ThemedText>
+      </Pressable>
+      {otrasSalas.length > 0 && (
+        <View style={styles.inputGroup}>
+          <ThemedText type="smallBold" style={styles.inputLabel}>TRASLADAR A OTRA SALA</ThemedText>
+          {currentSala && (
+            <ThemedText themeColor="textSecondary" type="small">
+              Actualmente en: {currentSala.edificio} · {currentSala.nombre}
+            </ThemedText>
+          )}
+          <View style={styles.roomChips}>
+            {otrasSalas.map((sala) => (
+              <Pressable
+                key={sala.id}
+                accessibilityRole="button"
+                disabled={saving}
+                onPress={() => handleTraslado(sala.id)}
+                style={[styles.roomChip, styles.roomChipTraslado]}>
+                <ThemedText style={styles.roomChipLabel}>{sala.nombre}</ThemedText>
+              </Pressable>
+            ))}
+          </View>
+    </View>
+      )}
+      {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
+    </View>
   );
 }
 
@@ -358,4 +510,13 @@ const styles = StyleSheet.create({
   panelButton: { minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
   panelButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   pressed: { opacity: 0.78 },
+  editor: { gap: Spacing.two, paddingTop: Spacing.two },
+  editToggle: { alignSelf: 'flex-start', marginTop: Spacing.one, minHeight: 32, borderRadius: 16, borderWidth: 1, borderColor: '#C8102E', paddingHorizontal: Spacing.two, alignItems: 'center', justifyContent: 'center' },
+  editToggleLabel: { color: '#C8102E', fontSize: 13, fontWeight: '700' },
+  roomChipTraslado: { opacity: 0.9 },
+  exportRow: { flexDirection: 'row', gap: Spacing.two },
+  exportButton: { flex: 1, minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
+  exportButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 14, textAlign: 'center' },
+  exportButtonGhost: { flex: 1, minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
+  exportButtonGhostLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14, textAlign: 'center' },
 });

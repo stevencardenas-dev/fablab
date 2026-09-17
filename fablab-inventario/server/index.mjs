@@ -7,7 +7,10 @@ import {
   registrarTraslado,
   historialElemento,
   agregarElemento,
+  actualizarElemento,
   eliminarElemento,
+  exportarElementos,
+  exportarTraslados,
 } from '../importer/api.mjs';
 import { conexionDesdeEnv } from '../importer/importar.mjs';
 
@@ -21,10 +24,30 @@ function json(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   });
   res.end(body);
+}
+
+// Respuesta CSV con BOM para que Excel respete los acentos (utf8 → Latin-1 look).
+function csv(res, filename, filas) {
+  const cols = filas.length ? Object.keys(filas[0]) : [];
+  const escape = (v) => {
+    if (v == null) return '';
+    const s = v instanceof Date ? v.toISOString() : String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const body = [
+    cols.join(','),
+    ...filas.map((f) => cols.map((c) => escape(f[c])).join(',')),
+  ].join('\n');
+  res.writeHead(200, {
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': `attachment; filename="${filename}"`,
+    'Access-Control-Allow-Origin': '*',
+  });
+  res.end('\ufeff' + body);
 }
 
 function notFound(res) {
@@ -57,7 +80,7 @@ async function handleReq(req, res) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     });
     res.end();
@@ -117,6 +140,27 @@ async function handleReq(req, res) {
       return json(res, 201, result);
     }
 
+    // PUT /api/elementos/:id  →  modificar elemento (detalle, serial, estado…)
+    if (req.method === 'PUT' && parts[0] === 'api' && parts[1] === 'elementos' && parts.length === 3 && /^\d+$/.test(parts[2])) {
+      const body = await readBody(req);
+      const result = await actualizarElemento(Number(parts[2]), body, conexionDesdeEnv());
+      return json(res, 200, result);
+    }
+
+    // GET /api/export/elementos[.csv|.json]  →  inventario completo con sala y edificio
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export' && parts[2] === 'elementos') {
+      const filas = await exportarElementos(conexionDesdeEnv());
+      if (parts[3] === 'csv') return csv(res, 'elementos.csv', filas);
+      return json(res, 200, filas);
+    }
+
+    // GET /api/export/traslados[.csv|.json]  →  historial de traslados con nombres de sala
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export' && parts[2] === 'traslados') {
+      const filas = await exportarTraslados(conexionDesdeEnv());
+      if (parts[3] === 'csv') return csv(res, 'traslados.csv', filas);
+      return json(res, 200, filas);
+    }
+
     // DELETE /api/elementos/:codigo  →  eliminar elemento por código
     if (req.method === 'DELETE' && parts[0] === 'api' && parts[1] === 'elementos' && parts.length === 3) {
       const codigo = decodeURIComponent(parts[2]);
@@ -139,6 +183,9 @@ server.listen(PORT, HOST, () => {
   console.log(`  GET    /api/salas/:id/elementos`);
   console.log(`  GET    /api/elementos/:id/historial`);
   console.log(`  POST   /api/elementos`);
+  console.log(`  PUT    /api/elementos/:id`);
   console.log(`  DELETE /api/elementos/:codigo`);
   console.log(`  POST   /api/traslados`);
+  console.log(`  GET    /api/export/elementos[.csv|.json]`);
+  console.log(`  GET    /api/export/traslados[.csv|.json]`);
 });
