@@ -3,6 +3,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useWindowDimensions } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -23,6 +24,7 @@ const fieldLabels: Record<string, string> = {
 export default function SalaScreen() {
   const { nombre } = useLocalSearchParams<{ nombre: string }>();
   const salaId = Number(nombre);
+  const { height: screenH } = useWindowDimensions();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [confirmCodigo, setConfirmCodigo] = useState<string | null>(null);
@@ -78,8 +80,8 @@ export default function SalaScreen() {
           )}
 
           <View style={styles.pillList}>
-            {items.map((item) => (
-              <Pressable key={item.codigo} accessibilityRole="button" onPress={() => setSelected(item)} style={styles.pill}>
+            {items.map((item, idx) => (
+              <Pressable key={item.id ?? item.codigo ?? `idx-${idx}`} accessibilityRole="button" onPress={() => setSelected(item)} style={styles.pill}>
                 {item.foto ? <Image source={{ uri: item.foto }} style={styles.thumb} /> : <View style={styles.thumbPlaceholder} />}
                 <ThemedText type="smallBold" style={styles.pillLabel}>{item.detalle || item.codigo}</ThemedText>
               </Pressable>
@@ -90,9 +92,11 @@ export default function SalaScreen() {
 
       {selected && (
         <Pressable style={styles.modalBackdrop} onPress={closeModal}>
-          <Pressable onPress={(e) => e.stopPropagation()} style={styles.modalCardWrapper}>
+          {/* Altura máxima en px: en nativo, flex:1 dentro de un padre de altura automática
+              colapsa a 0 (Yoga) y el modal queda invisible; en px explícitos nunca colapsa. */}
+          <Pressable onPress={(e) => e.stopPropagation()} style={[styles.modalCardWrapper, { maxHeight: Math.round(screenH * 0.85) }]}>
             <ThemedView style={styles.modalCard}>
-              <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalContent}>
+              <ScrollView style={[styles.modalScroll, { maxHeight: Math.round(screenH * 0.85) }]} contentContainerStyle={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <ThemedText type="subtitle" style={styles.modalTitle}>{selected.detalle || selected.codigo}</ThemedText>
                   <Pressable accessibilityRole="button" onPress={closeModal} hitSlop={8}>
@@ -165,9 +169,9 @@ const styles = StyleSheet.create({
   removeButtonLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14 },
   removeButtonLabelConfirm: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   modalBackdrop: { position: Platform.OS === 'web' ? ('fixed' as 'absolute') : 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: Spacing.four, zIndex: 1000 },
-  modalCardWrapper: { width: '100%', maxWidth: 420, maxHeight: '85%', flexShrink: 1, display: 'flex' },
-  modalCard: { borderRadius: 16, overflow: 'hidden', flex: 1, display: 'flex' },
-  modalScroll: { flex: 1 },
+  modalCardWrapper: { width: '100%', maxWidth: 420, display: 'flex' },
+  modalCard: { borderRadius: 16, overflow: 'hidden', display: 'flex' },
+  modalScroll: {},
   modalContent: { padding: Spacing.four, gap: Spacing.three },
   modalHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: Spacing.two },
   modalTitle: { flex: 1 },

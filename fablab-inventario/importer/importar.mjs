@@ -12,6 +12,11 @@ export function conexionDesdeEnv(env = process.env) {
     database: env.MYSQL_DATABASE || 'fablab',
     socketPath: env.MYSQL_SOCKET || undefined,
     multipleStatements: true,
+    // TLS para DBs administradas (Aiven, TiDB...): MYSQL_SSL=1 activa el cifrado.
+    // Sin CA, mysql2 valida igual contra la CA del sistema; 'Aiven' acepta su CA propia.
+    ...(env.MYSQL_SSL === '1' || env.MYSQL_SSL === 'true'
+      ? { ssl: { rejectUnauthorized: env.MYSQL_SSL_STRICT === '1' } }
+      : {}),
   };
 }
 

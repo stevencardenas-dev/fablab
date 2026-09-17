@@ -187,11 +187,11 @@ export default function HomeScreen() {
                 {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
               </ThemedText>
             )}
-            {searchResults?.map((item) => {
+            {searchResults?.map((item, idx) => {
               const room = salas.find((s) => s.id === item.sala_id);
               const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
               return (
-                <View key={item.codigo} style={styles.searchCard}>
+                <View key={item.id ?? item.codigo ?? `sr-${idx}`} style={styles.searchCard}>
                   <View style={styles.searchCardHeader}>
                     <ThemedText type="smallBold" style={styles.searchCardCode}>{item.codigo || '-'}</ThemedText>
                     {room && (

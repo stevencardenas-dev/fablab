@@ -68,6 +68,11 @@ async function handleReq(req, res) {
   const parts = pathname.split('/').filter(Boolean);
 
   try {
+    // GET /health  →  healthcheck para deploys (Render, etc.)
+    if (req.method === 'GET' && parts.join('/') === 'health') {
+      return json(res, 200, { ok: true, service: 'fablab-api' });
+    }
+
     // GET /api/salas  →  listar todas las salas con edificio + conteo
     if (req.method === 'GET' && parts.join('/') === 'api/salas') {
       const salas = await listarSalas(conexionDesdeEnv());
