@@ -9,7 +9,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import {
+  asignarCodigo,
   findByRoom,
+  generateCodigo,
   historialElemento,
   listarSalas,
   registrarTraslado,
@@ -58,6 +60,10 @@ export default function SalaScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [traslados, setTraslados] = useState<{ id: number; lista: TrasladoHistorial[] } | null>(null);
+
+  // Elementos importados de la hoja que quedaron sin N° de inventario: no
+  // tienen Data Matrix que imprimir hasta que se les asigne un código.
+  const sinCodigo = items.filter((item) => !item.codigo).length;
 
   const load = useCallback(() => {
     if (!Number.isFinite(salaId)) return;
@@ -140,6 +146,24 @@ export default function SalaScreen() {
     }
   }
 
+  // Los importados de la hoja pueden venir sin código; sin código no hay Data
+  // Matrix. Se le asigna uno nuevo (mismo formato que el alta desde la app).
+  async function handleAsignarCodigo() {
+    if (!selected || selected.id == null || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const codigo = generateCodigo();
+      await asignarCodigo(selected.id, codigo);
+      setSelected((prev) => (prev ? { ...prev, codigo } : prev));
+      load();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'No se pudo asignar el código');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleRemove(codigo: string) {
     if (saving) return;
     if (confirmCodigo !== codigo) {
@@ -177,7 +201,8 @@ export default function SalaScreen() {
             <View style={styles.sheetAction}>
               <DataMatrixSheetButton
                 codigos={items.map((item) => item.codigo)}
-                label={`Imprimir etiquetas de la sala (${items.length})`}
+                omitidos={items.filter((item) => !item.codigo).length}
+                label={`Imprimir etiquetas de la sala (${items.length - sinCodigo})`}
                 archivo={`sala-${salaNombre || nombre}`}
                 ayuda="Abre una hoja A4 con todas las etiquetas de esta sala (o guarda el PDF desde el diálogo de impresión)."
               />
@@ -228,12 +253,30 @@ export default function SalaScreen() {
 
                 {/* La etiqueta original se pierde o se daña: desde la ficha de
                     cualquier elemento se vuelve a descargar el Data Matrix. */}
-                {selected.codigo && (
+                {selected.codigo ? (
                   <View style={styles.etiquetaBox}>
                     <DataMatrixCode value={selected.codigo} size={110} />
                     <DataMatrixDownloadButton codigo={selected.codigo} label="Descargar para imprimir" />
                     <ThemedText themeColor="textSecondary" type="small" style={styles.etiquetaHint}>
                       Imprime esta etiqueta si el código del elemento se perdió o se dañó.
+                    </ThemedText>
+                  </View>
+                ) : (
+                  <View style={styles.etiquetaBox}>
+                    <ThemedText themeColor="textSecondary" type="small" style={styles.etiquetaHint}>
+                      Este elemento no tiene código, así que todavía no hay Data Matrix que imprimir.
+                    </ThemedText>
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={saving || selected.id == null}
+                      onPress={handleAsignarCodigo}
+                      style={[styles.removeButton, styles.saveButton, (saving || selected.id == null) && styles.buttonDisabled]}>
+                      {saving
+                        ? <ActivityIndicator size="small" color="#FFFFFF" />
+                        : <ThemedText style={styles.saveButtonLabel}>Asignar código</ThemedText>}
+                    </Pressable>
+                    <ThemedText themeColor="textSecondary" type="small" style={styles.etiquetaHint}>
+                      Se le asigna un código nuevo; después ya se puede descargar su etiqueta.
                     </ThemedText>
                   </View>
                 )}

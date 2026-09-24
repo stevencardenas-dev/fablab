@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   addItem,
+  asignarCodigo,
   removeItem,
   updateItem,
   exportarUrl,
@@ -390,6 +391,43 @@ describe('updateItem', () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: 'x' }) }));
     await expect(updateItem(1, { detalle: 'x' })).rejects.toThrow('API 500');
+  });
+});
+
+describe('asignarCodigo', () => {
+  afterEach(() => {
+    (globalThis as any).fetch = undefined;
+  });
+
+  it('hace POST a /elementos/:id/codigo y actualiza la cache con el código nuevo', async () => {
+    const itemBase = makeItem({ codigo: '', detalle: 'FOAMI NEGRO' });
+    itemBase.id = 77;
+    let urlLlamada = '';
+    (globalThis as any).fetch = jest.fn((url: string, opts?: { method?: string; body?: string }) => {
+      if (opts?.method === 'POST') {
+        urlLlamada = url;
+        expect(JSON.parse(opts.body ?? '{}').codigo).toBe('CNC-137');
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: () => Promise.resolve({ asignado: true, elemento: { ...itemBase, codigo: 'CNC-137' } }),
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([itemBase]) });
+    });
+    await getAllItems(); // llena la cache
+    const elemento = await asignarCodigo(77, 'CNC-137');
+    expect(elemento.codigo).toBe('CNC-137');
+    expect(urlLlamada).toMatch(/\/elementos\/77\/codigo$/);
+    // Write-through: la sala y el resto de la app lo ven sin re-descargar
+    const items = await getAllItems();
+    expect(items.find((i) => i.id === 77)?.codigo).toBe('CNC-137');
+  });
+
+  it('propaga el 409 si el elemento ya tiene código', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 409, json: () => Promise.resolve({ error: 'ya tiene código' }) }));
+    await expect(asignarCodigo(1, 'CNC-137')).rejects.toThrow('API 409');
   });
 });
 

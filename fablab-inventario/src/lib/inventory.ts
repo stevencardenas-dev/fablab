@@ -243,6 +243,19 @@ export async function findByCodigo(codigo: string): Promise<InventoryItem | unde
   return items.find((i) => i.codigo === codigo);
 }
 
+// POST /elementos/:id/codigo. Para elementos importados que quedaron sin
+// código: sin código no hay Data Matrix que imprimir ni forma de escanear el
+// elemento. El server solo rellena vacíos (responde 409 si ya tiene uno),
+// porque el código es el identificador impreso en la etiqueta.
+export async function asignarCodigo(id: number, codigo: string): Promise<InventoryItem> {
+  const res = await post<{ asignado: boolean; elemento: InventoryItem }>(`/elementos/${id}/codigo`, {
+    codigo,
+  });
+  const cached = memAll?.items ?? (await cacheAllFromStorage());
+  writeAllCache(cached.map((it) => (it.id === id ? { ...it, ...res.elemento } : it)));
+  return res.elemento;
+}
+
 // --- Búsqueda inteligente ---
 // Busca en TODOS los campos del elemento (codigo, detalle, serial, inventario,
 // estado, observaciones, cantidad). Soporta múltiples palabras: todas deben

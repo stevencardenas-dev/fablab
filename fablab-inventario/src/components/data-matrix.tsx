@@ -237,11 +237,14 @@ export function DataMatrixSheetButton({
   label,
   archivo = 'lote',
   ayuda,
+  omitidos = 0,
 }: {
   codigos: readonly string[];
   label: string;
   archivo?: string;
   ayuda?: string;
+  /** Elementos de la lista sin código: no se pueden etiquetar y la hoja los saltea. */
+  omitidos?: number;
 }) {
   const [trabajando, setTrabajando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -283,6 +286,13 @@ export function DataMatrixSheetButton({
         <PrinterIcon color="#FFFFFF" />
         <ThemedText style={styles.downloadLabel}>{trabajando ? 'Preparando…' : label}</ThemedText>
       </Pressable>
+      {omitidos > 0 ? (
+        <ThemedText style={styles.downloadAviso}>
+          {omitidos === 1
+            ? '1 elemento de la lista no tiene código y queda fuera de la hoja.'
+            : `${omitidos} elementos de la lista no tienen código y quedan fuera de la hoja.`}
+        </ThemedText>
+      ) : null}
       {aviso ? (
         <ThemedText themeColor={esError ? 'text' : 'textSecondary'} style={[styles.downloadHint, esError && styles.downloadError]}>
           {aviso}
@@ -325,6 +335,7 @@ const styles = StyleSheet.create({
   downloadLabelCompacta: { color: '#C8102E', fontWeight: '700', fontSize: 13 },
   downloadError: { color: '#C8102E', fontSize: 13, textAlign: 'center' },
   downloadHint: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  downloadAviso: { color: '#C8102E', fontSize: 13, textAlign: 'center', lineHeight: 18 },
   sheetBox: { alignItems: 'center', gap: Spacing.half, width: '100%' },
   pressed: { opacity: 0.78 },
 });

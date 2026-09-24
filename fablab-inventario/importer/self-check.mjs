@@ -71,7 +71,35 @@ console.log('self-check OK');
 // Este check solo evita que se rompa el modulo al importarlo.
 {
   const api = await import('./api.mjs');
-  for (const f of ['listarSalas', 'listarElementos', 'registrarTraslado', 'historialElemento'])
+  for (const f of ['listarSalas', 'listarElementos', 'registrarTraslado', 'historialElemento', 'asignarCodigo'])
     assert.equal(typeof api[f], 'function', `api.mjs: falta ${f}`);
   console.log('self-check api OK');
+}
+
+// Reglas de asignacion de codigo (puras: no tocan la base).
+{
+  const { normalizarCodigo, validarAsignacion, ErrorApi } = await import('./api.mjs');
+  const rechaza = (fn, status) => {
+    try { fn(); } catch (e) {
+      assert(e instanceof ErrorApi, `deberia ser ErrorApi: ${e.message}`);
+      assert.equal(e.status, status, `estatus esperado ${status}, llego ${e.status}: ${e.message}`);
+      return;
+    }
+    assert.fail('deberia haber rechazado la operacion');
+  };
+
+  // Normalizacion: espacios, minusculas y guiones son validos; el resto no.
+  assert.equal(normalizarCodigo('  cnc-137 '), 'CNC-137');
+  assert.equal(normalizarCodigo('vl-303-05'), 'VL-303-05');
+  for (const malo of ['', 'A', 'CNC 137', 'CNC_137', 'CNC#137', 'A'.repeat(21), null])
+    rechaza(() => normalizarCodigo(malo), 400);
+
+  // Solo rellena vacios: un codigo existente no se sobrescribe.
+  assert.equal(validarAsignacion({ id: 1, codigoActual: null, codigoNuevo: 'CNC-137', idConEseCodigo: null }), 'CNC-137');
+  assert.equal(validarAsignacion({ id: 1, codigoActual: '  ', codigoNuevo: 'CNC-137', idConEseCodigo: null }), 'CNC-137');
+  rechaza(() => validarAsignacion({ id: 1, codigoActual: 'CNC-01', codigoNuevo: 'CNC-137', idConEseCodigo: null }), 409);
+  // Codigo ya usado por OTRO elemento: rechaza; por el mismo (reintento): pasa.
+  rechaza(() => validarAsignacion({ id: 1, codigoActual: null, codigoNuevo: 'IOT-79', idConEseCodigo: 246 }), 409);
+  assert.equal(validarAsignacion({ id: 1, codigoActual: null, codigoNuevo: 'CNC-137', idConEseCodigo: 1 }), 'CNC-137');
+  console.log('self-check codigos OK');
 }

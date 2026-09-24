@@ -288,6 +288,31 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   de `index.html`; el router resuelve la ruta en el cliente) — es el
   comportamiento de siempre, no un síntoma del deploy. Los commits del monorepo
   con todo esto siguen **SIN pushear** a `feature/inventario-scan`.
+- **Códigos para los elementos que no tenían (2026-09-25):** el cliente espera
+  que TODO elemento tenga Data Matrix, y 35 importados de la hoja (ids 1–29 y
+  166–171, materiales de CNC: foami, láminas, desechos) venían con `codigo`
+  NULL → sin código no hay símbolo que imprimir ni forma de escanearlos.
+  `codigo` **no es editable** por diseño (es el identificador impreso), así que
+  se agregó una vía explícita: `POST /api/elementos/:id/codigo` (con token,
+  `asignarCodigo` en `importer/api.mjs`), que **solo rellena vacíos** — 409 si
+  el elemento ya tiene código, 409 si el código está en uso, 400 si el formato
+  no es `A-Z0-9-` (2–20). En la UI, la ficha de un elemento sin código muestra
+  "Asignar código" (genera uno tipo `FL-…`, igual que el alta) y en su lugar
+  no ofrece descargar etiqueta; la hoja por lote ahora **avisa cuántos
+  elementos saltea** por no tener código en vez de imprimir menos en silencio.
+  Migración: `scripts/asignar-codigos.mjs` (dry-run por defecto; `--api` para
+  producción, `--db` para MySQL directo, `--sql` imprime los UPDATE). Continúa
+  la numeración de cada sala tomando el prefijo que domina en ella: los 35
+  quedaron como **CNC-137…CNC-171**. Corrido en producción: 917 elementos,
+  **0 sin código**, sin duplicados nuevos (el `IOT-79`×2 heredado sigue ahí:
+  `codigo` no tiene índice UNIQUE en el esquema, y renombrar uno de los dos es
+  decisión del cliente). Verificado: self-check (`asignarCodigo` sin MySQL),
+  56/56 tests, tsc y lint limpios; endpoint probado contra MySQL local con
+  401/400/409/404/201 y CORS, migración probada en local por las dos vías
+  (API y BD) y luego en producción con backup previo
+  (`backups/elementos-2026-09-24-02-47.json`), y un E2E en el navegador que
+  cubre el botón, el aviso de omitidos y la hoja después de asignar. Deploy:
+  **api `1608d79..db6c29b`**, **web `50b4902..5f5e03f`** (SW `fablab-v9`).
 
 
 ## Decisions

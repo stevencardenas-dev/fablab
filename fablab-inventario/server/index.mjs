@@ -11,6 +11,7 @@ import {
   agregarElemento,
   eliminarElemento,
   actualizarElemento,
+  asignarCodigo,
   exportarElementos,
   exportarTraslados,
   cerrarPools,
@@ -212,6 +213,17 @@ async function handleReq(req, res) {
       return json(res, 200, result);
     }
 
+    // POST /api/elementos/:id/codigo  →  asignar código a un elemento que no
+    // tiene (los importados de la hoja pueden venir sin código, y sin código no
+    // hay Data Matrix). El server rechaza con 409 si el elemento ya tiene uno.
+    if (req.method === 'POST' && parts[0] === 'api' && parts[1] === 'elementos' && parts[3] === 'codigo') {
+      const elementoId = Number(parts[2]);
+      if (!Number.isFinite(elementoId)) return badRequest(res, 'ID de elemento inválido');
+      const body = await readBody(req);
+      const result = await asignarCodigo(elementoId, body.codigo, conexionDesdeEnv());
+      return json(res, 201, result);
+    }
+
     // GET /api/export/elementos.csv|.json y /api/export/traslados.csv|.json
     // (la extensión llega pegada al segmento: /api/export/elementos.csv → parts[2] = "elementos.csv")
     if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'export') {
@@ -261,6 +273,7 @@ server.listen(PORT, HOST, () => {
   console.log(`  GET    /api/elementos/:id/historial`);
   console.log(`  POST   /api/elementos`);
   console.log(`  PUT    /api/elementos/:id`);
+  console.log(`  POST   /api/elementos/:id/codigo  (solo si el elemento no tiene código)`);
   console.log(`  GET    /api/export/{elementos,traslados}.{csv,json}`);
   console.log(`  DELETE /api/elementos/:codigo`);
   console.log(`  POST   /api/traslados`);

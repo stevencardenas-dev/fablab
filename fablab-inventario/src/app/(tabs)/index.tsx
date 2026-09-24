@@ -221,7 +221,8 @@ export default function HomeScreen() {
             {searchResults !== null && searchResults.length > 0 && (
               <DataMatrixSheetButton
                 codigos={searchResults.map((item) => item.codigo)}
-                label={`Imprimir etiquetas de los resultados (${searchResults.length})`}
+                omitidos={searchResults.filter((item) => !item.codigo).length}
+                label={`Imprimir etiquetas de los resultados (${searchResults.filter((item) => item.codigo).length})`}
                 archivo={`busqueda-${searchName}`}
                 ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja A4."
               />

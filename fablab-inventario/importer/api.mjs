@@ -208,6 +208,69 @@ export async function actualizarElemento(id, campos, cfg = conexionDesdeEnv()) {
   });
 }
 
+// --- Asignar código a un elemento importado sin código ---
+// La hoja de cálculo trae filas sin N° de inventario (hoy: 35 materiales de
+// CNC), y sin código no hay Data Matrix que imprimir ni forma de escanear el
+// elemento. Esto es lo único que toca `codigo` — y SOLO para rellenar vacíos:
+// un código existente es el identificador ya impreso en la etiqueta, así que
+// sobrescribirlo invalidaría las etiquetas pegadas y la búsqueda por código.
+//
+// Nota: `codigo` NO tiene índice UNIQUE en el esquema (por eso existen
+// duplicados heredados como IOT-79), así que la unicidad se verifica con un
+// SELECT dentro de la misma transacción de lectura/escritura de la conexión.
+const FORMATO_CODIGO = /^[A-Z0-9][A-Z0-9-]{1,19}$/;
+
+export function normalizarCodigo(codigo) {
+  const limpio = String(codigo ?? '').trim().toUpperCase();
+  if (!FORMATO_CODIGO.test(limpio)) {
+    throw new ErrorApi('Código inválido: de 2 a 20 caracteres A-Z, 0-9 y guiones', 400);
+  }
+  return limpio;
+}
+
+/**
+ * Decide si se puede asignar el código. Pura: sin base, así el self-check la
+ * cubre sin MySQL. `idConEseCodigo` es el id que ya usa ese código, si hay uno.
+ */
+export function validarAsignacion({ id, codigoActual, codigoNuevo, idConEseCodigo }) {
+  const nuevo = normalizarCodigo(codigoNuevo);
+  if (codigoActual != null && String(codigoActual).trim() !== '') {
+    throw new ErrorApi(
+      `El elemento ${id} ya tiene código (${codigoActual}); no se sobrescribe el identificador impreso`,
+      409,
+    );
+  }
+  if (idConEseCodigo != null && Number(idConEseCodigo) !== Number(id)) {
+    throw new ErrorApi(`El código ${nuevo} ya está en uso por el elemento ${idConEseCodigo}`, 409);
+  }
+  return nuevo;
+}
+
+const COLUMNAS_ELEMENTO = 'id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad';
+
+export async function asignarCodigo(id, codigo, cfg = conexionDesdeEnv()) {
+  if (!Number.isFinite(Number(id))) throw new ErrorApi('ID de elemento inválido', 400);
+  const nuevo = normalizarCodigo(codigo);
+  invalidarCache();
+  return conectar(cfg, async (conn) => {
+    const [[actual]] = await conn.query('SELECT id, codigo FROM elementos WHERE id = ?', [id]);
+    if (!actual) throw new ErrorApi(`El elemento ${id} no existe`, 404);
+    const [[ocupado]] = await conn.query('SELECT id FROM elementos WHERE codigo = ? LIMIT 1', [nuevo]);
+    const asignable = validarAsignacion({
+      id,
+      codigoActual: actual.codigo,
+      codigoNuevo: nuevo,
+      idConEseCodigo: ocupado?.id ?? null,
+    });
+    await conn.query('UPDATE elementos SET codigo = ? WHERE id = ?', [asignable, id]);
+    const [[elemento]] = await conn.query(
+      `SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`,
+      [id],
+    );
+    return { asignado: true, elemento };
+  });
+}
+
 // --- Export completo (CSV/JSON) ---
 // Elementos con su sala y edificio; traslados con codigo de elemento y nombres de sala.
 

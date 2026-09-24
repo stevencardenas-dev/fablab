@@ -57,6 +57,7 @@
     "verify:datamatrix": "node scripts/verify-datamatrix.mjs",
     "seed": "node scripts/seed.mjs",
     "fix:mojibake": "node scripts/fix-mojibake.mjs",
+    "asignar:codigos": "node scripts/asignar-codigos.mjs",
     "backup:remoto": "node scripts/backup-remoto.mjs",
     "sync:deploy": "node scripts/sync-deploy.mjs"
   },

@@ -1,7 +1,7 @@
 // Service Worker para FabLab Inventario PWA
 // Cachea la app shell y permite uso offline básico.
 
-const CACHE_NAME = 'fablab-v8';
+const CACHE_NAME = 'fablab-v9';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

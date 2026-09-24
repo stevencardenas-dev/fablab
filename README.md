@@ -88,6 +88,7 @@ Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go
 | GET | `/api/elementos/:id/historial` | Historial de traslados |
 | POST | `/api/elementos` | Agregar elemento |
 | PUT | `/api/elementos/:id` | Editar campos del elemento |
+| POST | `/api/elementos/:id/codigo` | Asignar código a un elemento que no tiene (409 si ya tiene) |
 | DELETE | `/api/elementos/:codigo` | Eliminar elemento |
 | POST | `/api/traslados` | Registrar traslado (transaccional) |
 | GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar inventario o traslados |
@@ -142,6 +143,7 @@ fablab/
 - **Exportar** — Descarga el inventario o los traslados en CSV (abre directo en Excel) o JSON
 - **Inventario** — Lista de salas con conteo de elementos
 - **Sala** — Elementos de una sala, detalles, editar campos, mover a otra sala (traslado con historial), eliminar con confirmación
+- **Códigos** — Los elementos importados sin N° de inventario pueden recibir un código desde su ficha (o en bloque con `npm run asignar:codigos`) para poder etiquetarlos
 - **PWA** — Instalable en pantalla de inicio del teléfono
 
 ## Base de datos
@@ -161,9 +163,10 @@ Datos cargados: **916 elementos**, **11 salas**, **2 edificios** (FabLab + ViveL
 
 ```bash
 cd fablab/fablab-inventario
-npm test                        # 54/54 tests (Jest)
+npm test                        # 56/56 tests (Jest)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
 node scripts/verify-datamatrix.mjs  # Verifica códigos DataMatrix
+node scripts/asignar-codigos.mjs    # Dry-run: códigos para elementos sin código (--api, --escribir, --sql)
 ```
 
 ## Variables de entorno
