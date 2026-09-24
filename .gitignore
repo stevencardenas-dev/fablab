@@ -2,5 +2,8 @@
 inventario.sql
 inventario-normalizado.sql
 
+# Export web (artefacto para sync:deploy → Masterkillerr/fablab-web)
+fablab-inventario/dist/
+
 # LibreOffice
 .~lock.*#

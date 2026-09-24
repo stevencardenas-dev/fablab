@@ -1,17 +1,18 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as Linking from 'expo-linking';
 import { useState, useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DataMatrixCode } from '@/components/data-matrix';
+import { DataMatrixCode, DataMatrixDownloadButton, DataMatrixSheetButton, descargarDataMatrix } from '@/components/data-matrix';
 import { Scanner } from '@/components/scanner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
-import { addItem, findByCodigo, findByDetalle, generateCodigo, listarSalas, buscarElementos, type InventoryItem, type Room } from '@/lib/inventory';
+import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, listarSalas, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -30,9 +31,14 @@ export default function HomeScreen() {
   const theme = useTheme();
   const themeMode = useThemeMode();
   const toggleTheme = useToggleTheme();
-  const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | null>(null);
+  const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | 'export' | null>(null);
   const [element, setElement] = useState<InventoryItem>(newElement);
+  // Sala de destino: la BD la guarda como FK (sala_id), NO dentro del campo
+  // `inventario` (ese es el "N° INVENTARIO" de la hoja). Sin sala_id el server
+  // rechaza el POST con 400.
+  const [salaId, setSalaId] = useState<number | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [addSaving, setAddSaving] = useState(false);
   const [savedCodigo, setSavedCodigo] = useState<string | null>(null);
   const [scannedItem, setScannedItem] = useState<InventoryItem | null | undefined>(undefined);
   const [searchName, setSearchName] = useState('');
@@ -45,7 +51,7 @@ export default function HomeScreen() {
     });
   }, []);
 
-  function openPanel(panel: 'scan' | 'add' | 'search') {
+  function openPanel(panel: 'scan' | 'add' | 'search' | 'export') {
     const next = openAction === panel ? null : panel;
     setOpenAction(next);
     setScannedItem(undefined);
@@ -53,7 +59,10 @@ export default function HomeScreen() {
     setSearchName('');
     setAddError(null);
     setSavedCodigo(null);
-    if (next === 'add') setElement(newElement());
+    if (next === 'add') {
+      setElement(newElement());
+      setSalaId(null);
+    }
   }
 
   async function handleScanned(codigo: string) {
@@ -62,14 +71,30 @@ export default function HomeScreen() {
   }
 
   async function handleAdd() {
-    if (!element.detalle || !element.inventario) {
+    if (!element.detalle || salaId == null) {
       setAddError('Detalle y sala son obligatorios.');
       return;
     }
+    if (addSaving) return;
+    setAddSaving(true);
     setAddError(null);
-    await addItem(element);
-    setSavedCodigo(element.codigo);
-    setElement(newElement());
+    try {
+      const guardado = await addItem({ ...element, sala_id: salaId });
+      const codigo = guardado.codigo || element.codigo;
+      setSavedCodigo(codigo);
+      setElement(newElement());
+      setSalaId(null);
+      // En web el archivo se entrega solo: el usuario acaba de crear el elemento
+      // y necesita la etiqueta ya, sin un clic extra. En nativo la descarga abre
+      // la hoja de compartir, y abrirla sin que la pidan interrumpe el flujo:
+      // ahí queda el botón. Si esta descarga automática falla, el botón sigue
+      // ahí como respaldo (por eso no se reporta el error aquí).
+      if (Platform.OS === 'web') descargarDataMatrix(codigo).catch(() => {});
+    } catch (e) {
+      setAddError(e instanceof Error ? `No se pudo guardar: ${e.message}` : 'No se pudo guardar.');
+    } finally {
+      setAddSaving(false);
+    }
   }
 
   async function handleSearch() {
@@ -108,6 +133,9 @@ export default function HomeScreen() {
                 {(['codigo', 'detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
                   <ThemedText key={field} style={styles.resultLine}>{field.toUpperCase()}: {scannedItem[field] || '-'}</ThemedText>
                 ))}
+                {scannedItem.codigo && (
+                  <DataMatrixDownloadButton codigo={scannedItem.codigo} label="Descargar Data Matrix" />
+                )}
               </View>
             )}
           </ActionPanel>}
@@ -143,25 +171,25 @@ export default function HomeScreen() {
               <FormInput key={field} label={field.toUpperCase()} value={element[field]} onChangeText={(value) => setElement({ ...element, [field]: value })} theme={theme} />
             ))}
             <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.inputLabel}>INVENTARIO</ThemedText>
+              <ThemedText type="smallBold" style={styles.inputLabel}>SALA</ThemedText>
               <View style={styles.roomChips}>
                 {salas.map((sala) => (
                   <Pressable
                     key={sala.id}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: element.inventario === sala.nombre }}
-                    onPress={() => setElement({ ...element, inventario: sala.nombre })}
-                    style={[styles.roomChip, element.inventario === sala.nombre && styles.roomChipSelected]}>
-                    <ThemedText style={element.inventario === sala.nombre ? styles.roomChipLabelSelected : styles.roomChipLabel}>{sala.nombre}</ThemedText>
+                    accessibilityState={{ selected: salaId === sala.id }}
+                    onPress={() => setSalaId(sala.id)}
+                    style={[styles.roomChip, salaId === sala.id && styles.roomChipSelected]}>
+                    <ThemedText style={salaId === sala.id ? styles.roomChipLabelSelected : styles.roomChipLabel}>{sala.nombre}</ThemedText>
                   </Pressable>
                 ))}
                 {!salas.length && <ThemedText themeColor="textSecondary" type="small">Cargando salas…</ThemedText>}
               </View>
             </View>
-            {(['estado', 'observaciones', 'cantidad'] as const).map((field) => (
+            {(['inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
               <FormInput key={field} label={field.toUpperCase()} value={element[field]} onChangeText={(value) => setElement({ ...element, [field]: value })} theme={theme} />
             ))}
-            <PanelButton label="Agregar" onPress={handleAdd} />
+            <PanelButton label={addSaving ? 'Guardando…' : 'Agregar'} onPress={handleAdd} disabled={addSaving} />
 
             {addError && (
               <ThemedText style={styles.errorText}>{addError}</ThemedText>
@@ -169,10 +197,13 @@ export default function HomeScreen() {
             {savedCodigo && (
               <View style={styles.codePreview}>
                 <ThemedText themeColor="textSecondary" style={styles.description}>
-                  Guardado. Imprime este Data Matrix y pégalo en el elemento:
+                  {Platform.OS === 'web'
+                    ? 'Guardado. El archivo para imprimir ya se descargó; si lo necesitas de nuevo, está aquí:'
+                    : 'Guardado. Descarga el Data Matrix para imprimirlo y pegarlo en el elemento:'}
                 </ThemedText>
                 <DataMatrixCode value={savedCodigo} size={120} />
                 <ThemedText type="smallBold" style={styles.codeLabel}>{savedCodigo}</ThemedText>
+                <DataMatrixDownloadButton codigo={savedCodigo} label="Descargar para imprimir" />
               </View>
             )}
           </ActionPanel>}
@@ -186,6 +217,14 @@ export default function HomeScreen() {
               <ThemedText style={styles.searchCount}>
                 {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
               </ThemedText>
+            )}
+            {searchResults !== null && searchResults.length > 0 && (
+              <DataMatrixSheetButton
+                codigos={searchResults.map((item) => item.codigo)}
+                label={`Imprimir etiquetas de los resultados (${searchResults.length})`}
+                archivo={`busqueda-${searchName}`}
+                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja A4."
+              />
             )}
             {searchResults?.map((item, idx) => {
               const room = salas.find((s) => s.id === item.sala_id);
@@ -214,16 +253,42 @@ export default function HomeScreen() {
                       <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
                     )}
                   </View>
+                  {item.codigo && (
+                    <DataMatrixDownloadButton codigo={item.codigo} compacta label="Data Matrix" />
+                  )}
                 </View>
               );
             })}
             {searchResults?.length === 0 && (
               <View style={styles.searchEmpty}>
                 <ThemedText style={styles.searchEmptyIcon}>🔍</ThemedText>
-                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para "{searchName}"</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para &ldquo;{searchName}&rdquo;</ThemedText>
                 <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
               </View>
             )}
+          </ActionPanel>}
+
+          <ActionButton icon="export" label="Exportar inventario" isOpen={openAction === 'export'} onPress={() => openPanel('export')} />
+          {openAction === 'export' && <ActionPanel>
+            <ThemedText themeColor="textSecondary" style={styles.description}>
+              Descarga el inventario completo o el historial de traslados. El CSV abre directo en Excel (con acentos correctos); el JSON es para otros programas.
+            </ThemedText>
+            <View style={styles.exportRow}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'csv'))} style={styles.exportButton}>
+                <ThemedText style={styles.exportButtonLabel}>Inventario (CSV)</ThemedText>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'csv'))} style={styles.exportButton}>
+                <ThemedText style={styles.exportButtonLabel}>Traslados (CSV)</ThemedText>
+              </Pressable>
+            </View>
+            <View style={styles.exportRow}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'json'))} style={styles.exportButtonGhost}>
+                <ThemedText style={styles.exportButtonGhostLabel}>Inventario (JSON)</ThemedText>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'json'))} style={styles.exportButtonGhost}>
+                <ThemedText style={styles.exportButtonGhostLabel}>Traslados (JSON)</ThemedText>
+              </Pressable>
+            </View>
           </ActionPanel>}
         </View>
         </ScrollView>
@@ -256,8 +321,8 @@ function MoonIcon({ color }: { color: string }) {
   );
 }
 
-function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass'; label: string; isOpen: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
+function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass' | 'export'; label: string; isOpen: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : icon === 'export' ? <ExportIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
 }
 
 function ScanIcon() {
@@ -287,12 +352,21 @@ function SearchIcon() {
   );
 }
 
+function ExportIcon() {
+  return (
+    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none" accessibilityLabel="Exportar">
+      <Path d="M12 3v12M12 3l-4 4M12 3l4 4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function ActionPanel({ children }: { children: React.ReactNode }) {
   return <ThemedView type="backgroundElement" style={styles.actionPanel}>{children}</ThemedView>;
 }
 
-function PanelButton({ label, onPress }: { label: string; onPress?: () => void }) {
-  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.panelButton, pressed && styles.pressed]}><ThemedText style={styles.panelButtonLabel}>{label}</ThemedText></Pressable>;
+function PanelButton({ label, onPress, disabled }: { label: string; onPress?: () => void; disabled?: boolean }) {
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.panelButton, disabled && styles.panelButtonDisabled, pressed && !disabled && styles.pressed]}><ThemedText style={styles.panelButtonLabel}>{label}</ThemedText></Pressable>;
 }
 
 function FormInput({ label, value, onChangeText, theme }: { label: string; value: string; onChangeText: (value: string) => void; theme: ReturnType<typeof useTheme> }) {
@@ -355,7 +429,13 @@ const styles = StyleSheet.create({
   searchEmptyIcon: { fontSize: 32 },
   searchEmptyText: { marginTop: Spacing.two, textAlign: 'center' },
   searchEmptyHint: { textAlign: 'center' },
+  exportRow: { flexDirection: 'row', gap: Spacing.two },
+  exportButton: { flex: 1, minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
+  exportButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 14, textAlign: 'center' },
+  exportButtonGhost: { flex: 1, minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
+  exportButtonGhostLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14, textAlign: 'center' },
   panelButton: { minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
+  panelButtonDisabled: { opacity: 0.6 },
   panelButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   pressed: { opacity: 0.78 },
 });

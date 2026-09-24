@@ -1,12 +1,13 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemeModeContext, ToggleThemeContext, type AppThemeMode } from '@/hooks/use-theme';
 import { registerServiceWorker } from '@/components/service-worker';
+import { prewarmCache } from '@/lib/inventory';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,6 +15,12 @@ SplashScreen.preventAutoHideAsync();
 registerServiceWorker();
 
 export default function RootLayout() {
+  // Calienta la cache del inventario apenas abre la app: cuando el usuario
+  // entra a Inventario los datos ya están (carga instantánea).
+  useEffect(() => {
+    prewarmCache();
+  }, []);
+
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<AppThemeMode>(
     systemColorScheme === 'dark' ? 'dark' : 'light',
