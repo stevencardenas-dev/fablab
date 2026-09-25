@@ -165,10 +165,23 @@ function readFileSyncSafe(p) {
 // salió el artefacto, para poder responder "¿qué código está en producción?"
 // sin adivinar. `+dirty` avisa que había cambios sin commitear, o sea que el
 // deploy NO es reproducible desde ese hash.
-function firmaMonorepo() {
+//
+// El chequeo mira SOLO las rutas que alimentan cada artefacto: un archivo suelto
+// en .freebuff/ o un doc sin commitear no invalidan el artefacto de la API (la
+// primera versión de esto marcaba +dirty por un untracked irrelevante), pero un
+// archivo nuevo dentro de server/ sí — y ese se copia igual, así que cuenta.
+const RUTAS_ARTEFACTO = {
+  api: ['server', 'importer', 'ddl-data.sql'],
+  web: ['.'], // el export web se arma con todo el proyecto
+};
+
+function firmaMonorepo(name) {
   try {
     const hash = shOut('git rev-parse --short HEAD', APP_ROOT);
-    const sucio = shOut('git status --porcelain', APP_ROOT).length > 0;
+    const rutas = (RUTAS_ARTEFACTO[name] ?? ['.'])
+      .map((r) => `"${join(APP_ROOT, r)}"`)
+      .join(' ');
+    const sucio = shOut(`git status --porcelain -- ${rutas}`, APP_ROOT).length > 0;
     return `${hash}${sucio ? '+dirty' : ''}`;
   } catch {
     return 'sin-git';
@@ -180,7 +193,7 @@ function commitAndPush(name, t) {
     console.log(`[${name}] sin cambios que subir ✔`);
     return;
   }
-  const msg = `${SYNC_PREFIX} (${new Date().toISOString().slice(0, 16).replace('T', ' ')} · fablab@${firmaMonorepo()})`;
+  const msg = `${SYNC_PREFIX} (${new Date().toISOString().slice(0, 16).replace('T', ' ')} · fablab@${firmaMonorepo(name)})`;
   sh(`git add -A && git commit -m "${msg}" && git push origin main`, t.dir);
   console.log(`[${name}] commiteado y subido → ${TARGETS[name].repo.replace('git@github.com:', '')}`);
 }
