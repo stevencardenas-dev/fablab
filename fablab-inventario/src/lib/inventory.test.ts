@@ -3,8 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   addItem,
   asignarCodigo,
+  eliminarFoto,
   removeItem,
+  subirFoto,
   updateItem,
+  urlFoto,
   exportarUrl,
   fetchConReintentos,
   generateCodigo,
@@ -478,5 +481,115 @@ describe('exportarUrl', () => {
 describe('SinUbicacion', () => {
   it('is defined as a string', () => {
     expect(SinUbicacion).toBe('Sin ubicación');
+  });
+});
+
+describe('urlFoto', () => {
+  it('arma la URL de la miniatura con el hash como versión', () => {
+    expect(urlFoto({ id: 42, foto_hash: 'abc123' })).toMatch(/\/elementos\/42\/foto\?tam=miniatura&v=abc123$/);
+  });
+
+  it('permite pedir la foto completa', () => {
+    expect(urlFoto({ id: 42, foto_hash: 'abc123' }, 'foto')).toContain('tam=foto');
+  });
+
+  it('sin foto guardada no hay URL (nada de <Image> roto)', () => {
+    expect(urlFoto({ id: 42 })).toBeNull();
+    expect(urlFoto(null)).toBeNull();
+    expect(urlFoto({ foto_hash: 'abc123' })).toBeNull();
+  });
+
+  it('cambia la URL cuando cambia la foto (cache-busting)', () => {
+    const antes = urlFoto({ id: 42, foto_hash: 'aaaa' });
+    const despues = urlFoto({ id: 42, foto_hash: 'bbbb' });
+    expect(antes).not.toBe(despues);
+  });
+});
+
+describe('subirFoto', () => {
+  const payload = {
+    mime: 'image/webp',
+    foto: 'AAAA',
+    miniatura: 'AA==',
+    ancho: 800,
+    alto: 600,
+  };
+
+  afterEach(() => {
+    (globalThis as any).fetch = undefined;
+  });
+
+  it('POSTea a /elementos/:id/foto con el payload ya reducido', async () => {
+    const itemBase = { ...makeItem({ codigo: 'FOT-1' }), id: 55 };
+    let urlLlamada = '';
+    let body: Record<string, unknown> = {};
+    (globalThis as any).fetch = jest.fn((url: string, opts?: { method?: string; body?: string }) => {
+      if (opts?.method === 'POST') {
+        urlLlamada = url;
+        body = JSON.parse(opts.body ?? '{}');
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: () => Promise.resolve({ guardada: true, elemento_id: 55, hash: 'nuevohash' }),
+        });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([itemBase]) });
+    });
+
+    await getAllItems(); // llena la cache
+    const hash = await subirFoto(55, payload);
+
+    expect(urlLlamada).toMatch(/\/elementos\/55\/foto$/);
+    expect(body).toMatchObject({ mime: 'image/webp', ancho: 800, alto: 600 });
+    expect(hash).toBe('nuevohash');
+    // Write-through: la foto aparece sin volver a descargar el inventario.
+    const items = await getAllItems();
+    expect(items.find((i) => i.id === 55)?.foto_hash).toBe('nuevohash');
+  });
+
+  it('propaga el mensaje del 413 (el server explica cuánto pesa)', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 413,
+        json: () => Promise.resolve({ error: 'La foto pesa 500 KB y el límite es 400 KB' }),
+      }));
+    await expect(subirFoto(1, payload)).rejects.toThrow(/límite es 400 KB/);
+  });
+
+  it('propaga el error si falta el token (401)', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) }));
+    await expect(subirFoto(1, payload)).rejects.toThrow('API 401');
+  });
+});
+
+describe('eliminarFoto', () => {
+  afterEach(() => {
+    (globalThis as any).fetch = undefined;
+  });
+
+  it('DELETEa la foto y la quita de la cache', async () => {
+    const itemBase = { ...makeItem({ codigo: 'FOT-2' }), id: 66, foto_hash: 'viejo' };
+    let metodo = '';
+    (globalThis as any).fetch = jest.fn((_url: string, opts?: { method?: string }) => {
+      if (opts?.method === 'DELETE') {
+        metodo = 'DELETE';
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ borrada: true }) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([itemBase]) });
+    });
+
+    await getAllItems();
+    await eliminarFoto(66);
+    expect(metodo).toBe('DELETE');
+    const items = await getAllItems();
+    expect(items.find((i) => i.id === 66)?.foto_hash).toBeUndefined();
+  });
+
+  it('propaga el error si el DELETE falla (sin fallback silencioso)', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }));
+    await expect(eliminarFoto(1)).rejects.toThrow('API 500');
   });
 });

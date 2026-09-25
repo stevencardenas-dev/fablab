@@ -1,22 +1,27 @@
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DataMatrixCode, DataMatrixDownloadButton, DataMatrixSheetButton } from '@/components/data-matrix';
+import { prepararFotoParaSubir } from '@/lib/foto-optimizar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import {
   asignarCodigo,
+  eliminarFoto,
   findByRoom,
   generateCodigo,
   historialElemento,
   listarSalas,
   registrarTraslado,
   removeItem,
+  subirFoto,
   updateItem,
+  urlFoto,
   type CamposEditables,
   type InventoryItem,
   type Room,
@@ -44,7 +49,6 @@ const fieldLabels: Record<string, string> = {
   estado: 'Estado',
   observaciones: 'Observaciones',
   cantidad: 'Cantidad',
-  foto: 'Foto',
 };
 
 export default function SalaScreen() {
@@ -60,10 +64,32 @@ export default function SalaScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [traslados, setTraslados] = useState<{ id: number; lista: TrasladoHistorial[] } | null>(null);
+  // La foto se reduce en el teléfono antes de subirla: sin eso, cada foto de
+  // cámara serían 1-2,5 MB y el inventario completo no cabría en el servidor.
+  const [fotoEstado, setFotoEstado] = useState<string | null>(null);
+  const [fotoResumen, setFotoResumen] = useState<string | null>(null);
 
   // Elementos importados de la hoja que quedaron sin N° de inventario: no
   // tienen Data Matrix que imprimir hasta que se les asigne un código.
   const sinCodigo = items.filter((item) => !item.codigo).length;
+
+  // Precarga de la foto grande: el modal muestra primero la miniatura (placeholder)
+  // y ~200-600 ms después hace el fundido a la foto 800 px — se ve "borroso →
+  // nítido". onPressIn dispara ~100-300 ms ANTES que onPress (y onHoverIn en web),
+  // así la descarga va en camino antes de abrir el modal y casi siempre llega
+  // nítido de una. Falla en silencio: el modal ya revalida por su cuenta.
+  const precargarFoto = (item: InventoryItem) => {
+    const url = urlFoto(item, 'foto');
+    if (url) Image.prefetch(url, 'memory-disk').catch(() => {});
+  };
+
+  // URL de la foto del elemento abierto (null si no tiene): el listado solo trae
+  // `foto_hash`, así que la imagen se pide al mostrarla, no al cargar el inventario.
+  // La foto grande tarda ~350-600 ms en llegar (WAN + Render); mientras tanto,
+  // el placeholder muestra la miniatura del chip, que ya está en la caché de
+  // memoria (memoryCachePolicy): el modal abre con imagen en vez de cuadrado vacío.
+  const fotoGrande = urlFoto(selected, 'foto');
+  const fotoMiniatura = urlFoto(selected);
 
   const load = useCallback(() => {
     if (!Number.isFinite(salaId)) return;
@@ -99,6 +125,59 @@ export default function SalaScreen() {
     setConfirmCodigo(null);
     setEdit({});
     setSaveError(null);
+    setFotoEstado(null);
+    setFotoResumen(null);
+  }
+
+  async function handleFoto(asset: ImagePicker.ImagePickerAsset) {
+    if (!selected?.id || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    setFotoResumen(null);
+    try {
+      setFotoEstado('Optimizando foto…');
+      const optimizada = await prepararFotoParaSubir({
+        uri: asset.uri,
+        ancho: asset.width,
+        alto: asset.height,
+        pesoOriginalBytes: asset.fileSize,
+      });
+      setFotoEstado('Subiendo foto…');
+      const hash = await subirFoto(selected.id, optimizada);
+      // El hash nuevo cambia la URL: expo-image pide la imagen nueva sola.
+      setSelected((prev) => (prev ? { ...prev, foto_hash: hash } : prev));
+      setFotoResumen(`Foto guardada: ${optimizada.resumen}`);
+      load();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'No se pudo guardar la foto');
+    } finally {
+      setFotoEstado(null);
+      setSaving(false);
+    }
+  }
+
+  async function elegirFoto(origen: 'camara' | 'galeria') {
+    if (saving) return;
+    const result = origen === 'camara'
+      ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3] })
+      : await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled) await handleFoto(result.assets[0]);
+  }
+
+  async function handleQuitarFoto() {
+    if (!selected?.id || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await eliminarFoto(selected.id);
+      setSelected((prev) => (prev ? { ...prev, foto_hash: undefined } : prev));
+      setFotoResumen(null);
+      load();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'No se pudo quitar la foto');
+    } finally {
+      setSaving(false);
+    }
   }
 
   // Solo los campos que el usuario tocó van al PUT: el server rechaza un
@@ -216,12 +295,23 @@ export default function SalaScreen() {
           )}
 
           <View style={styles.pillList}>
-            {items.map((item, idx) => (
-              <Pressable key={item.id ?? item.codigo ?? `idx-${idx}`} accessibilityRole="button" onPress={() => setSelected(item)} style={styles.pill}>
-                {item.foto ? <Image source={{ uri: item.foto }} style={styles.thumb} /> : <View style={styles.thumbPlaceholder} />}
-                <ThemedText type="smallBold" style={styles.pillLabel}>{item.detalle || item.codigo}</ThemedText>
-              </Pressable>
-            ))}
+            {items.map((item, idx) => {
+              const miniatura = urlFoto(item);
+              return (
+                <Pressable
+                  key={item.id ?? item.codigo ?? `idx-${idx}`}
+                  accessibilityRole="button"
+                  onPress={() => setSelected(item)}
+                  onPressIn={() => precargarFoto(item)}
+                  onHoverIn={() => precargarFoto(item)}
+                  style={styles.pill}>
+                  {/* memoryCachePolicy: la miniatura queda viva en RAM, así el
+                      placeholder del modal la reutiliza sin re-pedirla. */}
+                  {miniatura ? <Image source={{ uri: miniatura }} style={styles.thumb} contentFit="cover" cachePolicy="memory" /> : <View style={styles.thumbPlaceholder} />}
+                  <ThemedText type="smallBold" style={styles.pillLabel}>{item.detalle || item.codigo}</ThemedText>
+                </Pressable>
+              );
+            })}
           </View>
         </SafeAreaView>
       </ScrollView>
@@ -240,13 +330,51 @@ export default function SalaScreen() {
                   </Pressable>
                 </View>
 
-                {selected.foto ? (
-                  <Image source={{ uri: selected.foto }} style={styles.photo} contentFit="cover" />
+                {fotoGrande ? (
+                  <Image
+                    source={{ uri: fotoGrande }}
+                    style={styles.photo}
+                    contentFit="cover"
+                    placeholder={fotoMiniatura}
+                    placeholderContentFit="cover"
+                    transition={150}
+                    cachePolicy="memory"
+                  />
                 ) : (
                   <View style={styles.photoPlaceholder}>
                     <ThemedText themeColor="textSecondary">Sin foto</ThemedText>
                   </View>
                 )}
+
+                {/* La foto se toma aquí y se sube ya reducida (800 px + miniatura),
+                    para que el inventario completo quepa en el servidor. */}
+                <View style={styles.photoActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={saving || selected.id == null}
+                    onPress={() => elegirFoto('camara')}
+                    style={[styles.photoButton, (saving || selected.id == null) && styles.buttonDisabled]}>
+                    <ThemedText style={styles.photoButtonLabel}>{fotoGrande ? 'Reemplazar foto' : 'Tomar foto'}</ThemedText>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={saving || selected.id == null}
+                    onPress={() => elegirFoto('galeria')}
+                    style={[styles.photoButton, (saving || selected.id == null) && styles.buttonDisabled]}>
+                    <ThemedText style={styles.photoButtonLabel}>Galería</ThemedText>
+                  </Pressable>
+                  {fotoGrande && (
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={saving}
+                      onPress={handleQuitarFoto}
+                      style={[styles.photoButton, saving && styles.buttonDisabled]}>
+                      <ThemedText style={styles.photoButtonLabel}>Quitar foto</ThemedText>
+                    </Pressable>
+                  )}
+                </View>
+                {fotoEstado && <ThemedText themeColor="textSecondary" type="small">{fotoEstado}</ThemedText>}
+                {fotoResumen && <ThemedText themeColor="textSecondary" type="small">{fotoResumen}</ThemedText>}
 
                 <ThemedText type="smallBold" style={styles.detailLabel}>{fieldLabels.codigo}</ThemedText>
                 <ThemedText style={styles.codigoValue}>{selected.codigo}</ThemedText>
@@ -381,6 +509,9 @@ const styles = StyleSheet.create({
   thumbPlaceholder: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#C8102E22' },
   pillLabel: { color: '#C8102E', fontSize: 14 },
   photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: 12 },
+  photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one, marginTop: Spacing.two },
+  photoButton: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: '#C8102E', paddingHorizontal: Spacing.two, alignItems: 'center', justifyContent: 'center' },
+  photoButtonLabel: { color: '#C8102E', fontSize: 13, fontWeight: '700' },
   photoPlaceholder: { width: '100%', aspectRatio: 4 / 3, borderRadius: 12, backgroundColor: '#C8102E11', alignItems: 'center', justifyContent: 'center' },
   detailLabel: { textTransform: 'uppercase', letterSpacing: 0.5 },
   removeButton: { minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.two },

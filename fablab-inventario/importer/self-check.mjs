@@ -103,3 +103,26 @@ console.log('self-check OK');
   assert.equal(validarAsignacion({ id: 1, codigoActual: null, codigoNuevo: 'CNC-137', idConEseCodigo: 1 }), 'CNC-137');
   console.log('self-check codigos OK');
 }
+
+// Ids de ruta y borrado por código ambiguo (puros: no tocan la base).
+{
+  const { idEntero, idUnicoParaCodigo, ErrorApi } = await import('./api.mjs');
+
+  // Solo enteros positivos dentro del rango de la columna INT.
+  assert.equal(idEntero('7'), 7);
+  assert.equal(idEntero(7), 7);
+  assert.equal(idEntero('007'), 7, 'los ceros a la izquierda no cambian el id');
+  for (const malo of ['1.5', 'abc', '', null, undefined, '-1', '0', ' 7 ', '1e3', '2147483648', '99999999999999999999'])
+    assert.equal(idEntero(malo), null, `id imposible aceptado: ${JSON.stringify(malo)}`);
+
+  // Borrado por código: con dos coincidencias NO se borra nada (IOT-79).
+  assert.equal(idUnicoParaCodigo([]), null, 'sin coincidencias no hay nada que borrar');
+  assert.equal(idUnicoParaCodigo([42]), 42);
+  try {
+    idUnicoParaCodigo([246, 247]);
+    assert.fail('un código duplicado debería rechazar el borrado');
+  } catch (e) {
+    assert(e instanceof ErrorApi && e.status === 409, `esperaba ErrorApi 409, llegó ${e.status}: ${e.message}`);
+  }
+  console.log('self-check ids OK');
+}

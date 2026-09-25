@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import type { DatosFoto } from './foto';
 // multiRemove existe en el mock de jest-expo; si no, cae a removeItem secuencial.
 if (!AsyncStorage.multiRemove) {
   (AsyncStorage as any).multiRemove = (keys: string[]) =>
@@ -16,7 +18,13 @@ export type InventoryItem = {
   estado: string;
   observaciones: string;
   cantidad: string;
-  foto?: string;
+  /**
+   * Versión de la foto guardada en el servidor. El listado NUNCA trae la foto
+   * (pesaría 30 MB para 917 elementos): trae este hash, y con él se arma la URL
+   * que se pide solo cuando hay que mostrar la imagen. Si la foto cambia,
+   * cambia el hash y con él la URL (cache-busting + ETag).
+   */
+  foto_hash?: string;
   sala_id?: number;
 };
 
@@ -254,6 +262,61 @@ export async function asignarCodigo(id: number, codigo: string): Promise<Invento
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(cached.map((it) => (it.id === id ? { ...it, ...res.elemento } : it)));
   return res.elemento;
+}
+
+// --- Fotos ---
+// La foto vive en su propia tabla y se sube YA reducida (ver `foto-optimizar.ts`).
+// Medido: ~31 KB por elemento entre foto y miniatura (≈29 MB para 917), contra
+// 1-2,5 MB del original — que además no cabe en el disco del plan.
+
+/**
+ * URL de la foto (o de su miniatura) de un elemento. Devuelve null si el
+ * elemento no tiene foto, para que la UI no pinte un <Image> roto.
+ * El `v=<hash>` es redundante con el ETag a propósito: si la foto se reemplaza,
+ * la URL cambia y ni el navegador ni el SW tienen por qué revalidar.
+ */
+export function urlFoto(
+  elemento: { id?: number | null; foto_hash?: string | null } | null | undefined,
+  tam: 'foto' | 'miniatura' = 'miniatura',
+): string | null {
+  if (!elemento || elemento.id == null || !elemento.foto_hash) return null;
+  return `${API_BASE}/elementos/${elemento.id}/foto?tam=${tam}&v=${encodeURIComponent(elemento.foto_hash)}`;
+}
+
+/**
+ * POST /elementos/:id/foto. Manda la foto y la miniatura ya reducidas en el
+ * dispositivo (base64). El mensaje del server se propaga porque un 413 explica
+ * exactamente cuánto pesa y cuál es el límite.
+ */
+export async function subirFoto(id: number, datos: DatosFoto): Promise<string> {
+  const res = await fetch(`${API_BASE}/elementos/${id}/foto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) {
+    const detalle = await res.json().catch(() => null);
+    const mensaje = detalle?.error ? `${detalle.error}` : `API ${res.status}: POST /elementos/${id}/foto`;
+    throw new Error(mensaje);
+  }
+  const respuesta = (await res.json()) as { hash?: string };
+  // Write-through: la sala y el buscador ven la foto nueva sin re-descargar.
+  const cached = memAll?.items ?? (await cacheAllFromStorage());
+  writeAllCache(cached.map((it) => (it.id === id ? { ...it, foto_hash: respuesta.hash } : it)));
+  return respuesta.hash ?? '';
+}
+
+/** DELETE /elementos/:id/foto. Sin fallback local, igual que el resto de escrituras. */
+export async function eliminarFoto(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/elementos/${id}/foto`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: DELETE /elementos/${id}/foto`);
+  const cached = memAll?.items ?? (await cacheAllFromStorage());
+  writeAllCache(
+    cached.map((it) => (it.id === id ? { ...it, foto_hash: undefined } : it)),
+  );
 }
 
 // --- Búsqueda inteligente ---

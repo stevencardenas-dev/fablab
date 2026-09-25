@@ -14,6 +14,7 @@ function normalizar(h) {
 }
 
 export const DDL = `
+DROP TABLE IF EXISTS \`elemento_fotos\`;
 DROP TABLE IF EXISTS \`traslados\`;
 DROP TABLE IF EXISTS \`elementos\`;
 DROP TABLE IF EXISTS \`salas\`;
@@ -45,6 +46,26 @@ CREATE TABLE \`elementos\` (
   \`cantidad\` VARCHAR(64) NULL,
   KEY \`ix_sala\` (\`sala_id\`),
   FOREIGN KEY (\`sala_id\`) REFERENCES \`salas\`(\`id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Foto de cada elemento, aparte de la tabla de elementos para que el listado
+-- (que trae las 917 filas en UNA respuesta) nunca arrastre binarios. Dos tamaños
+-- por elemento: miniatura (200 px, para las listas) y foto (800 px, para la
+-- ficha), generadas en el teléfono antes de subir. El hash es ETag +
+-- cache-buster: si la foto cambia, el teléfono baja la nueva sin revalidar la
+-- vieja. OJO: este comentario va dentro de un template literal de JS, así que
+-- no puede llevar backticks sueltos (cierran la cadena y rompen el módulo).
+CREATE TABLE \`elemento_fotos\` (
+  \`elemento_id\` INT NOT NULL PRIMARY KEY,
+  \`mime\` VARCHAR(32) NOT NULL,
+  \`ancho\` SMALLINT UNSIGNED NULL,
+  \`alto\` SMALLINT UNSIGNED NULL,
+  \`bytes\` INT UNSIGNED NOT NULL,
+  \`hash\` CHAR(16) NOT NULL,
+  \`foto\` MEDIUMBLOB NOT NULL,
+  \`miniatura\` MEDIUMBLOB NOT NULL,
+  \`actualizado\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (\`elemento_id\`) REFERENCES \`elementos\`(\`id\`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE \`traslados\` (

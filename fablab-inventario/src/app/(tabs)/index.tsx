@@ -12,7 +12,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
-import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, listarSalas, type InventoryItem, type Room } from '@/lib/inventory';
+import { prepararFotoParaSubir, type FotoOptimizada } from '@/lib/foto-optimizar';
+import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, listarSalas, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -23,7 +24,6 @@ function newElement(): InventoryItem {
     estado: '',
     observaciones: '',
     cantidad: '',
-    foto: undefined,
   };
 }
 
@@ -40,6 +40,12 @@ export default function HomeScreen() {
   const [addError, setAddError] = useState<string | null>(null);
   const [addSaving, setAddSaving] = useState(false);
   const [savedCodigo, setSavedCodigo] = useState<string | null>(null);
+  // La foto se optimiza al capturarla, no al guardar: el usuario ve de una
+  // cuánto pasó a pesar (2,3 MB → 26 KB) y el momento de guardar no se alarga
+  // con una espera de conversión.
+  const [foto, setFoto] = useState<FotoOptimizada | null>(null);
+  const [fotoEstado, setFotoEstado] = useState<string | null>(null);
+  const [fotoError, setFotoError] = useState<string | null>(null);
   const [scannedItem, setScannedItem] = useState<InventoryItem | null | undefined>(undefined);
   const [searchName, setSearchName] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[] | null>(null);
@@ -59,9 +65,12 @@ export default function HomeScreen() {
     setSearchName('');
     setAddError(null);
     setSavedCodigo(null);
+    setFotoError(null);
     if (next === 'add') {
       setElement(newElement());
       setSalaId(null);
+      setFoto(null);
+      setFotoEstado(null);
     }
   }
 
@@ -78,12 +87,31 @@ export default function HomeScreen() {
     if (addSaving) return;
     setAddSaving(true);
     setAddError(null);
+    const fotoPendiente = foto;
     try {
       const guardado = await addItem({ ...element, sala_id: salaId });
       const codigo = guardado.codigo || element.codigo;
+      // La foto se sube DESPUÉS del alta porque necesita el id que asigna la
+      // base. Si falla, el elemento ya está guardado: se avisa y no se finge
+      // que todo salió bien (pero tampoco se pierde el elemento).
+      if (fotoPendiente && guardado.id != null) {
+        try {
+          await subirFoto(guardado.id, fotoPendiente);
+        } catch (e) {
+          setFotoError(
+            e instanceof Error
+              ? `El elemento se guardó, pero la foto no se pudo subir: ${e.message}`
+              : 'El elemento se guardó, pero la foto no se pudo subir.',
+          );
+        }
+      }
+      // El bloque de "Guardado" sale cuando ya no queda nada pendiente (tampoco
+      // la foto): si apareciera antes, el botón diría "Guardando…" debajo del
+      // cartel de éxito.
       setSavedCodigo(codigo);
       setElement(newElement());
       setSalaId(null);
+      setFoto(null);
       // En web el archivo se entrega solo: el usuario acaba de crear el elemento
       // y necesita la etiqueta ya, sin un clic extra. En nativo la descarga abre
       // la hoja de compartir, y abrirla sin que la pidan interrumpe el flujo:
@@ -101,14 +129,37 @@ export default function HomeScreen() {
     setSearchResults(await buscarElementos(searchName));
   }
 
+  // Sin `quality` en el selector: el original entra tal cual y la única
+  // compresión con pérdida la hace nuestra reducción a 800 px (comprimir dos
+  // veces solo acumula artefactos sin bajar el peso final).
+  async function optimizarFoto(asset: ImagePicker.ImagePickerAsset) {
+    setFotoError(null);
+    setFotoEstado('Optimizando foto…');
+    try {
+      setFoto(
+        await prepararFotoParaSubir({
+          uri: asset.uri,
+          ancho: asset.width,
+          alto: asset.height,
+          pesoOriginalBytes: asset.fileSize,
+        }),
+      );
+    } catch (e) {
+      setFoto(null);
+      setFotoError(e instanceof Error ? e.message : 'No se pudo procesar la foto.');
+    } finally {
+      setFotoEstado(null);
+    }
+  }
+
   async function handleTakePhoto() {
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
-    if (!result.canceled) setElement((current) => ({ ...current, foto: result.assets[0].uri }));
+    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled) await optimizarFoto(result.assets[0]);
   }
 
   async function handlePickPhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
-    if (!result.canceled) setElement((current) => ({ ...current, foto: result.assets[0].uri }));
+    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled) await optimizarFoto(result.assets[0]);
   }
 
   return (
@@ -151,20 +202,27 @@ export default function HomeScreen() {
 
             <View style={styles.inputGroup}>
               <ThemedText type="smallBold" style={styles.inputLabel}>FOTO (opcional)</ThemedText>
-              {element.foto && <Image source={{ uri: element.foto }} style={styles.photoPreview} contentFit="cover" />}
+              {foto && <Image source={{ uri: foto.uri }} style={styles.photoPreview} contentFit="cover" />}
+              {foto && (
+                <ThemedText themeColor="textSecondary" type="small" style={styles.photoMeta}>
+                  Optimizada en el teléfono: {foto.resumen} · {foto.ancho}×{foto.alto} · miniatura de lista incluida
+                </ThemedText>
+              )}
+              {fotoEstado && <ThemedText themeColor="textSecondary" type="small">{fotoEstado}</ThemedText>}
               <View style={styles.roomChips}>
-                <Pressable accessibilityRole="button" onPress={handleTakePhoto} style={styles.photoButton}>
+                <Pressable accessibilityRole="button" disabled={Boolean(fotoEstado)} onPress={handleTakePhoto} style={styles.photoButton}>
                   <ThemedText style={styles.photoButtonLabel}>Tomar foto</ThemedText>
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={handlePickPhoto} style={styles.photoButton}>
+                <Pressable accessibilityRole="button" disabled={Boolean(fotoEstado)} onPress={handlePickPhoto} style={styles.photoButton}>
                   <ThemedText style={styles.photoButtonLabel}>Elegir de galería</ThemedText>
                 </Pressable>
-                {element.foto && (
-                  <Pressable accessibilityRole="button" onPress={() => setElement({ ...element, foto: undefined })} style={styles.photoButton}>
+                {foto && (
+                  <Pressable accessibilityRole="button" onPress={() => { setFoto(null); setFotoError(null); }} style={styles.photoButton}>
                     <ThemedText style={styles.photoButtonLabel}>Quitar</ThemedText>
                   </Pressable>
                 )}
               </View>
+              {fotoError && <ThemedText style={styles.errorText}>{fotoError}</ThemedText>}
             </View>
 
             {(['detalle', 'serial'] as const).map((field) => (
@@ -406,6 +464,7 @@ const styles = StyleSheet.create({
   input: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: Spacing.two, fontSize: 16 },
   roomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   photoPreview: { width: '100%', aspectRatio: 4 / 3, borderRadius: 8, marginBottom: Spacing.one },
+  photoMeta: { lineHeight: 18 },
   photoButton: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: '#C8102E', paddingHorizontal: Spacing.two, alignItems: 'center', justifyContent: 'center' },
   photoButtonLabel: { color: '#C8102E', fontSize: 13, fontWeight: '700' },
   codePreview: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.two },

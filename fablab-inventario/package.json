@@ -14,6 +14,7 @@
     "expo-font": "~57.0.3",
     "expo-glass-effect": "~57.0.3",
     "expo-image": "~57.0.5",
+    "expo-image-manipulator": "~57.0.19",
     "expo-image-picker": "~57.0.17",
     "expo-linking": "~57.0.10",
     "expo-router": "~57.0.21",
@@ -58,7 +59,15 @@
     "seed": "node scripts/seed.mjs",
     "fix:mojibake": "node scripts/fix-mojibake.mjs",
     "asignar:codigos": "node scripts/asignar-codigos.mjs",
+    "migrar:esquema": "node scripts/migrar-esquema.mjs",
     "backup:remoto": "node scripts/backup-remoto.mjs",
+    "fotos:demo": "node scripts/fotos-demo.mjs",
+    "qa": "node scripts/qa-intensivo.mjs",
+    "bench": "node scripts/benchmark.mjs",
+    "docs:check": "node scripts/verificar-docs.mjs",
+    "typecheck": "tsc --noEmit",
+    "self-check": "node importer/self-check.mjs",
+    "gate": "npm run typecheck && npm run lint && npm test -- --silent && npm run self-check && npm run verify:datamatrix && npm run docs:check",
     "sync:deploy": "node scripts/sync-deploy.mjs"
   },
   "jest": {
@@ -71,5 +80,8 @@
       "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
     }
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
 }
