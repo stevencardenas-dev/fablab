@@ -161,12 +161,26 @@ function readFileSyncSafe(p) {
   catch { return ''; }
 }
 
+// Trazabilidad: el commit del repo de deploy dice de qué commit del monorepo
+// salió el artefacto, para poder responder "¿qué código está en producción?"
+// sin adivinar. `+dirty` avisa que había cambios sin commitear, o sea que el
+// deploy NO es reproducible desde ese hash.
+function firmaMonorepo() {
+  try {
+    const hash = shOut('git rev-parse --short HEAD', APP_ROOT);
+    const sucio = shOut('git status --porcelain', APP_ROOT).length > 0;
+    return `${hash}${sucio ? '+dirty' : ''}`;
+  } catch {
+    return 'sin-git';
+  }
+}
+
 function commitAndPush(name, t) {
   if (!hasChanges(t.dir)) {
     console.log(`[${name}] sin cambios que subir ✔`);
     return;
   }
-  const msg = `${SYNC_PREFIX} (${new Date().toISOString().slice(0, 16).replace('T', ' ')})`;
+  const msg = `${SYNC_PREFIX} (${new Date().toISOString().slice(0, 16).replace('T', ' ')} · fablab@${firmaMonorepo()})`;
   sh(`git add -A && git commit -m "${msg}" && git push origin main`, t.dir);
   console.log(`[${name}] commiteado y subido → ${TARGETS[name].repo.replace('git@github.com:', '')}`);
 }
