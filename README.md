@@ -4,6 +4,10 @@ Sistema de gestión y control de inventario para el FabLab de la Universidad Fra
 
 **Seminario Integrador II** — UFPS
 
+> **Documentación técnica completa:** [`fablab-inventario/docs/`](fablab-inventario/docs/README.md)
+> (arquitectura, API, base de datos, fotos, importación, operación, rendimiento,
+> pruebas y problemas conocidos).
+
 ## Equipo
 
 - 1152462 - Juan David Llanos Castañeda
@@ -91,7 +95,13 @@ Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go
 | POST | `/api/elementos/:id/codigo` | Asignar código a un elemento que no tiene (409 si ya tiene) |
 | DELETE | `/api/elementos/:codigo` | Eliminar elemento |
 | POST | `/api/traslados` | Registrar traslado (transaccional) |
+| GET·HEAD | `/api/elementos/:id/foto[?tam=miniatura]` | Foto o miniatura (ETag/304) |
+| POST | `/api/elementos/:id/foto` | Subir/reemplazar foto ya reducida |
+| DELETE | `/api/elementos/:id/foto` | Quitar la foto |
 | GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar inventario o traslados |
+
+Contrato completo (auth, CORS, gzip, códigos de estado y ejemplos) en
+[`fablab-inventario/docs/api.md`](fablab-inventario/docs/api.md).
 
 Los errores de cliente responden con su código real: `400` campo inválido o
 faltante, `404` id/código inexistente, `409` conflicto (p. ej. trasladar a la
@@ -108,6 +118,7 @@ fablab/
 │   ├── documento-integrador.md  ← Documento académico (3 capítulos)
 │   └── documento-integrador.odt
 └── fablab-inventario/           ← App + API + BD (todo en un repo)
+    ├── docs/                     ← Documentación técnica completa
     ├── src/
     │   ├── app/                  ← Pantallas (expo-router)
     │   │   ├── (tabs)/           ← Inicio (scan, add, search) + Inventario
@@ -157,17 +168,25 @@ Esquema normalizado (4 tablas):
 | `elementos` | id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad | FK → salas |
 | `traslados` | id, elemento_id, sala_anterior_id, sala_nueva_id, fecha, nota | FK → elementos + salas |
 
-Datos cargados: **916 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
+Datos cargados: **917 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
+A `elementos` se suman `elemento_fotos` (foto + miniatura por elemento, 1:1) y
+los índices que el servidor asegura al arrancar (`ix_codigo`, no único).
 
 ## Pruebas
 
 ```bash
 cd fablab/fablab-inventario
-npm test                        # 56/56 tests (Jest)
+npm run gate                    # tipos + lint + 99 tests + self-check + datamatrix + docs
+npm test                        # 99/99 tests (Jest)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
-node scripts/verify-datamatrix.mjs  # Verifica códigos DataMatrix
-node scripts/asignar-codigos.mjs    # Dry-run: códigos para elementos sin código (--api, --escribir, --sql)
+npm run qa                      # 69 checks contra la API
+npm run bench                   # Latencia de todas las operaciones
+npm run docs:check              # Enlaces, rutas documentadas y sintaxis de los scripts
+npm run asignar:codigos         # Dry-run: códigos para elementos sin código (--api, --escribir, --sql)
 ```
+
+El mismo gate corre en cada push y PR (`.github/workflows/ci.yml`). Qué cubre
+cada prueba en [`fablab-inventario/docs/qa.md`](fablab-inventario/docs/qa.md).
 
 ## Variables de entorno
 

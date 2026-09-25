@@ -5,7 +5,7 @@
 ## State
 
 **Base de datos: hecha y verificada.** El inventario de Excel está migrado a
-MySQL con esquema normalizado. 916 elementos, 11 salas, 2 edificios (FabLab y
+MySQL con esquema normalizado. 917 elementos, 11 salas, 2 edificios (FabLab y
 ViveLab). Conteos verificados uno a uno contra las hojas de origen.
 
 **Documento: capítulos 1-3 escritos y pasada de APA HECHA.** 15 páginas.
@@ -310,10 +310,275 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   56/56 tests, tsc y lint limpios; endpoint probado contra MySQL local con
   401/400/409/404/201 y CORS, migración probada en local por las dos vías
   (API y BD) y luego en producción con backup previo
-  (`backups/elementos-2026-09-24-02-47.json`), y un E2E en el navegador que
+  (`backups/elementos-2026-09-24-02-47.json`), y un  E2E en el navegador que
   cubre el botón, el aviso de omitidos y la hoja después de asignar. Deploy:
   **api `1608d79..db6c29b`**, **web `50b4902..5f5e03f`** (SW `fablab-v9`).
+- **Fotos de los elementos, optimizadas en el teléfono (2026-09-25):** el
+  formulario tomaba foto desde el principio pero **la descartaba en silencio**
+  (guardaba la URI local en el campo `foto`, que no existe en la base). El
+  obstáculo real no era subirlas sino que no caben: una foto de cámara son
+  1-2,5 MB y hay ~917 elementos → 1-2 GB, más que el disco entero del plan de
+  Aiven (1024 MB, ~288 MB ya usados por InnoDB/binlogs). Medido con una foto
+  sintética de 4000×3000: 599 KB a q0.6 **sin** reducir (917 × 599 KB = 0,55 GB),
+  contra 800 px WebP q0.6 ≈ 22-26 KB + 200 px ≈ 5-6 KB = ~31 KB por elemento
+  (~29 MB para los 917). Decisión: **la foto se reduce en el dispositivo y el
+  original nunca sale del teléfono**. Dos tamaños por foto: 800 px para la
+  ficha y 200 px para las listas.
+  Piezas: `src/lib/foto.ts` (puro y testeado: dimensiones que no deforman ni
+  agrandan, peso legible, medir base64 sin decodificarlo, firma de bytes, tope
+  del ahorro en 99% para no mostrar "-100%", escalones de calidad y límites
+  duplicados del server) → `src/lib/foto-optimizar.ts`
+  (`prepararFotoParaSubir`: `expo-image-manipulator` para reducir y codificar
+  WebP, con caída a **JPEG** donde no haya codificador WebP — Safari — y
+  bajando de calidad 0,6 → 0,45 → 0,32 si aún no cabe en el límite; el `mime`
+  final lo deciden los BYTES, no lo que se pidió, porque iOS puede devolver
+  JPEG aunque se pida WebP) → `subirFoto`/`eliminarFoto`/`urlFoto` en
+  `src/lib/inventory.ts` (write-through del `foto_hash` en la cache SWR).
+  Esquema: tabla **`elemento_fotos`** (1:1 con `elementos`, `ON DELETE
+  CASCADE`, `foto`/`miniatura` MEDIUMBLOB + `hash` = sha1 corto).
+  `GET /api/elementos` trae solo `foto_hash` (con LEFT JOIN): el listado sigue
+  pesando **173 KB** para 916 elementos — si arrastrara las fotos serían
+  decenas de MB en cada carga. La app arma la URL con ese hash como versión y
+  pide la imagen cuando la muestra; los binarios van por
+  `GET|HEAD /api/elementos/:id/foto[?tam=miniatura]`, con `Cache-Control:
+  immutable` + ETag y **304** si `If-None-Match` coincide (`binario()` en
+  `server/index.mjs`, que no pasa por `json()`: nada de gzip, WebP ya está
+  comprimido). `POST` (con token) valida la firma de los bytes y los límites
+  —foto ≤ 400 KB, miniatura ≤ 80 KB, miniatura < foto— con 400/413 y mensaje
+  que dice cuánto pesa; `DELETE` la quita. El guard `escribeAutorizado` ahora
+  trata **HEAD como lectura** (un HEAD es un GET sin cuerpo: exigirle token
+  rompía la revalidación). Migración de esquema:
+  `scripts/migrar-esquema.mjs` (idempotente, `--check`, `npm run
+  migrar:esquema`) — **aplicada y re-aplicada en la base local (13306),
+  PENDIENTE en Aiven**.
+  En la UI: al capturar se optimiza de una y se muestra el ahorro
+  ("3.4 MB → 13 KB (-99%) · 800×600"); en el alta la foto se sube DESPUÉS del
+  POST (necesita el id) y el cartel de "Guardado" sale recién cuando no queda
+  nada pendiente (si aparece antes, el botón dice "Guardando…" debajo del
+  éxito); si la subida falla el elemento igual queda guardado y se avisa
+  aparte. En la ficha de la sala: miniatura en la lista, foto grande en el
+  modal y botones Reemplazar / Galería / Quitar foto. El selector ya no
+  comprime (`quality` fuera): la única compresión con pérdida la hace nuestra
+  reducción, comprimir dos veces solo acumulaba artefactos.
+  Verificado: **98/98 tests** (34 de `foto.test.ts`, +9 de `inventory.test.ts`:
+  `urlFoto` devuelve null sin foto para no pintar un `<Image>` roto y cambia de
+  URL al cambiar el hash), tsc y lint limpios (sigue el único error heredado de
+  `use-color-scheme.web.ts`), `expo export --platform web` limpio, y contra
+  MySQL local por los dos caminos: API (26 casos —401 sin token, 400 id
+  inválido/mime no soportado/firma mentirosa/miniatura más pesada, 413 foto de
+  500 KB y miniatura de 100 KB, 404 sin foto y elemento inexistente, 201, 304
+  con GET y con HEAD, ETag viejo que NO da 304 tras reemplazar, CASCADE al
+  borrar el elemento) y **E2E con Playwright sobre el export real** (servidor
+  estático + la API local, eligiendo un JPEG de 4000×3000 por el `<input
+  type=file>` de `expo-image-picker`): 3,4 MB → **12,9 KB de foto + 2,9 KB de
+  miniatura = 15,8 KB (99,6% menos)**, convertida en 700 ms, y el navegador
+  pide `tam=miniatura` (200×150) al pintar la lista y `tam=foto` (800×600) al
+  abrir la ficha, sin errores de consola. Casos borde probados igual: foto de
+  320×240 (no se agranda) y de 150×100 (foto y miniatura salen del mismo
+  tamaño → la miniatura se guarda con más compresión para seguir siendo menor,
+  como exige el server).
+  **HECHO (2026-09-24):** api `db6c29b..4a24f08` y web `5f5e03f..79dafb9` (SW
+  `fablab-v10`). La tabla `elemento_fotos` se creó en Aiven **desde el propio
+  server**: no hay credenciales de esa base fuera de Render (la contraseña que
+  reporta la API de Aiven da `ER_ACCESS_DENIED` y el HANDOFF prohíbe resetearla),
+  así que `server/index.mjs` llama a `asegurarEsquemaFotos()` antes de escuchar
+  y el DDL idempotente vive en `importer/api.mjs` (`DDL_FOTOS`, el mismo que usa
+  `migrar-esquema.mjs`). Si aun así el `LEFT JOIN` falla (permisos), el listado
+  degrada a "sin fotos" con un aviso en el log en vez de tumbar la app.
+- **Prueba en vivo: la misma foto en los 917 elementos (2026-09-24).** Para ver
+  en la app desplegada cómo se comporta el inventario con fotos en TODOS los
+  elementos (y cuánto pesa de verdad), `scripts/fotos-demo.mjs` (`npm run
+  fotos:demo`) pone una foto de demo —el PNG que pasó el usuario, optimizado con
+  `cwebp` a 800 px q82 (25,6 KB) + 200 px q95 (5,4 KB) = 31 KB, **el mismo peso
+  medido con fotos reales de cámara**, para que la prueba no salga más optimista
+  que la realidad— en cada elemento que NO tenga foto. Los binarios viven en
+  `scripts/demo-foto/` (no entran al bundle: `sync:deploy` sólo copia `dist/`).
+  Corrido en producción: **917/917 en 90 s** (~28 MB, 4 en paralelo), deja
+  manifiesto en `backups/fotos-demo-*.json` con los ids tocados.
+  **Cómo se deshace:** `npm run fotos:demo -- --revertir` (borra sólo los ids
+  del manifiesto; los elementos que ya tenían foto nunca se tocan, por eso sigue
+  siendo reversible: el binario viejo no se guarda). Estado esperado después de
+  revertir: 917 elementos, 0 con foto.
+  **Qué se midió (producción, 24 elementos):** miniatura 200 px en serie p50 204
+  ms; foto 800 px p50 357 ms; foto + revalidación por ETag 629 ms. Abrir la sala
+  más grande (CNC, 171 elementos) pide hasta 171 miniaturas: en Node con
+  concurrencia ilimitada tardan 5,3 s en total, pero **en el navegador sólo se
+  descargan las visibles** (expo-image pone `loading="lazy"`: 39 de 171 en la
+  primera pantalla, última a los 1,7 s) y el resto se pide al hacer scroll. El
+  listado completo (917, con `foto_hash`) sigue en **186 KB**.
+  Ojo al mirar la consola de la PWA: el 404 del documento al abrir un deep link
+  (`/sala/1`) es el comportamiento de siempre (Render sirve `404.html`), no un
+  síntoma de las fotos.
 
+- **Polishing + QA intensivo (2026-09-24, sesión completa).** Trigger: el usuario
+  notó que la foto del modal tarda en aparecer con todos los elementos con foto.
+  Diagnóstico y fixes:
+  - **Server: 304/HEAD ya no leen el blob.** `obtenerFoto()` traía el MEDIUMBLOB
+    entero para contestar "no cambió". Ahora hay `obtenerHashFoto()` (sólo
+    `mime, hash`) y `server/index.mjs` decide 304/HEAD con eso; el GET sin
+    `If-None-Match` no paga la query extra. Medido en producción: revalidación
+    629 ms → **~200 ms total** (el piso de red de Render es ~250 ms; la parte de
+    BD bajó a ~60-70 ms).
+  - **App: el modal abre con la miniatura, no con un cuadrado vacío.** La foto
+    grande del modal usa `placeholder={miniatura}` + `transition={150}` +
+    `cachePolicy="memory"` de expo-image (57.0.5: literales `'memory'`, no hay
+    export `memoryCachePolicy`). Las miniaturas de los chips también van en
+    memoria para que el placeholder no re-pida nada. En el navegador medido:
+    repetir modal sirve la foto en **3 ms** (misma URL ya cacheada, `immutable`).
+  - **Segundo reporte del usuario: "primero se ve borrosa y luego nítida".** Es la
+    ventana entre placeholder (miniatura 200 px) y la llegada de la foto 800 px
+    (descarga fría medida: 866 ms). Fix: **precarga en el chip** con
+    `Image.prefetch(url, 'memory-disk')` atado a `onPressIn` (dispara ~100-300 ms
+    antes que `onPress`; en nativo es el gesto completo, en web al `pointerdown`)
+    y `onHoverIn` (web). Así la descarga arranca antes de abrir el modal y el
+    fundido borroso→nítido casi no se ve. En web `prefetch` es un
+    `new Image(); img.src` (calienta la caché HTTP); en nativo va al cache
+    `memory-disk`. Deploy web `f24aba7..172d707`, bundle `entry-faecb15…`.
+  - **SW `fablab-v11`** (nuevo bundle en cache). Además se arregló la carrera de
+    registro: si el bundle evalúa después del evento `load`, el listener de
+    `service-worker.ts` nunca disparaba y **el SW quedaba sin registrar en la
+    primera visita** (verificado: perfil fresco → `getRegistration()` null).
+    Ahora registra en cuanto `document.readyState === 'complete'`.
+  - **QA automatizado: `npm run qa`** (`scripts/qa-intensivo.mjs`, 54 checks:
+    lecturas, contrato HTTP de fotos con ETag=sha1 verificado, escrituras sobre
+    elementos temporales `QA-INT-*` que se borran solos, casos borde, export
+    CSV/JSON con BOM). Verde en producción y local. `--base` apunta a otro
+    server; limpia restos de corridas anteriores.
+  - **3 bugs reales encontrados y arreglados (todo app-level, sin ALTER TABLE):**
+    (1) alta con `codigo` duplicado se aceptaba 201 → ahora **409** con el id del
+    dueño (la columna no tiene índice UNIQUE: por eso existe IOT-79);
+    (2) **DELETE de elemento con traslados → 500** (FK de `traslados` sin
+    CASCADE): `eliminarElemento` ahora borra traslados+elemento en transacción;
+    (3) alta/traslado con **sala inexistente → 500** de FK → ahora 404 claro.
+  - **Issues conocidos caracterizados (no arreglados todos):** el error React
+    **#418 reproduce también en incógnito y en `/`** → no es extensión ni el
+    fallback 404: es hidratación del export estático de Expo (SDK-level,
+    cosmético). El deep link `/sala/1` **renderiza bien** pero con status 404:
+    el fix correcto es una **Rewrite Rule en el Dashboard de Render**
+    (`/*` → `/index.html`, acción Rewrite — los archivos reales ganan; no se
+    puede desde `_redirects`, Render no lo soporta). **IOT-79** es el único
+    duplicado (ids 246 y 247, sala 2: "Silla madera marron IOT-12" vs "Mesa de
+    trabajo 1.50x2.40 M-01"): decidir cuál elemento conserva el código — el
+    server ya bloquea duplicados nuevos con 409.
+  - **Deploys:** api `edb4b31..0905129` (409 + DELETE con traslados) y
+    `0905129..222d0ad` (validación de sala); web `79dafb9..df81f2f` (perf modal
+    + SW v11) y `df81f2f..3f94fb0` (registro SW); bundle final `entry-82a8a4…`
+    + fix de lint de `use-color-scheme.web.ts` (useSyncExternalStore; `npm run
+    lint` sale limpio por primera vez).
+
+- **Optimización de overhead de BD (2026-09-24, "imperativo").** Objetivo: que
+  la base de Aiven (WAN+TLS) deje de aportar tiempo medible. Cuatro palancas,
+  todo app-level, api `222d0ad..867a949`:
+  1. **Pool tibio.** El default de mysql2 podaba conexiones libres a los 60 s
+     (`idleTimeout`), así que con tráfico espaciado casi cada request pagaba
+     handshake TLS contra Aiven. Ahora `maxIdle=connectionLimit=5` +
+     `idleTimeout=8 min` + `enableKeepAlive`.
+  2. **Caché de fotos en RAM.** `precargarMiniaturas()` al arranque sube las
+     miniaturas de TODOS los elementos (~917 × 6 KB ≈ 5 MB): pintar la sala CNC
+     (171 chips) no hace ninguna query. Fotos grandes en LRU de 100 (~2,5 MB):
+     reabrir un modal reciente no re-paga el blob. Índice de hashes
+     (`hashesFoto`) para 304/HEAD sin BD. Toda escritura/borrado de fotos limpia
+     las entradas del elemento; la coherencia con el cliente no depende de esta
+     caché (cada URL lleva el hash como cache-buster).
+  3. **Índice `elementos(codigo)` (NO único).** El check de duplicado del alta,
+     el DELETE por código y la búsqueda escaneaban la tabla; el índice lo arregla
+     sin tocar el duplicado heredado IOT-79. Se asegura en el arranque
+     (`asegurarIndiceCodigo`, idempotente, errno 1061 ignorada).
+  4. **304/HEAD por hash** (ya hecho antes en la sesión, ahora sale de RAM).
+  **Medido en producción (ping local → Render):** miniatura/304/foto en estado
+  estable **~240-260 ms total = puro piso de red** (delta vs `/health` ≈ 0-15 ms:
+  la BD aporta ~0). Antes: 320 ms estables con ~60-70 ms de query, y 640 ms el
+  primer hit tras una pausa (reconexión TLS). Ahora el primer hit tras 70 s idle
+  cuesta 0,43-0,47 s **también en `/health`, que no toca la BD** → es despertar
+  de CPU del free tier de Render, no MySQL. El listado 917 elems sigue
+  186 KB/~320 ms (cache TTL 60 s encima). QA 54/54 en producción tras el deploy.
+
+- **Verificación "todas las operaciones rápidas" (2026-09-24/25).** Nuevo
+  `scripts/benchmark.mjs` (falta meterlo a package.json si se quiere: `node
+  scripts/benchmark.mjs [--base ...] [--n 8]`): mide TODAS las ops con
+  calentamiento + 8 muestras y las compara contra el piso de red (`/health`, que
+  no toca BD). Dos caches más que salieron de este barrido, deploys
+  `867a949..4efb56f` y `4efb56f..5e67754`:
+  - **Cache TTL por sala** (`listarElementos`): abrir una sala pedía 2 queries
+    sin cache (~+140 ms); era la pantalla más usada.
+  - **Cache TTL del historial**: el modal lo pide en CADA apertura (+67 ms por
+    abrir cualquier elemento). Las escrituras ya invalidaban todo el cache, así
+    que el traslado nuevo se ve al instante.
+  **Resultado final (p50, delta contra piso de red ~140 ms):** TODAS las
+  lecturas en el piso — salas +2, sala CNC -4, historial -3, miniatura +0, foto
+  grande (LRU) -1, 304 -2, listado 917 +78 (cuando expira el TTL de 60 s paga
+  una query; las 7 muestras restantes en el piso). Escrituras: dominadas por sus
+  round-trips WAN inherentes — PUT +141 (1 query), 409 dup +66 (1 query, índice),
+  DELETE foto +70, DELETE elemento +61 (transacción de 3), traslado +200 (4
+  consultas transaccionales), foto 25,6 KB +223 (validación + upsert + 60 KB).
+  Export: JSON +76, traslados +67, CSV 917 filas +141 (sin gzip: se genera y
+  baja crudo). Notas de medición: `curl` SIN `--compressed` mide ~120 ms de
+  transferencia de más (140 KB vs 776 B) — siempre medir con gzip como la app;
+  y HEAD marca ~+105 ms sobre 304 aunque ambos salen de RAM (raro del proxy de
+  Render; la app nunca usa HEAD). Lo único que queda por encima del piso son
+  escrituras reales y el arranque en frío del free tier de Render.
+
+
+- **Foto de demo revertida + documentación completa (2026-09-24).**
+  (1) **Revertida la prueba en vivo:** `npm run fotos:demo -- --revertir` borró
+  **917 fotos** (borradas: 917 · ya no tenían: 0) y dejó la producción en
+  **917 elementos · 0 con foto**, verificado por fuera del script (`GET
+  /api/elementos` con 0 `foto_hash`; `404` en foto, miniatura y en el DELETE
+  repetido de ids 1, 250, 500, 750 y 917). El manifiesto
+  `backups/fotos-demo-2026-09-24-04-14.json` queda como evidencia y la
+  herramienta (`scripts/fotos-demo.mjs` + `scripts/demo-foto/`) se queda en el
+  repo, documentada como prueba en vivo reversible.
+  (2) **Documentación completa nueva en `fablab-inventario/docs/`** (11
+  documentos + índice, ~1750 líneas): `README` (índice y mapa), `arquitectura`,
+  `api` (las 14 rutas con auth, CORS, gzip, ETag/304 y códigos),
+  `base-de-datos` (DDL, índices, migraciones, respaldos), `fotos` (pipeline
+  dispositivo→BD→cliente), `app` (pantallas, caché SWR, Data Matrix/PWA),
+  `importacion`, `operacion` (deploy, credenciales, rollback, checklist),
+  `rendimiento` (tabla del benchmark + trampas de medición), `qa` y
+  `problemas-conocidos` (IOT-79, #418, deep link 404, free tier…). Los dos README
+  (monorepo y app) enlazan a `docs/` y se corrigieron los conteos viejos
+  (916 → **917** elementos, 56 → **99** tests). Nuevo script `npm run bench`
+  (`scripts/benchmark.mjs`), que era el pendiente de package.json.
+  Verificado: 99/99 tests, `self-check` 4 bloques OK, `tsc` y `lint` limpios, y
+  los **60 enlaces relativos** de los READMEs + docs resuelven a archivos reales.
+
+- **Endurecimiento del borde HTTP + automatización (2026-09-24/25).** Pedido del
+  usuario: "¿estamos siguiendo buenas prácticas? un ingeniero va a juzgar esto".
+  Auditoría con sondas reales contra producción (todas no destructivas) y
+  arreglo de lo encontrado. **Hallazgos confirmados con evidencia:**
+  (1) `POST /elementos` con JSON roto → **500** (`{"sala_id": `);
+  (2) un cuerpo de **2 MB se bufferizaba entero y se parseaba** (no había tope);
+  (3) `GET /elementos/1.5/historial` → **200 `[]`** (id imposible tratado como
+  elemento sin traslados) y `/salas/1.5/elementos` → 404 en vez de 400;
+  (4) el chequeo de código duplicado era `SELECT`→`INSERT` sin lock (TOCTOU);
+  (5) `DELETE /api/elementos/:codigo` hacía `SELECT` **sin LIMIT**: con el
+  duplicado `IOT-79` borraba el que devolviera la base primero;
+  (6) **`npm run qa` reventaba con `TypeError`** en una base sin fotos — que es
+  el estado actual de producción: el QA "verde" solo aplicaba con fotos.
+  **Arreglos:** `readBody` rechaza JSON roto con **400** y aplica un **tope de
+  1 MB** (por `Content-Length` y por chunked, sin acumular; `413`); ids de ruta
+  con `idEntero()` (entero 1…2147483647 → si no, `400`); historial responde
+  **404** si el elemento no existe (la consulta extra solo se paga cuando el
+  historial está vacío, así el camino caliente sigue con una query);
+  **lock con nombre de MySQL** (`GET_LOCK('fablab:codigo-unico')`) alrededor del
+  chequeo + escritura en alta y asignación de código; `idUnicoParaCodigo()`
+  responde **409** y no borra nada ante un código ambiguo. Verificado en local:
+    5 altas simultáneas del mismo código → **1×201 y 4×409** (lock liberado
+    después de los rechazos: las escrituras siguientes siguen en 201/200),
+    cuerpo chunked de 2 MB → 413, borrado ambiguo → 409 con **0 filas borradas**,
+    historial 999999 → 404 y 1.5 → 400, 0 residuos QA en la base local.
+  **Automatización y proceso:** CI nuevo en `.github/workflows/ci.yml` (push y
+  PR: `npm ci`, tsc, lint, tests, self-check, datamatrix, docs) y script
+  equivalente `npm run gate`; `npm run docs:check` (enlaces de docs/README,
+  rutas de `docs/api.md` vs. `server/index.mjs`, `node --check` de los 19 .mjs
+  de server/importer/scripts) — que ya encontró dos drifts reales y por eso el
+  log de arranque del server ahora anuncia también `/health`; `engines: node >=20`;
+  `npm run bench` en package.json; y `sync:deploy` estampa el commit del monorepo
+  en el mensaje de commit de los repos de deploy (`fablab@hash`, con `+dirty` si
+  el árbol no está limpio) para poder responder qué código está desplegado.
+  QA pasó de **54 a 69 checks** y ya no depende de que existan fotos reales.
+  Verificado: `npm run gate` 5/5 + 99 tests + tsc/lint limpios, y `npm run qa`
+  contra el server local **69 OK · 0 fallos**.
 
 ## Decisions
 
