@@ -92,25 +92,34 @@ CREATE TABLE IF NOT EXISTS `elemento_fotos` (
 | `ix_sala` | `elementos(sala_id)` | Viene del DDL |
 | `uq_sala` | `salas(edificio_id, nombre)` | El nombre de sala es único **por edificio**, no global |
 | `PRIMARY KEY` | `elemento_fotos(elemento_id)` | Relación 1:1 |
-| `ix_codigo` | `elementos(codigo)` | **NO ÚNICO**, lo crea `asegurarIndiceCodigo()` al arrancar el server (idempotente) |
+| `uq_codigo` | `elementos(codigo)` | **UNIQUE**, lo crea `asegurarCodigoUnico()` al arrancar el server (idempotente) |
 
-`ix_codigo` no es `UNIQUE` a propósito: la base trae un duplicado heredado
-(`IOT-79`, ver [`problemas-conocidos.md`](problemas-conocidos.md)) y hacerlo
-único rompería la carga. Como el índice no puede garantizar la unicidad, la
-garantiza el servidor, y **con lock**: `GET_LOCK('fablab:codigo-unico')` de
-MySQL serializa el `SELECT` de duplicado y el `INSERT`/`UPDATE` de las
-escrituras de código. Sin él, dos altas simultáneas del mismo código pasaban
-las dos (se probó con 5 en paralelo); con él, una responde `201` y el resto
-`409`. Cuesta 2 round-trips extra en las dos únicas operaciones que asignan
-código (alta y `POST /:id/codigo`), que son poco frecuentes; timeout de 5 s →
-`503` si hay otra en curso.
+`uq_codigo` es `UNIQUE`: un código, un elemento. Costó llegar ahí porque la base
+traía un duplicado heredado (`IOT-79` repetido, ver
+[`problemas-conocidos.md`](problemas-conocidos.md)) y con él MySQL no acepta el
+índice. Hoy el arranque repara ese tipo de dato **primero** y crea el índice
+después, así que la unicidad la garantiza la base: un `INSERT`/`UPDATE` que
+repita un código falla con `ER_DUP_ENTRY` (errno `1062`) y el server lo traduce a
+`409` con el id del dueño.
 
-El mismo duplicado heredado obliga a que el **borrado por código** sea
-explícito: si hay más de un elemento con ese código, `DELETE /api/elementos/:codigo`
-responde `409` en vez de borrar uno al azar (antes hacía `SELECT` sin `LIMIT` y
-borraba el que devolviera la base primero). Cuando `IOT-79` se resuelva, el
-siguiente paso natural es `ALTER TABLE elementos ADD UNIQUE (codigo)`, y
-entonces el lock deja de ser necesario.
+Antes esto se sostenía con un lock con nombre (`GET_LOCK('fablab:codigo-unico')`):
+el servidor hacía `SELECT` y después `INSERT`, y sin serializar había ventana de
+carrera (dos altas simultáneas del mismo código pasaban las dos). El índice
+UNIQUE cierra esa ventana **sin lock y sin round-trips extra**. `ix_codigo` —el
+índice normal anterior— se retira al crear el UNIQUE: un único sirve las mismas
+búsquedas, tener los dos era pagar dos índices por lo mismo.
+
+**Estado degradado.** Si quedaran duplicados, MySQL rechaza el UNIQUE (errno
+`1062`), el arranque lo avisa en el log y se conserva el índice normal: las
+escrituras vuelven al chequeo a mano, que protege contra duplicados existentes
+pero no tiene garantía ante escrituras simultáneas. Es el único caso en que el
+servidor no delega la unicidad en la base.
+
+El **borrado por código** sigue siendo explícito: si hubiera más de un elemento
+con ese código, `DELETE /api/elementos/:codigo` responde `409` y no borra nada
+(antes hacía `SELECT` sin `LIMIT` y borraba el que devolviera la base primero).
+Con `uq_codigo` el caso es imposible, pero el guardián se queda: borrar por
+código es destructivo y una base degradada sigue existiendo.
 
 ### Tipos y por qué
 
@@ -135,15 +144,39 @@ dos vías **idempotentes** — se pueden correr las veces que sea necesario:
    - `asegurarEsquemaFotos()` crea `elemento_fotos` si falta
      (errno `1146` en el `LEFT JOIN` del listado también está contemplado: el
      inventario degrada a "sin fotos" con un aviso en el log en vez de caerse).
-   - `asegurarIndiceCodigo()` crea `ix_codigo`; si ya existe ignora el
-     `ER_DUP_KEYNAME` (errno `1061`).
+   - `repararCodigosDuplicados()` repara los `codigo` repetidos que queden (ver
+     abajo). Va **antes** del índice: con duplicados, MySQL no deja crearlo.
+   - `asegurarCodigoUnico()` crea `uq_codigo` (ignora `ER_DUP_KEYNAME`, errno
+     `1061`, si ya estaba) y retira `ix_codigo`. Con duplicados vivos devuelve
+     `'duplicados'`: se conserva el índice normal y el arranque lo avisa.
    - Es la única forma de tocar la base de Aiven: no hay credenciales de esa base
      fuera de Render (ver [`operacion.md`](operacion.md)).
 2. **Manual** (`npm run migrar:esquema` → `scripts/migrar-esquema.mjs`):
    - `--check` solo informa qué falta (exit 1 si falta algo);
-   - sin `--check` aplica lo que falte y resume el estado;
-   - comparte el DDL con el server (`DDL_FOTOS` en `importer/api.mjs`), así que
-     no hay dos definiciones que se separen.
+   - sin `--check` aplica lo que falte y resume el estado (incluye la misma
+     reparación de duplicados y el índice UNIQUE);
+   - comparte DDL y funciones con el server (`DDL_FOTOS`,
+     `repararCodigosDuplicados`, `asegurarCodigoUnico` en `importer/api.mjs`),
+     así que no hay dos definiciones que se separen.
+
+### Reparación de códigos duplicados (la única migración de datos)
+
+Existe por un caso concreto: el Excel original escribió `IOT-79` dos veces (una
+silla y una mesa, ids 246 y 247). La regla es la del primer registro —**el id más
+bajo conserva el código**— porque es el orden en que aparecen en el origen y es
+la única que se puede aplicar sin criterio humano en un arranque; los demás
+reciben el siguiente código libre de su propia familia (`IOT-79` → el primero
+libre a partir de 80 → `IOT-88`, respetando el relleno con ceros de familias como
+`VL-303-05`). Cada recodificación se registra con su sentencia de reversión:
+
+```
+[datos] código duplicado reparado: elemento 247 · IOT-79 → IOT-88
+[datos]   reversión: UPDATE elementos SET codigo='IOT-79' WHERE id=247
+```
+
+Es idempotente: sin duplicados devuelve `[]` y no toca nada. La decisión es pura
+(`planRepararDuplicados`, `siguienteCodigoLibre` en `importer/api.mjs`) y el
+`self-check` la cubre sin base, con el caso real incluido.
 
 ## Conexión
 

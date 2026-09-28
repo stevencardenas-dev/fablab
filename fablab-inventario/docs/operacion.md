@@ -114,8 +114,15 @@ curl -s https://fablab-web.onrender.com/_expo/static/js/web/<entry>.js | grep -c
 
 1. `asegurarEsquemaFotos()` — crea `elemento_fotos` si falta (idempotente).
    Sin esto, el `LEFT JOIN` del listado tumbaba la app entera en Aiven.
-2. `asegurarIndiceCodigo()` — crea `ix_codigo` si falta (ignora errno 1061).
-3. `precargarMiniaturas()` — sube las miniaturas a RAM (~5 MB).
+2. `repararCodigosDuplicados()` — recodifica los `codigo` repetidos y registra
+   cada cambio con su sentencia de reversión. Sin duplicados no hace nada.
+3. `asegurarCodigoUnico()` — crea `uq_codigo` (UNIQUE) y retira `ix_codigo`;
+   ignora errno 1061 si ya estaba. Si quedaran duplicados devuelve `'duplicados'`
+   y el arranque lo avisa en vez de dejar la base sin índice.
+4. `precargarMiniaturas()` — sube las miniaturas a RAM (~5 MB).
+
+Los pasos 2 y 3 van en ese orden: con duplicados vivos, MySQL no acepta el
+índice `UNIQUE`.
 
 Si algo de esto falla, se registra y el server sigue: el listado degrada a "sin
 fotos" en vez de caerse. La vía manual para revisar el esquema es

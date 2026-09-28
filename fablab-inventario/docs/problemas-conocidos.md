@@ -14,32 +14,46 @@ qué queda abierto:
 | Cuerpo con JSON roto → `500` | `400` "JSON inválido" | `npm run qa` |
 | Cuerpo sin tope (2 MB se bufferizaban enteros en RAM) | tope de 1 MB → `413`, sin acumular | `npm run qa` + prueba chunked |
 | `GET /elementos/1.5/historial` → `200 []`; ids fuera de rango llegaban a la base | ids solo enteros (`1`…`2147483647`), resto `400` | `npm run qa` · `self-check` |
-| Dos altas simultáneas del mismo código → ambas `201` (TOCTOU) | lock con nombre: una `201`, el resto `409` | `npm run qa` (5 en paralelo) |
+| Dos altas simultáneas del mismo código → ambas `201` (TOCTOU) | primer intento: lock con nombre; hoy la base: `UNIQUE uq_codigo` (una `201`, el resto `409`) | `npm run qa` (5 en paralelo) |
 | `DELETE` por código duplicado borraba uno al azar | `409` y no borra nada | `self-check` (función pura) |
 | Historial de un elemento inexistente → `200 []` | `404` | `npm run qa` |
 | `npm run qa` reventaba con `TypeError` en una base sin fotos | el contrato de fotos se prueba sobre la foto temporal del QA | `npm run qa` |
 | Sin CI: los tests dependían de que alguien se acordara | `.github/workflows/ci.yml` + `npm run gate` | GitHub Actions |
 
-Lo que **no** cambia con esto: `codigo` sigue sin ser `UNIQUE` en la base (el
-siguiente paso llegará cuando se resuelva `IOT-79`), y el token de escritura
-sigue viajando en el bundle web.
+Lo que **no** cambia con esto: el token de escritura sigue viajando en el bundle
+web (ver más abajo).
+
+## `IOT-79`: resuelto el 2026-09-25
+
+No era un bug del software sino un dato: el Excel original escribió `IOT-79` dos
+veces (una *silla de madera marrón* y una *mesa de trabajo 1.50×2.40 M-01*, ids
+246 y 247 de la sala 2). Impacto mientras estuvo: el listado devolvía dos filas
+con el mismo `codigo`, buscar o escanear ese código mostraba las dos fichas y
+ningún índice `UNIQUE` podía crearse, así que la unicidad la sostenía el servidor
+con un lock.
+
+**La decisión: lo conserva el id más bajo**, la silla (246). El criterio es la
+regla del primer registro —en el inventario original la silla aparece primero— y
+el hecho de que la serie de sillas quede completa: `IOT-68…IOT-79` son las 12
+sillas de madera `IOT-01…IOT-12` (`79 − 67 = 12`), mientras que la mesa `M-01`
+entró en un número ya consumido (las mesas siguen en `80…82`, que son `M-02…M-04`).
+La mesa recibió **`IOT-88`**, el siguiente libre de la familia: `IOT-87` era el
+máximo en uso, así que `88` nunca existió y no puede chocar con una etiqueta
+heredada.
+
+| | Antes | Después |
+|---|---|---|
+| id 246 · Silla madera marrón IOT-12 | `IOT-79` | `IOT-79` |
+| id 247 · Mesa de trabajo 1.50×2.40 M-01 | `IOT-79` | `IOT-88` |
+
+Lo aplica el arranque (`repararCodigosDuplicados`, ver
+[`base-de-datos.md`](base-de-datos.md)) con la regla general *el id más bajo
+conserva el código*, que sirve para cualquier duplicado futuro. **Reversión:**
+`UPDATE elementos SET codigo='IOT-79' WHERE id=247` — y antes hay que quitar
+`uq_codigo`, porque el índice no acepta el duplicado de vuelta. El arranque
+imprime esa sentencia al reparar.
 
 ## Bugs abiertos
-
-### `IOT-79` está duplicado en la base
-
-Dos elementos comparten código (ids **246** y **247**, sala 2): una *silla de
-madera marrón* y una *mesa de trabajo 1.50×2.40 M-01*. Viene del Excel original.
-
-- Impacto: `GET /api/elementos` devuelve dos filas con el mismo `codigo`; buscar
-  por ese código muestra las dos; al escanear puede resolver a cualquiera de las
-  dos fichas.
-- Estado del server: los códigos **nuevos** duplicados ya se rechazan con `409`
-  (`ix_codigo` es un índice normal, no `UNIQUE`, justamente por este heredado).
-- **Decisión pendiente del cliente**: cuál de los dos elementos conserva `IOT-79`
-  y qué código recibe el otro. El camino más simple es usar la ficha de la app
-  (o `PUT`/`POST …/codigo` no sirve para sobrescribir: habría que hacerlo por
-  base de datos, que en producción no es accesible fuera de Render).
 
 ### Error #418 de React en la PWA
 
@@ -93,7 +107,8 @@ Render (`ER_ACCESS_DENIED`), y el HANDOFF prohíbe resetearla (tira la API). Por
 eso:
 
 - los cambios de esquema se hacen con el **server al arrancar**
-  (`asegurarEsquemaFotos`, `asegurarIndiceCodigo`) o por la API;
+  (`asegurarEsquemaFotos`, `repararCodigosDuplicados`, `asegurarCodigoUnico`) o
+  por la API;
 - `npm run migrar:esquema` sirve para local, no para producción;
 - cualquier operación de datos en producción pasa por la API pública.
 

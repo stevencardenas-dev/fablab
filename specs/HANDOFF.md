@@ -605,6 +605,41 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   media con +80 en la muestra que expira TTL); escrituras PUT +139, traslado
   +200, foto +226, DELETE foto +68, DELETE elemento +72, **alta +337** (los ~+135
   sobre el alta anterior son el lock de código), HEAD +113 (artefacto del proxy).
+- **`IOT-79` resuelto y `codigo` ahora es `UNIQUE` (2026-09-25).** El duplicado
+  heredado del Excel (*silla madera marrón IOT-12*, id 246, y *mesa de trabajo
+  1.50×2.40 M-01*, id 247, ambos sala 2) tenía bloqueada la unicidad en la base:
+  por él la columna no podía ser `UNIQUE` y la garantía la sostenía el servidor
+  con un lock con nombre. **Decisión: lo conserva el id más bajo (la silla)**, por
+  la regla del primer registro —en el origen la silla aparece primero— y porque
+  así la serie de sillas queda completa: `IOT-68…IOT-79` son las 12 sillas de
+  madera `IOT-01…IOT-12` (79 − 67 = 12), mientras que la mesa `M-01` cayó en un
+  número ya consumido (las mesas siguen en 80..82 = `M-02…M-04`). La mesa recibe
+  **`IOT-88`** (el máximo en uso era 87: 88 nunca existió, así que no puede chocar
+  con una etiqueta heredada). La regla quedó generalizada en código puro —
+  `planRepararDuplicados()` / `siguienteCodigoLibre()`, el id más bajo conserva y
+  los demás toman el siguiente libre de su familia, respetando el relleno con
+  ceros— y el arranque la aplica solo (`repararCodigosDuplicados()`) antes de
+  pedir el índice, porque con duplicados MySQL no lo acepta. Cada recodificación
+  se registra con su sentencia de reversión en el log.
+- **Con el índice `UNIQUE uq_codigo` se fue el lock de códigos.** El alta y
+  `POST …/codigo` ya no hacen `SELECT`+`INSERT` con `GET_LOCK` alrededor: el
+  `INSERT`/`UPDATE` falla con `1062` si el código está repetido y el server lo
+  traduce a `409` con el id del dueño. Misma garantía (5 altas simultáneas siguen
+  dando 1×201 y 4×409) sin los ~135 ms de lock del alta, que vuelve al costo de
+  una escritura simple. Queda un **estado degradado** declarado: si volviera a
+  haber duplicados, el arranque lo avisa, conserva el índice normal y las
+  escrituras chequean a mano (sin garantía ante simultaneidad).
+- **Ensayado completo en la base local antes de tocar producción.** El Docker
+  local tenía el mismo duplicado y el mismo `ix_codigo` no único, así que sirvió
+  de ensayo: el arranque reparó `247 → IOT-88`, creó `uq_codigo`, retiró
+  `ix_codigo` y en el segundo arranque no hizo nada (idempotente); `POST` con
+  `IOT-79` → `409 (elemento 246)`; carrera de altas 1×201 + 4×409; **carrera de
+  asignaciones 1×201 + 1×409** (el camino que antes cubría el lock); estado
+  degradado (sin `asegurarCodigoUnico`, como un script suelto) → 409 por chequeo
+  a mano y 404 de sala intacto; y `npm run qa` contra local **72 OK · 0 fallos**
+  (eran 69: se sumaron el invariante «ningún código repetido», el 409 contra un
+  código real y la comprobación de que el alta rechazada no deja otra fila).
+  La base local queda migrada (igual que quedará producción) y sin residuos.
 
 ## Decisions
 

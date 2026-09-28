@@ -9,7 +9,7 @@ salvo el QA y el benchmark (que también aceptan un server local).
 | Sin base | `node importer/self-check.mjs` | DDL/DML, capa de API, códigos, ids | **OK** (5 bloques) |
 | Tipos/lint | `npx tsc --noEmit` · `npm run lint` | TypeScript y ESLint | limpios |
 | Simbología | `npm run verify:datamatrix` | Los Data Matrix son decodificables | OK (con limitación) |
-| Integración | `npm run qa` | **61-69 checks** contra la API real (el número depende de los datos) | verde en producción (61) y local (69) |
+| Integración | `npm run qa` | **61-72 checks** contra la API real (el número depende de los datos) | verde en producción y en local |
 | Rendimiento | `npm run bench` | Todas las operaciones, vs. piso de red | ver [`rendimiento.md`](rendimiento.md) |
 | Doc y scripts | `npm run docs:check` | Enlaces, rutas documentadas vs. server, sintaxis de los `.mjs` | 5/5 |
 
@@ -61,7 +61,7 @@ push y PR: `npm ci`, `tsc`, `lint`, `npm test`, `self-check`,
 `verify:datamatrix` y `docs:check`. Es el gate que antes dependía de que alguien
 se acordara; **no** necesita base de datos ni toca producción.
 
-## `npm run qa` (integrativo, 61-69 checks)
+## `npm run qa` (integrativo, 61-72 checks)
 
 ```bash
 npm run qa                                        # producción
@@ -76,6 +76,8 @@ cortada, primero barre esos restos.
   una sala, historial, gzip (`Content-Encoding`), CORS y errores de cliente
   (`/salas/abc/elementos` → 400, `/salas/1.5/elementos` → 400,
   `/elementos/1.5/historial` → 400, historial de un id inexistente → 404).
+  Incluye el **invariante del inventario**: ningún `codigo` repetido (es lo que
+  `uq_codigo` garantiza y lo que el arranque repara si un dato heredado lo rompe).
 - **B. Contrato HTTP de las fotos** — ETag igual al `sha1` de los bytes, `304`
   con `If-None-Match`, `HEAD`, `immutable`, tamaños, y los errores (`400` id
   inválido o no entero, `413` foto/miniatura pasada de peso, `404` sin foto).
@@ -89,17 +91,21 @@ cortada, primero barre esos restos.
   asignación de código, subida/borrado de foto, `401` sin token y borrado final.
 - **C · endurecimiento** — JSON roto → `400` (no `500`), cuerpo de 2 MB → `413`
   (tope 1 MB), **5 altas simultáneas con el mismo código → 1×201 y 4×409**
-  (sin carrera), ids no enteros → `400` en alta, `PUT` y traslado.
+  (lo garantiza el índice `UNIQUE uq_codigo`, no el servidor), **alta con un
+  código real ya existente → `409` nombrando al dueño y sin dejar otra fila**,
+  ids no enteros → `400` en alta, `PUT` y traslado.
 - **D. Export** — `elementos.csv` (BOM y cabeceras), `elementos.json`,
   `traslados.csv|json`.
 
 El token sale de `API_TOKEN` o de `~/.config/fablab/api-token`.
 
 **¿Por qué el conteo cambia?** El contrato de fotos de la sección B solo corre
-si la base tiene alguna foto real; en la sección C corre siempre sobre la foto
-temporal del QA. Con la base de producción sin fotos (hoy) salen **61 checks**;
-en una base con fotos salen **69**. Los dos números son verde; lo que no cambia
-es que no haya fallos.
+si la base tiene alguna foto real (y entonces corre **dos veces**: sobre la foto
+real y sobre la temporal del QA); en la sección C corre siempre, sobre la foto
+temporal. Por eso la misma suite da una cuenta distinta según la base: **72** en
+local (tiene 1 foto) y la cuenta corta —sin el bloque de fotos reales— en
+producción, que hoy no tiene ninguna. Las dos son verde; lo que no cambia es que
+no haya fallos.
 
 **Qué NO cubre**: la UI en sí (eso se valida en el navegador a mano o con
 Playwright en sesiones puntuales), el camino nativo (hoja de compartir, cámara
@@ -140,5 +146,8 @@ server local (`PORT=3101 node server/index.mjs`).
   incógnito y en `/`; es cosmético y de nivel SDK, no de nuestra app.
 - **El deep link devuelve 404** aunque renderiza: falta la Rewrite Rule en Render
   (no es algo que una prueba pueda arreglar).
-- **`IOT-79` duplicado**: hay que decidir cuál de los dos elementos conserva el
-  código; el server ya bloquea duplicados nuevos con 409.
+- **Carrera de asignación de código** (`POST …/codigo` en paralelo): solo se
+  puede ejercitar donde haya elementos **sin** código, y hoy no queda ninguno.
+  La cubre el mismo mecanismo que la carrera de altas —el `1062` de
+  `uq_codigo` traducido a `409`—, que sí corre en cada pasada; se probó a mano
+  en la base local (1×201 y 1×409) antes de aceptar el cambio.

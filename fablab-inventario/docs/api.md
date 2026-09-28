@@ -216,10 +216,9 @@ o ninguna):
 
 - `400` si falta `sala_id` o `codigo`.
 - `404` si la sala no existe.
-- `409` si **`codigo` ya existe**: el mensaje incluye el id del dueño
-  (`El código CNC-172 ya existe (elemento 42)`). La columna no tiene índice
-  `UNIQUE` por el duplicado heredado `IOT-79`, así que la unicidad la verifica
-  el server antes de insertar.
+- `409` si **`codigo` ya existe**: lo rechaza el índice `UNIQUE uq_codigo` de la
+  base y el mensaje incluye el id del dueño (`El código CNC-172 ya existe
+  (elemento 42)`), que es el dato necesario para resolverlo.
 
 ### 11. `PUT /api/elementos/:id`
 
@@ -245,9 +244,7 @@ normaliza a mayúsculas.
 - `400` formato inválido.
 - `404` elemento inexistente.
 - `409` si el elemento **ya tiene** código (no se sobrescribe la etiqueta) o si
-  el código ya está en uso.
-- `503` si otra asignación de códigos está en curso (el lock se toma con un
-  timeout de 5 s).
+  el código ya está en uso por otro elemento (lo decide `uq_codigo`).
 - En bloque, la herramienta es `npm run asignar:codigos` (ver
   [`importacion.md`](importacion.md)).
 
@@ -275,10 +272,11 @@ CASCADE. `DELETE` es idempotente: repetirlo devuelve `404`.
 
 `200` → `{ "deleted": true, "codigo": "CNC-172" }` · `404` si no existe.
 
-> **`409` si el código es ambiguo.** `codigo` no es único en el esquema (existe
-> el duplicado heredado `IOT-79`), y un `DELETE` por código con dos coincidencias
-> borraba la que devolviera la base primero. Ahora responde `409` y **no borra
-> nada**: el duplicado se resuelve primero.
+> **`409` si el código es ambiguo.** Un `DELETE` por código con dos coincidencias
+> borraba la que devolviera la base primero, así que el server responde `409` y
+> **no borra nada**. Con `uq_codigo` el caso ya no puede darse; el guardián queda
+> porque el borrado por código es destructivo y una base degradada (duplicados sin
+> reparar) sigue siendo posible.
 
 ---
 
@@ -292,7 +290,7 @@ Cinco arreglos de la sesión de QA (2026-09-24), todos con su check en
 | Cuerpo con JSON roto → `500` | `400` "JSON inválido" (y no ensucia el log de errores del server) |
 | Cuerpo sin límite (2 MB se bufferizaban enteros) | tope de 1 MB → `413`, sin acumular |
 | `GET /elementos/1.5/historial` → `200 []` | `400` (id no entero) |
-| Dos altas simultáneas del mismo código → ambas `201` | lock con nombre: una `201`, el resto `409` |
+| Dos altas simultáneas del mismo código → ambas `201` | índice `UNIQUE uq_codigo`: una `201`, el resto `409` |
 | `DELETE` de un código duplicado borraba uno al azar | `409`, sin borrar |
 
 ```bash

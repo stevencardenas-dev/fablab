@@ -45,8 +45,10 @@ repetir la misma query cuando la pantalla la pide dos veces seguidas.
 ### 4. Índice `elementos(codigo)`
 
 Sin índice, el chequeo de duplicado del alta, el DELETE por código y la búsqueda
-recorrían los 917 elementos. `ix_codigo` **no es único** (existe el duplicado
-heredado `IOT-79`), se crea al arrancar de forma idempotente.
+recorrían los 917 elementos. Hoy es `uq_codigo`, **UNIQUE**: sirve las mismas
+búsquedas y además deja que la garantía de unicidad la dé la base (un `INSERT`
+repetido falla con `1062` → `409`). Se crea al arrancar, una vez reparados los
+duplicados heredados (ver [`base-de-datos.md`](base-de-datos.md)).
 
 ### 5. `304`/`HEAD` sin leer el blob
 
@@ -109,6 +111,9 @@ paga la consulta; en la app, la caché SWR del cliente tapa esa ventana.
 | `PUT /api/elementos/:id` (1 query) | +139 ms |
 | `POST /api/elementos` con código duplicado (409: lock + 2 consultas) | +273 ms |
 | `POST /api/elementos` con código nuevo (la ruta real del alta) | +337 ms |
+
+Las dos filas de `POST /api/elementos` son de la corrida **con lock**
+(2026-09-25, previa al índice UNIQUE); se conservan como registro de esa etapa.
 | `POST /api/traslados` (4 consultas transaccionales) | +200 ms |
 | `POST …/foto` (25,6 KB: validación + upsert de 60 KB) | +226 ms |
 | `DELETE /api/elementos/:id/foto` | +68 ms |
@@ -117,12 +122,13 @@ paga la consulta; en la app, la caché SWR del cliente tapa esa ventana.
 | `GET /api/export/traslados.csv` | +69 ms |
 | `GET /api/export/elementos.csv` (917 filas, sin gzip) | +82 ms |
 
-El **alta** es la escritura más cara (+337 ms): valida la sala, toma el lock de
-código, chequea el duplicado, inserta y libera el lock — cinco viajes. Antes del
-endurecimiento habría sido ~+200 ms con el chequeo sin lock; los ~135 ms extra
-son el precio de que dos altas simultáneas del mismo código no puedan pasar las
-dos. Cuando `IOT-79` se resuelva y `codigo` sea `UNIQUE`, el lock desaparece y el
-alta vuelve a su costo anterior.
+El **alta** volvió al costo de una escritura simple: valida la sala, inserta y,
+si el código está repetido, traduce el `1062` de la base a `409` con el id del
+dueño. Los **+337 ms** que midió la corrida de más abajo incluían el lock de
+código que hizo falta mientras existió el duplicado heredado `IOT-79` (ver
+[`problemas-conocidos.md`](problemas-conocidos.md)); con `uq_codigo` ese lock ya
+no existe y la garantía es la misma (5 altas simultáneas siguen dando `1×201` y
+`4×409`, verificado por `npm run qa`).
 
 Lo único por encima del piso son las escrituras reales (cada una paga sus
 consultas) y el arranque en frío del free tier.
@@ -137,7 +143,7 @@ consultas) y el arranque en frío del free tier.
 | Revalidar una foto (ETag) | 629 ms | +1 ms (hash en RAM) |
 | Miniatura de un elemento | +204 ms (query) | +9 ms (precargada en RAM) |
 | Primer hit tras 70 s idle | 0,6 s+ con query | 0,43-0,47 s **en `/health` también** (CPU del free tier) |
-| Alta de un elemento | ~+200 ms | +337 ms (**a cambio** de cerrar la carrera de códigos) |
+| Alta de un elemento | ~+200 ms | +337 ms con el lock de códigos; **el lock ya no existe** (índice UNIQUE) |
 
 ## Cómo medir sin engañarte
 
@@ -169,12 +175,10 @@ corrida se corta, la siguiente limpia el resto.
   Si algún día molestan, el siguiente paso sería agrupar (batch) o mover la base
   a una región más cercana.
 - **Primera carga del listado con TTL expirado**: +78 ms una vez por minuto.
-- **Los códigos se escriben bajo un lock con nombre** (`GET_LOCK`): medidos
-  **+135 ms** sobre el piso (el alta pasó de ~+200 a **+337 ms**). Es deliberado:
-  sin él, dos altas simultáneas del mismo código podían pasar las dos (con el
-  lock, 5 en paralelo dan 1×201 y 4×409). Son operaciones poco frecuentes y la
-  alternativa —un `UNIQUE` en la columna— no es posible mientras exista `IOT-79`:
-  cuando se resuelva, el lock se va y el alta vuelve a su costo anterior.
+- **La unicidad de `codigo` ya no cuesta round-trips.** Mientras existió el
+  duplicado heredado `IOT-79` la sostenía un lock con nombre (`GET_LOCK`),
+  medido en **+135 ms** por alta. Resuelto el dato, el índice `UNIQUE uq_codigo`
+  hace el trabajo: mismo resultado, sin lock y sin consultas extra.
 - **El historial solo hace una consulta extra cuando está vacío**: si el
   elemento existe y no tiene traslados, paga un `SELECT` de existencia para
   poder responder `404` cuando el id no existe. Con traslados, una sola query.

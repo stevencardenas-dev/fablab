@@ -45,7 +45,7 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 - **[qa.md](qa.md)** — qué cubre cada prueba (`npm test`, `self-check`, `qa`,
   `benchmark`, `verify:datamatrix`) y cómo apuntarlas a un servidor local.
 - **[problemas-conocidos.md](problemas-conocidos.md)** — issues abiertos
-  (`IOT-79`, error #418, deep link 404…) y trampas del entorno.
+  (error #418, deep link 404, token en el bundle…) y trampas del entorno.
 
 ## Mapa del repositorio
 
