@@ -88,31 +88,41 @@ async function op(nombre, path, opts = {}, muestras = N) {
   await op('GET /salas/7/elementos (sala CNC, 171)', '/salas/7/elementos');
   await op('GET /elementos/:id/historial', '/elementos/30/historial');
 
-  console.log('\n— Fotos (miniatura en RAM desde el arranque) —');
-  await op('GET foto miniatura', '/elementos/1/foto?tam=miniatura');
-  await op('GET foto grande 800px (LRU)', '/elementos/1/foto');
-  const etag = (await pedir('/elementos/1/foto')).headers.get('etag');
-  await op('GET 304 revalidación (hash en RAM)', '/elementos/1/foto', { headers: { 'If-None-Match': etag } });
-  await op('HEAD foto (hash en RAM)', '/elementos/1/foto', { method: 'HEAD' });
-
-  console.log('\n— Escrituras (elemento temporal QA-BENCH) —');
+  // Preparación: el elemento temporal existe ANTES de medir y lleva una foto.
+  // Las lecturas de foto apuntaban al elemento 1, que tenía foto solo durante la
+  // prueba de demo: con la base sin fotos, esos "GET foto" medían en realidad la
+  // consulta + 404, y el +0/+69 que salía no significaba lo mismo. Ahora el
+  // benchmark se autoabastece y los números se pueden comparar entre corridas.
+  console.log('\n— Preparación (elemento temporal con foto) —');
+  await pedir(`/elementos/${CODIGO}`, { method: 'DELETE', headers: AUTH }).catch(() => {});
   const rAlta = await pedir('/elementos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...AUTH },
     body: JSON.stringify({ sala_id: 7, codigo: CODIGO, detalle: 'benchmark perf' }),
   });
-  if (rAlta.status !== 201) {
-    // Si quedó de otra corrida, borrar y reintentar una vez.
-    await pedir(`/elementos/${CODIGO}`, { method: 'DELETE', headers: AUTH });
-    const r2 = await pedir('/elementos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...AUTH },
-      body: JSON.stringify({ sala_id: 7, codigo: CODIGO, detalle: 'benchmark perf' }),
-    });
-    if (r2.status !== 201) throw new Error(`no pude crear el elemento de benchmark (${r2.status})`);
-  }
-  const { id } = await (await pedir('/elementos', {})).json().then((j) => j.find((e) => e.codigo === CODIGO));
+  if (rAlta.status !== 201) throw new Error(`no pude crear el elemento de benchmark (${rAlta.status})`);
+  const { id } = await rAlta.json();
 
+  const fotoWebp = readFileSync(new URL('./demo-foto/foto.webp', import.meta.url));
+  const miniWebp = readFileSync(new URL('./demo-foto/mini-reemplazo.webp', import.meta.url));
+  const b64 = (b) => b.toString('base64');
+  const payloadFoto = () => ({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...AUTH },
+    body: JSON.stringify({ mime: 'image/webp', foto: b64(fotoWebp), miniatura: b64(miniWebp), ancho: 800, alto: 800 }),
+  });
+  const rPrevia = await pedir(`/elementos/${id}/foto`, payloadFoto());
+  if (rPrevia.status !== 201) throw new Error(`no pude subir la foto de benchmark (${rPrevia.status})`);
+  console.log(`  elemento ${id} creado y con foto ✔`);
+
+  console.log('\n— Fotos (miniatura y 304 desde RAM; foto grande en LRU) —');
+  await op('GET foto miniatura', `/elementos/${id}/foto?tam=miniatura`);
+  await op('GET foto grande 800px (LRU)', `/elementos/${id}/foto`);
+  const etag = (await pedir(`/elementos/${id}/foto`)).headers.get('etag');
+  await op('GET 304 revalidación (hash en RAM)', `/elementos/${id}/foto`, { headers: { 'If-None-Match': etag } });
+  await op('HEAD foto (hash en RAM)', `/elementos/${id}/foto`, { method: 'HEAD' });
+
+  console.log('\n— Escrituras (sobre el elemento temporal) —');
   await op('PUT editar elemento', `/elementos/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...AUTH },
@@ -134,16 +144,30 @@ async function op(nombre, path, opts = {}, muestras = N) {
     body: JSON.stringify({ elementoId: id, salaNuevaId: 7, nota: 'bench' }),
   }, 4);
 
-  const fotoWebp = readFileSync(new URL('./demo-foto/foto.webp', import.meta.url));
-  const miniWebp = readFileSync(new URL('./demo-foto/mini-reemplazo.webp', import.meta.url));
-  const b64 = (b) => b.toString('base64');
-  const payloadFoto = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...AUTH },
-    body: JSON.stringify({ mime: 'image/webp', foto: b64(fotoWebp), miniatura: b64(miniWebp), ancho: 800, alto: 800 }),
-  };
-  await op('POST foto 25.6KB (INSERT/UPDATE)', `/elementos/${id}/foto`, payloadFoto, 4);
+  await op('POST foto 25.6KB (INSERT/UPDATE)', `/elementos/${id}/foto`, payloadFoto(), 4);
   await op('DELETE foto', `/elementos/${id}/foto`, { method: 'DELETE', headers: AUTH }, 4);
+
+  // Alta real (el camino que usa el usuario al agregar un elemento): mide el
+  // lock de código + INSERT. Se crean 3 y se borran al final, sin medir.
+  console.log('\n— Alta con código nuevo (lock + INSERT) —');
+  const altas = [`${CODIGO}-A1`, `${CODIGO}-A2`, `${CODIGO}-A3`];
+  for (const cod of altas) await pedir(`/elementos/${cod}`, { method: 'DELETE', headers: AUTH }).catch(() => {});
+  const tAltas = [];
+  for (const cod of altas) {
+    const t0 = performance.now();
+    const r = await pedir('/elementos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...AUTH },
+      body: JSON.stringify({ sala_id: 7, codigo: cod, detalle: 'bench alta' }),
+    });
+    await r.arrayBuffer();
+    if (r.status !== 201) throw new Error(`alta ${cod} → ${r.status}`);
+    tAltas.push(performance.now() - t0);
+  }
+  const rAltas = resumen(tAltas);
+  filas.push({ nombre: 'POST alta con código nuevo', ...rAltas });
+  console.log(`POST alta con código nuevo`.padEnd(46) + ` min${f(rAltas.min)} p50${f(rAltas.p50)} max${f(rAltas.max)}`);
+  for (const cod of altas) await pedir(`/elementos/${cod}`, { method: 'DELETE', headers: AUTH }).catch(() => {});
 
   console.log('\n— Export —');
   await op('GET /export/elementos.csv (917 filas)', '/export/elementos.csv');
