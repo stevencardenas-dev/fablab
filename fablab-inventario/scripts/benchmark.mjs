@@ -148,8 +148,9 @@ async function op(nombre, path, opts = {}, muestras = N) {
   await op('DELETE foto', `/elementos/${id}/foto`, { method: 'DELETE', headers: AUTH }, 4);
 
   // Alta real (el camino que usa el usuario al agregar un elemento): mide el
-  // lock de código + INSERT. Se crean 3 y se borran al final, sin medir.
-  console.log('\n— Alta con código nuevo (lock + INSERT) —');
+  // INSERT (la unicidad la garantiza el índice UNIQUE, no un chequeo previo).
+  // Se crean 3 y se borran al final, sin medir.
+  console.log('\n— Alta con código nuevo (INSERT) —');
   const altas = [`${CODIGO}-A1`, `${CODIGO}-A2`, `${CODIGO}-A3`];
   for (const cod of altas) await pedir(`/elementos/${cod}`, { method: 'DELETE', headers: AUTH }).catch(() => {});
   const tAltas = [];

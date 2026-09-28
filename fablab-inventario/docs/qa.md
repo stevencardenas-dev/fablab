@@ -102,10 +102,9 @@ El token sale de `API_TOKEN` o de `~/.config/fablab/api-token`.
 **¿Por qué el conteo cambia?** El contrato de fotos de la sección B solo corre
 si la base tiene alguna foto real (y entonces corre **dos veces**: sobre la foto
 real y sobre la temporal del QA); en la sección C corre siempre, sobre la foto
-temporal. Por eso la misma suite da una cuenta distinta según la base: **72** en
-local (tiene 1 foto) y la cuenta corta —sin el bloque de fotos reales— en
-producción, que hoy no tiene ninguna. Las dos son verde; lo que no cambia es que
-no haya fallos.
+temporal. Por eso la misma suite da una cuenta distinta según la base: **64** en
+producción (sin ninguna foto real, medido el 2026-09-28) y **72** en local (tiene
+una). Las dos son verde; lo que no cambia es que no haya fallos.
 
 **Qué NO cubre**: la UI en sí (eso se valida en el navegador a mano o con
 Playwright en sesiones puntuales), el camino nativo (hoja de compartir, cámara

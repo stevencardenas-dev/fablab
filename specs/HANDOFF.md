@@ -640,6 +640,22 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   (eran 69: se sumaron el invariante «ningún código repetido», el 409 contra un
   código real y la comprobación de que el alta rechazada no deja otra fila).
   La base local queda migrada (igual que quedará producción) y sin residuos.
+- **Desplegado y verificado en producción (2026-09-28).** `sync:deploy --push api`
+  subió la api **`143bdbb..a44a26d`** (mensaje con el marcador `fablab@a4d7aac`,
+  ya sin el `+dirty` falso). A los 30 s de Render servir el código nuevo la base
+  estaba reparada y verificada por API: **917 elementos · 917 códigos distintos ·
+  0 repetidos**, id 246 `IOT-79` (silla) y id 247 **`IOT-88`** (mesa); `POST` con
+  `IOT-79` → `409 (elemento 246)` — la unicidad la da la base, no el servidor —
+  y `npm run qa` en producción **64 OK · 0 fallos** (eran 61: +3 checks nuevos).
+  La api quedó sin lock y sin `ix_codigo` (solo `uq_codigo`), 0 fotos, 0 residuos.
+- **El alta bajó de +337 a +142 ms (2026-09-28).** Medido con `npm run bench`
+  después del deploy: el alta ahora es la escritura más barata de todas —valida
+  la sala e inserta, sin `SELECT` de duplicado ni lock— y el rechazo por
+  duplicado pasó de +273 a +208 ms (`INSERT` que falla + consulta del dueño).
+  Las lecturas siguen en el piso. Ojo con la varianza del free tier: una pasada
+  posterior dio el export 2-3× más caro sin que ese código cambiara, así que las
+  cifras del doc se leen como orden de magnitud, no como tercera cifra
+  significativa.
 
 ## Decisions
 

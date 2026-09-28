@@ -109,26 +109,31 @@ paga la consulta; en la app, la caché SWR del cliente tapa esa ventana.
 | Operación | Delta p50 |
 |---|---|
 | `PUT /api/elementos/:id` (1 query) | +139 ms |
-| `POST /api/elementos` con código duplicado (409: lock + 2 consultas) | +273 ms |
-| `POST /api/elementos` con código nuevo (la ruta real del alta) | +337 ms |
-
-Las dos filas de `POST /api/elementos` son de la corrida **con lock**
-(2026-09-25, previa al índice UNIQUE); se conservan como registro de esa etapa.
+| `POST /api/elementos` con código nuevo (la ruta real del alta) | **+142 ms** |
+| `POST /api/elementos` con código duplicado (409: `INSERT` rechazado + consulta del dueño) | +208 ms |
 | `POST /api/traslados` (4 consultas transaccionales) | +200 ms |
 | `POST …/foto` (25,6 KB: validación + upsert de 60 KB) | +226 ms |
 | `DELETE /api/elementos/:id/foto` | +68 ms |
-| `DELETE /api/elementos/:codigo` (transacción de 3) | +72 ms |
+| `DELETE /api/elementos/:codigo` (transacción de 3) | +66 ms |
 | `GET /api/export/elementos.json` | +76 ms |
 | `GET /api/export/traslados.csv` | +69 ms |
 | `GET /api/export/elementos.csv` (917 filas, sin gzip) | +82 ms |
 
-El **alta** volvió al costo de una escritura simple: valida la sala, inserta y,
-si el código está repetido, traduce el `1062` de la base a `409` con el id del
-dueño. Los **+337 ms** que midió la corrida de más abajo incluían el lock de
-código que hizo falta mientras existió el duplicado heredado `IOT-79` (ver
-[`problemas-conocidos.md`](problemas-conocidos.md)); con `uq_codigo` ese lock ya
-no existe y la garantía es la misma (5 altas simultáneas siguen dando `1×201` y
-`4×409`, verificado por `npm run qa`).
+El **alta** cuesta una escritura simple: valida la sala, inserta y, si el código
+está repetido, traduce el `1062` de la base a `409` con el id del dueño. Mientras
+existió el duplicado heredado `IOT-79` el alta medía **+337 ms** porque además
+tomaba el lock de código ([`problemas-conocidos.md`](problemas-conocidos.md)); con
+`uq_codigo` quedó en **+142 ms** —más barata que el `~+200 ms` anterior al
+endurecimiento, porque ya no hace el `SELECT` de duplicado— y el rechazo por
+duplicado bajó de +273 a +208 ms. La garantía no se movió: 5 altas simultáneas
+siguen dando `1×201` y `4×409` (`npm run qa`), ahora serializando la base.
+
+**Las cifras se mueven entre corridas.** La tabla mezcla la corrida del
+2026-09-25 con la del 2026-09-28 (esta última, ya con `uq_codigo`, midió el alta,
+el 409 y el `DELETE`). Una pasada posterior dio el export más caro (JSON +159 ms,
+CSV +242 ms) y la foto grande +89 ms **sin que ese código cambiara**: en el free
+tier la CPU es compartida y el orden de las muestras mueve esos números. Lo que
+se compara es el piso, no la tercera cifra significativa.
 
 Lo único por encima del piso son las escrituras reales (cada una paga sus
 consultas) y el arranque en frío del free tier.
@@ -143,7 +148,7 @@ consultas) y el arranque en frío del free tier.
 | Revalidar una foto (ETag) | 629 ms | +1 ms (hash en RAM) |
 | Miniatura de un elemento | +204 ms (query) | +9 ms (precargada en RAM) |
 | Primer hit tras 70 s idle | 0,6 s+ con query | 0,43-0,47 s **en `/health` también** (CPU del free tier) |
-| Alta de un elemento | ~+200 ms | +337 ms con el lock de códigos; **el lock ya no existe** (índice UNIQUE) |
+| Alta de un elemento | ~+200 ms (chequeo + `INSERT`) | **+142 ms** (la unicidad la garantiza la base) |
 
 ## Cómo medir sin engañarte
 
