@@ -9,6 +9,9 @@
 //      que declara el propio documento no se contradice.
 //   3. Todo .mjs de server/, importer/ y scripts/ pasa `node --check` (el
 //      compilador de TypeScript no los ve; un script roto se descubre tarde).
+//   4. Los archivos de tipos que un CLON LIMPIO necesita están versionados: si
+//      `expo-env.d.ts` falta (o está en .gitignore), `tsc` pasa en la máquina que
+//      lo generó y falla en CI. Fue el primer fallo real del workflow.
 //
 // Uso:  node scripts/verificar-docs.mjs        (npm run docs:check)
 // Sale con código 1 si algo falla: es un gate de CI, no un informe.
@@ -142,10 +145,36 @@ function verificarSintaxis() {
   else bien(`sintaxis OK en ${archivos.length} scripts .mjs (server/, importer/, scripts/)`);
 }
 
+// --- 4. Archivos de tipos que un clon limpio necesita ---
+// `expo-env.d.ts` lo genera `npx expo start` y el .gitignore de la plantilla de
+// Expo lo ignora; contiene las declaraciones ambientales (`*.css`, `*.module.css`)
+// que `tsc` exige. Sin él versionado, el tipo pasa en la máquina de quien lo
+// generó y CI falla en un clon limpio (pasó el 2026-09-28).
+function verificarTiposVersionados() {
+  const archivo = path.join(RAIZ_APP, 'expo-env.d.ts');
+  try {
+    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: RAIZ_APP, stdio: 'pipe' });
+  } catch {
+    bien('expo-env.d.ts: sin repo git, no hay versionado que verificar');
+    return;
+  }
+  if (!existsSync(archivo)) {
+    mal('expo-env.d.ts', 'no existe: en un clon limpio `tsc` no encontraría los tipos de `*.css`');
+    return;
+  }
+  try {
+    execFileSync('git', ['ls-files', '--error-unmatch', 'expo-env.d.ts'], { cwd: RAIZ_APP, stdio: 'pipe' });
+    bien('expo-env.d.ts existe y está versionado (los tipos de CSS que tsc necesita)');
+  } catch {
+    mal('expo-env.d.ts versionado', 'está en el árbol pero fuera de git: un clon limpio no lo tendría y `tsc` falla en CI');
+  }
+}
+
 console.log('Verificación de documentación y scripts\n');
 verificarEnlaces();
 verificarRutasDocumentadas();
 verificarSintaxis();
+verificarTiposVersionados();
 
 console.log(`\n${controles - fallos}/${controles} controles OK${fallos ? ` · ${fallos} FALLO(S)` : ''}`);
 process.exit(fallos ? 1 : 0);

@@ -11,7 +11,7 @@ salvo el QA y el benchmark (que también aceptan un server local).
 | Simbología | `npm run verify:datamatrix` | Los Data Matrix son decodificables | OK (con limitación) |
 | Integración | `npm run qa` | **61-72 checks** contra la API real (el número depende de los datos) | verde en producción y en local |
 | Rendimiento | `npm run bench` | Todas las operaciones, vs. piso de red | ver [`rendimiento.md`](rendimiento.md) |
-| Doc y scripts | `npm run docs:check` | Enlaces, rutas documentadas vs. server, sintaxis de los `.mjs` | 5/5 |
+| Doc y scripts | `npm run docs:check` | Enlaces, rutas documentadas vs. server, sintaxis de los `.mjs`, tipos versionados | 6/6 |
 
 ## Unitarias (`npm test`)
 

@@ -7,7 +7,11 @@ node_modules/
 .expo/
 dist/
 web-build/
-expo-env.d.ts
+# expo-env.d.ts NO se ignora a propósito: la plantilla de Expo lo ignora, pero
+# contiene las declaraciones ambientales (`*.css`, `*.module.css`) que `tsc`
+# necesita. Sin el archivo versionado, un clon limpio no compila los tipos y CI
+# falla aunque en la máquina que lo generó todo pase (primer fallo real de CI,
+# 2026-09-28). Lo genera `npx expo start`; si cambia, se versiona el cambio.
 
 # Native
 .kotlin/
