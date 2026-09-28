@@ -13,7 +13,8 @@ import {
   actualizarElemento,
   asignarCodigo,
   asegurarEsquemaFotos,
-  asegurarIndiceCodigo,
+  asegurarCodigoUnico,
+  repararCodigosDuplicados,
   precargarMiniaturas,
   guardarFoto,
   obtenerFoto,
@@ -397,8 +398,19 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 try {
   await asegurarEsquemaFotos(conexionDesdeEnv());
   console.log('[esquema] elemento_fotos lista ✔');
-  const ix = await asegurarIndiceCodigo(conexionDesdeEnv());
-  console.log(`[esquema] índice elementos(codigo): ${ix} ✔`);
+  // Duplicados de `codigo` (el Excel original repitió IOT-79): se reparan ANTES
+  // de pedir el índice UNIQUE, porque con duplicados la base no lo acepta. Sin
+  // duplicados no hace nada; cada recodificación se registra con su reversión.
+  const reparados = await repararCodigosDuplicados(conexionDesdeEnv());
+  for (const { id, de, a } of reparados) {
+    console.log(`[datos] código duplicado reparado: elemento ${id} · ${de} → ${a}`);
+    console.log(`[datos]   reversión: UPDATE elementos SET codigo='${de}' WHERE id=${id}`);
+  }
+  const unico = await asegurarCodigoUnico(conexionDesdeEnv());
+  console.log(`[esquema] unicidad de elementos(codigo): ${unico} ✔`);
+  if (unico === 'duplicados') {
+    console.warn('[esquema] AVISO: quedan códigos duplicados — la unicidad la chequea el server, sin garantía ante escrituras simultáneas');
+  }
   // Miniaturas a RAM (~917 × 6 KB ≈ 5 MB): las salas pintan sus chips sin
   // tocar la BD. Si falla, las miniaturas se sirven igual — una query por una.
   const n = await precargarMiniaturas(conexionDesdeEnv());

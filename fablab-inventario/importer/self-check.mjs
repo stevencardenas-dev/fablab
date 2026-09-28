@@ -126,3 +126,57 @@ console.log('self-check OK');
   }
   console.log('self-check ids OK');
 }
+
+// Recodificación de códigos duplicados (pura: no toca la base). Es la migración
+// de datos que el arranque aplica, así que se prueba con el caso real.
+{
+  const { partesCodigo, siguienteCodigoLibre, planRepararDuplicados, normalizarCodigo } =
+    await import('./api.mjs');
+
+  // Familia y número final del código.
+  assert.deepEqual(partesCodigo('IOT-79'), { familia: 'IOT-', n: 79, ancho: 2 });
+  assert.deepEqual(partesCodigo('VL-303-05'), { familia: 'VL-303-', n: 5, ancho: 2 });
+  assert.deepEqual(partesCodigo('IMP3D-121'), { familia: 'IMP3D-', n: 121, ancho: 3 });
+  assert.deepEqual(partesCodigo('FL-MUEX2K8FXZT'), { familia: null, n: null, ancho: 0 });
+  assert.deepEqual(partesCodigo(null), { familia: null, n: null, ancho: 0 });
+
+  // Siguiente libre de la misma familia.
+  assert.equal(siguienteCodigoLibre('IOT-79', []), 'IOT-80');
+  assert.equal(siguienteCodigoLibre('IOT-79', ['IOT-80', 'IOT-81']), 'IOT-82');
+  assert.equal(siguienteCodigoLibre('VL-303-49', ['VL-303-49']), 'VL-303-50');
+  assert.equal(siguienteCodigoLibre('VL-303-05', []), 'VL-303-06', 'el relleno con ceros se respeta');
+  // Sin dígitos finales la familia se forma con un guion, para no devolver un
+  // código ya usado ni uno que el formato de la API rechazaría.
+  assert.equal(siguienteCodigoLibre('FL-MUEX2K8FXZT', []), 'FL-MUEX2K8FXZT-2');
+  assert.equal(siguienteCodigoLibre('FL-MUEX2K8FXZT', ['FL-MUEX2K8FXZT-2']), 'FL-MUEX2K8FXZT-3');
+  assert.equal(normalizarCodigo(siguienteCodigoLibre('FL-MUEX2K8FXZT', [])), 'FL-MUEX2K8FXZT-2');
+
+  // El caso real: el Excel repitió IOT-79 (silla id 246 y mesa id 247). El id más
+  // bajo conserva el código; la mesa recibe el siguiente libre de la familia
+  // (80..87 ya son las mesas M-02..M-04 y el resto de la sala) → IOT-88.
+  const enUso = [];
+  for (let i = 1; i <= 87; i++) enUso.push(`IOT-${i}`);
+  for (const hueco of ['IOT-27', 'IOT-28', 'IOT-42', 'IOT-43']) enUso.splice(enUso.indexOf(hueco), 1);
+  const planReal = planRepararDuplicados([
+    { id: 246, codigo: 'IOT-79' },
+    { id: 247, codigo: 'IOT-79' },
+  ], enUso);
+  assert.deepEqual(planReal, [{ id: 247, de: 'IOT-79', a: 'IOT-88' }], 'IOT-79: la silla 246 lo conserva, la mesa 247 pasa a IOT-88');
+
+  // Un grupo de tres deja dos recodificaciones, cada una con un código distinto.
+  assert.deepEqual(
+    planRepararDuplicados([
+      { id: 5, codigo: 'CNC-7' },
+      { id: 6, codigo: 'CNC-7' },
+      { id: 9, codigo: 'CNC-7' },
+    ], ['CNC-7', 'CNC-8']),
+    [{ id: 6, de: 'CNC-7', a: 'CNC-9' }, { id: 9, de: 'CNC-7', a: 'CNC-10' }],
+  );
+
+  // Lo que NO es un duplicado: sin código (no hay etiqueta que corregir) y
+  // grupos de uno (el llamador solo pasa filas repetidas, pero no se confía).
+  assert.deepEqual(planRepararDuplicados([{ id: 1, codigo: null }, { id: 2, codigo: '  ' }], []), []);
+  assert.deepEqual(planRepararDuplicados([], []), []);
+  assert.deepEqual(planRepararDuplicados([{ id: 1, codigo: 'A-1' }], ['A-1']), []);
+  console.log('self-check duplicados OK');
+}

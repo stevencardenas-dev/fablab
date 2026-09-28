@@ -6,14 +6,17 @@
 //
 // Qué hace:
 //   A. Lecturas públicas (salas, elementos, historial, gzip, CORS) y errores de
-//      cliente: ids no enteros → 400, inexistentes → 404
+//      cliente: ids no enteros → 400, inexistentes → 404. Incluye el invariante
+//      del inventario: ningún código repetido (lo garantiza `uq_codigo`)
 //   B. Fotos: contrato HTTP (ETag/304/HEAD/immutable, tamaños, errores). Si la
 //      base no tiene fotos reales, esto se prueba sobre la foto temporal del QA
 //      en la sección C: el QA ya no depende de que existan fotos
 //   C. Escrituras sobre elementos temporales QA-INT-<sello> (alta, edición,
 //      traslado, código, foto, autorización) y endurecimiento: JSON roto → 400,
 //      cuerpo > 1 MB → 413, 5 altas simultáneas del mismo código → 1 sola se
-//      crea (sin carrera), ids no enteros → 400. Borra todo lo que crea
+//      crea (la garantiza el índice UNIQUE, no el server), alta con un código
+//      real ya existente → 409 sin tocar nada, ids no enteros → 400. Borra todo
+//      lo que crea
 //   D. Export CSV/JSON
 //
 // El token sale de API_TOKEN o ~/.config/fablab/api-token (igual que fotos-demo).
@@ -196,6 +199,21 @@ async function probarContratoFotos({ id, marca }) {
       mal('GET /elementos', `length=${elementos?.length}, conHash=${conHash}`);
     }
 
+    // Invariante de la base: un código = un elemento. Es lo que garantiza el
+    // índice UNIQUE `uq_codigo`, y lo que el arranque repara si un dato heredado
+    // lo rompe (el Excel original repetía IOT-79). Con un duplicado acá, el
+    // escaneo de una etiqueta puede abrir la ficha equivocada.
+    const repetidos = new Map();
+    for (const e of elementos) {
+      const c = String(e.codigo ?? '').trim();
+      if (!c) continue;
+      repetidos.set(c, (repetidos.get(c) ?? 0) + 1);
+    }
+    const dups = [...repetidos.entries()].filter(([, n]) => n > 1);
+    dups.length === 0
+      ? ok(`ningún código repetido entre los ${repetidos.size} elementos con código`)
+      : mal('códigos repetidos', dups.map(([c, n]) => `${c}×${n}`).join(', '));
+
     const sala0 = salas[0].id;
     const rSala = await pedir(`/salas/${sala0}/elementos`);
     const deSala = await cuerpo(rSala);
@@ -280,7 +298,8 @@ async function probarContratoFotos({ id, marca }) {
   try {
     // Limpieza de corridas anteriores
     const rPrev = await pedir('/elementos');
-    const previos = (await rPrev.json()).filter((e) => String(e.codigo).startsWith(PREFIJO));
+    const todosAlEmpezar = await rPrev.json();
+    const previos = todosAlEmpezar.filter((e) => String(e.codigo).startsWith(PREFIJO));
     for (const p of previos) {
       await pedir(`/elementos/${encodeURIComponent(p.codigo)}`, { method: 'DELETE', headers: auth() });
       console.log(`  (limpieza) borrado resto de corrida anterior: ${p.codigo}`);
@@ -336,8 +355,33 @@ async function probarContratoFotos({ id, marca }) {
       ? ok(`cuerpo de ${(cuerpoGigante.length / 1048576).toFixed(1)} MB → 413 (tope 1 MB; antes se bufferizaba entero)`)
       : mal('tope de cuerpo', `${rCuerpoGig.status}`);
 
-    // Carrera de códigos: sin lock, el SELECT→INSERT dejaba pasar varias altas
-    // simultáneas con el mismo código (TOCTOU). Con el lock, debe crearse UNA.
+    // Alta con un código REAL ya existente: el 409 lo tiene que dar la base
+    // (índice UNIQUE `uq_codigo`) y nombrar al dueño, no un SELECT del server.
+    const elementoReal = todosAlEmpezar.find((e) => e.codigo && !String(e.codigo).startsWith(PREFIJO));
+    if (elementoReal) {
+      const rReal = await pedir('/elementos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...auth() },
+        body: JSON.stringify({ sala_id: salas[0].id, codigo: elementoReal.codigo, detalle: 'QA duplicado real' }),
+      });
+      const realTxt = await cuerpo(rReal);
+      rReal.status === 409 && String(realTxt?.error ?? '').includes(String(elementoReal.id))
+        ? ok(`alta con código existente (${elementoReal.codigo}) → 409 nombrando al dueño (elemento ${elementoReal.id})`)
+        : mal('409 con código real', `${rReal.status} ${JSON.stringify(realTxt).slice(0, 120)}`);
+
+      // ...y el intento fallido no puede dejar una segunda fila con ese código.
+      const rLista = await pedir('/elementos');
+      const conEseCodigo = (await rLista.json()).filter((e) => e.codigo === elementoReal.codigo).length;
+      conEseCodigo === 1
+        ? ok('el alta rechazada no dejó otra fila con ese código')
+        : mal('fila duplicada', `${conEseCodigo} filas con ${elementoReal.codigo}`);
+    } else {
+      aviso('409 con código real', 'la base no tiene códigos fuera del prefijo QA; se omite');
+    }
+
+    // Carrera de códigos: el SELECT→INSERT del server tenía ventana (TOCTOU) y
+    // dejaba pasar varias altas simultáneas con el mismo código. Con `uq_codigo`
+    // la base rechaza las que sobran: debe crearse UNA.
     const codigoCarrera = `${PREFIJO}${SELLO}C`;
     const rCarrera = await Promise.all(Array.from({ length: 5 }, () => pedir('/elementos', {
       method: 'POST',
@@ -347,9 +391,13 @@ async function probarContratoFotos({ id, marca }) {
     const estados = rCarrera.map((r) => r.status);
     const creados = estados.filter((s) => s === 201).length;
     const rechazados = estados.filter((s) => s === 409).length;
-    creados === 1 && rechazados === 4
-      ? ok('5 altas simultáneas con el mismo código → 1×201 y 4×409 (sin carrera)')
-      : mal('carrera de códigos', `201:${creados} 409:${rechazados} · estados ${estados.join(',')}`);
+    if (creados === 1 && rechazados === 4) {
+      ok('5 altas simultáneas con el mismo código → 1×201 y 4×409 (la base serializa: sin carrera)');
+    } else if (creados > 1) {
+      mal('carrera de códigos', `201:${creados} 409:${rechazados} · estados ${estados.join(',')} — la base NO está aplicando uq_codigo (¿duplicados heredados sin reparar?)`);
+    } else {
+      mal('carrera de códigos', `201:${creados} 409:${rechazados} · estados ${estados.join(',')}`);
+    }
 
     // Edición
     const rPut = await pedir(`/elementos/${idQA}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...auth() }, body: JSON.stringify({ observaciones: `QA edit ${SELLO}` }) });

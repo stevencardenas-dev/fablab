@@ -1,10 +1,15 @@
 #!/usr/bin/env node
-// migrar-esquema.mjs — Aplica los cambios de esquema que no están en la base ya
-// cargada (el DDL de importer/normalizado.mjs sólo corre al crear la base desde
-// cero; en la base viva hay que agregar las piezas nuevas sin borrar datos).
+// migrar-esquema.mjs — Aplica los cambios de esquema/datos que no están en la
+// base ya cargada (el DDL de importer/normalizado.mjs sólo corre al crear la
+// base desde cero; en la base viva hay que agregar las piezas nuevas sin borrar
+// datos).
 //
-// Es idempotente: cada paso comprueba information_schema antes de ejecutar, así
-// que se puede correr las veces que haga falta.
+// Es idempotente: cada paso comprueba el estado antes de ejecutar, así que se
+// puede correr las veces que haga falta.
+//
+// El server hace exactamente esto al arrancar (es su forma de arreglar su
+// propia base sin credenciales externas). Este script es la versión manual: útil
+// para la base local y para VER qué haría antes de aplicarlo.
 //
 // Uso:
 //   node scripts/migrar-esquema.mjs                          # BD local (Docker, 13306)
@@ -14,11 +19,20 @@
 //
 // Esquema que aplica:
 //   1. Tabla `elemento_fotos` (foto + miniatura por elemento, aparte de la lista).
+//   2. Unicidad de `elementos(codigo)`: repara los códigos repetidos heredados
+//      (el Excel original repitió `IOT-79`) y crea el índice UNIQUE `uq_codigo`.
+//      Sin duplicados, el índice es lo único que hace.
 
 import { conexionDesdeEnv } from '../importer/importar.mjs';
-// La definición vive en importer/api.mjs porque el server la usa para asegurar
-// el esquema al arrancar: una sola copia del DDL, no dos que se separan.
-import { DDL_FOTOS } from '../importer/api.mjs';
+// Las definiciones viven en importer/api.mjs porque el server las usa para
+// arreglar el esquema al arrancar: una sola copia, no dos que se separan.
+import {
+  DDL_FOTOS,
+  asegurarCodigoUnico,
+  repararCodigosDuplicados,
+  codigosDuplicados,
+  cerrarPools,
+} from '../importer/api.mjs';
 
 const soloCheck = process.argv.includes('--check');
 
@@ -48,6 +62,34 @@ async function main() {
       console.log('elemento_fotos: creada ✔');
     }
 
+    // --- Unicidad de elementos(codigo) ---
+    const repetidos = await codigosDuplicados(cfg);
+    if (repetidos.length) {
+      const codigos = [...new Set(repetidos.map((f) => f.codigo))];
+      console.log(`códigos duplicados: ${codigos.length} (${codigos.join(', ')}) — filas: ${repetidos.map((f) => f.id).join(', ')}`);
+      if (soloCheck) {
+        console.log('  (sin --check se reparan: el id más bajo conserva el código)');
+        process.exitCode = 1;
+      } else {
+        const plan = await repararCodigosDuplicados(cfg);
+        for (const { id, de, a } of plan) {
+          console.log(`  reparado: elemento ${id} · ${de} → ${a}  (reversión: UPDATE elementos SET codigo='${de}' WHERE id=${id})`);
+        }
+      }
+    } else {
+      console.log('códigos duplicados: ninguno ✔');
+    }
+
+    const estado = await asegurarCodigoUnico(cfg);
+    console.log(`índice UNIQUE elementos(codigo): ${estado} ✔`);
+    if (estado === 'duplicados') process.exitCode = 1;
+
+    const [indices] = await conn.query(
+      `SELECT DISTINCT index_name FROM information_schema.statistics
+       WHERE table_schema = DATABASE() AND table_name = 'elementos' ORDER BY index_name`,
+    );
+    console.log(`índices de elementos: ${indices.map((i) => i.index_name).join(', ')}`);
+
     // Estado actual, útil para verificar a ojo
     const [[elementos]] = await conn.query('SELECT COUNT(*) AS n FROM elementos');
     const [[fotos]] = await conn.query(
@@ -56,6 +98,8 @@ async function main() {
     console.log(`elementos: ${elementos.n} · fotos guardadas: ${fotos.n} (${(Number(fotos.bytes) / 1e6).toFixed(1)} MB)`);
   } finally {
     await conn.end();
+    // Los pasos de código usan el pool de api.mjs: si queda abierto, node no sale.
+    await cerrarPools();
   }
 }
 

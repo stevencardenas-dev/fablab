@@ -28,11 +28,13 @@ export function idEntero(valor) {
 }
 
 /**
- * Decide el borrado por código. `codigo` no es único en el esquema (existe el
- * duplicado heredado IOT-79), y el código hacía `SELECT ... WHERE codigo = ?`
- * sin LIMIT: con dos coincidencias borraba la que devolviera la base primero,
- * o sea una lotería sobre datos reales. Devuelve el id a borrar, `null` si no
- * hay nada que borrar, y 409 si es ambiguo. Pura: la cubre el self-check.
+ * Decide el borrado por código. Nació porque `codigo` no era único (el duplicado
+ * heredado IOT-79) y el borrado hacía `SELECT ... WHERE codigo = ?` sin LIMIT:
+ * con dos coincidencias borraba la que devolviera la base primero, o sea una
+ * lotería sobre datos reales. Hoy `uq_codigo` hace imposible el caso, pero el
+ * guardián se queda: la base degradada (sin UNIQUE) sigue existiendo y borrar
+ * por código es destructivo. Devuelve el id a borrar, `null` si no hay nada que
+ * borrar, y 409 si es ambiguo. Pura: la cubre el self-check.
  */
 export function idUnicoParaCodigo(ids) {
   const lista = (ids || []).map(Number);
@@ -255,29 +257,51 @@ export async function historialElemento(elementoId, cfg = conexionDesdeEnv()) {
   return filas;
 }
 
-// --- Bloqueo por código ---
-// El chequeo de duplicado es un SELECT seguido de INSERT/UPDATE, y `codigo` NO
-// tiene índice UNIQUE (existe el duplicado heredado IOT-79), así que dos
-// peticiones simultáneas con el mismo código podían pasar las dos (TOCTOU: el
-// `SELECT` de una no ve el `INSERT` de la otra). MySQL da un lock con
-// nombre por base; se toma mientras se chequea y se escribe, y se libera
-// SIEMPRE. El timeout de 5 s evita que una escritura colgada deje la API muda.
-const LOCK_CODIGO = 'fablab:codigo-unico';
+// --- Unicidad de `codigo` ---
+// Historia de esta columna, porque explica su forma actual: nació SIN índice
+// (cada búsqueda por código escaneaba los 917 elementos), luego tuvo un índice
+// normal con la unicidad verificada a mano por el servidor —y bajo un lock con
+// nombre, porque un `SELECT` seguido de `INSERT` tiene ventana de carrera
+// (TOCTOU): dos altas simultáneas con el mismo código pasaban las dos—. Todo
+// eso existía por UN dato heredado: el Excel original escribió `IOT-79` dos
+// veces (una silla y una mesa).
+//
+// Resuelto el duplicado, la unicidad la garantiza la BASE con un índice UNIQUE:
+// el `INSERT`/`UPDATE` falla con 1062 (ER_DUP_ENTRY) si el código ya está en
+// uso. Cierra la carrera igual que el lock, sin serializar nada y sin sus
+// round-trips extra. `uq_codigo` también sirve las búsquedas por código, así que
+// el índice normal anterior queda redundante.
+//
+// Si la base todavía tiene duplicados, MySQL no deja crear el UNIQUE: el
+// arranque lo avisa, se conserva el índice normal y las escrituras vuelven al
+// chequeo a mano (estado degradado: se pierde la garantía de carrera, no la
+// protección contra duplicados preexistentes).
+const DDL_IX_CODIGO = 'CREATE INDEX ix_codigo ON elementos (codigo)';
+const DDL_UQ_CODIGO = 'CREATE UNIQUE INDEX uq_codigo ON elementos (codigo)';
 
-async function conBloqueoCodigo(conn, fn) {
-  const [[lock]] = await conn.query('SELECT GET_LOCK(?, 5) AS ok', [LOCK_CODIGO]);
-  if (Number(lock?.ok) !== 1) {
-    throw new ErrorApi('Hay otra asignación de códigos en curso; reintenta en un momento', 503);
-  }
-  try {
-    return await fn();
-  } finally {
-    try {
-      await conn.query('SELECT RELEASE_LOCK(?)', [LOCK_CODIGO]);
-    } catch {
-      // Si la conexión muere, MySQL suelta el lock solo al cerrarla.
-    }
-  }
+// ¿La base garantiza la unicidad? Lo prende `asegurarCodigoUnico()` en el
+// arranque del server. Apagado (scripts sueltos, o base con duplicados
+// heredados) las escrituras chequean a mano antes de escribir.
+let codigoUnicoEnBase = false;
+
+// 1062 (ER_DUP_ENTRY) en `elementos` solo puede ser `uq_codigo` (la otra clave
+// única de la tabla es el id, que no se envía). El 409 dice a quién pertenece el
+// código: es el dato que hace falta para resolverlo.
+async function idDuenoDelCodigo(conn, codigo) {
+  if (!codigo) return null;
+  const [[dup]] = await conn.query(
+    'SELECT id FROM elementos WHERE codigo = ? ORDER BY id LIMIT 1',
+    [codigo],
+  );
+  return dup ? dup.id : null;
+}
+
+async function errorCodigoOcupado(conn, codigo) {
+  const dueno = await idDuenoDelCodigo(conn, codigo);
+  return new ErrorApi(
+    `El código ${codigo} ya existe${dueno == null ? '' : ` (elemento ${dueno})`}`,
+    409,
+  );
 }
 
 // Agrega un elemento nuevo a la base. El codigo es único.
@@ -288,14 +312,13 @@ export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
     // entendible (QA 2026-09-24: alta con sala_id=999999 → 500).
     const [[sala]] = await conn.query('SELECT id FROM salas WHERE id = ?', [elemento.sala_id]);
     if (!sala) throw new ErrorApi(`La sala ${elemento.sala_id} no existe`, 404);
-    return conBloqueoCodigo(conn, async () => {
-      // Unicidad de codigo a mano, bajo el lock: la columna no tiene índice
-      // UNIQUE (esquema heredado), así que sin este SELECT la base aceptaba dos
-      // elementos con el mismo código sin rechazar nada (QA 2026-09-24).
-      if (elemento.codigo) {
-        const [[dup]] = await conn.query('SELECT id FROM elementos WHERE codigo = ? LIMIT 1', [elemento.codigo]);
-        if (dup) throw new ErrorApi(`El código ${elemento.codigo} ya existe (elemento ${dup.id})`, 409);
-      }
+    // Base sin UNIQUE (duplicados heredados vivos): única red disponible, con su
+    // ventana de carrera. Estado degradado y avisado en el arranque.
+    if (!codigoUnicoEnBase) {
+      const dueno = await idDuenoDelCodigo(conn, elemento.codigo);
+      if (dueno != null) throw new ErrorApi(`El código ${elemento.codigo} ya existe (elemento ${dueno})`, 409);
+    }
+    try {
       const [res] = await conn.query(
         `INSERT INTO elementos (sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -311,7 +334,10 @@ export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
         ],
       );
       return { id: res.insertId, ...elemento };
-    });
+    } catch (e) {
+      if (e?.errno === 1062) throw await errorCodigoOcupado(conn, elemento.codigo);
+      throw e;
+    }
   });
 }
 
@@ -372,9 +398,9 @@ export async function actualizarElemento(id, campos, cfg = conexionDesdeEnv()) {
 // un código existente es el identificador ya impreso en la etiqueta, así que
 // sobrescribirlo invalidaría las etiquetas pegadas y la búsqueda por código.
 //
-// Nota: `codigo` NO tiene índice UNIQUE en el esquema (por eso existen
-// duplicados heredados como IOT-79), así que la unicidad se verifica con un
-// SELECT dentro de la misma transacción de lectura/escritura de la conexión.
+// Nota: que el código esté libre lo garantiza la base (índice UNIQUE
+// `uq_codigo`, ver más abajo); `validarAsignacion` solo queda para la regla de
+// negocio de no sobrescribir y para el chequeo a mano de una base degradada.
 const FORMATO_CODIGO = /^[A-Z0-9][A-Z0-9-]{1,19}$/;
 
 export function normalizarCodigo(codigo) {
@@ -412,23 +438,24 @@ export async function asignarCodigo(id, codigo, cfg = conexionDesdeEnv()) {
   return conectar(cfg, async (conn) => {
     const [[actual]] = await conn.query('SELECT id, codigo FROM elementos WHERE id = ?', [id]);
     if (!actual) throw new ErrorApi(`El elemento ${id} no existe`, 404);
-    // Bajo el mismo lock que el alta: el "¿está en uso?" y el UPDATE tienen que
-    // ser atómicos, o dos asignaciones simultáneas del mismo código pasan las dos.
-    return conBloqueoCodigo(conn, async () => {
-      const [[ocupado]] = await conn.query('SELECT id FROM elementos WHERE codigo = ? LIMIT 1', [nuevo]);
-      const asignable = validarAsignacion({
-        id,
-        codigoActual: actual.codigo,
-        codigoNuevo: nuevo,
-        idConEseCodigo: ocupado?.id ?? null,
-      });
-      await conn.query('UPDATE elementos SET codigo = ? WHERE id = ?', [asignable, id]);
-      const [[elemento]] = await conn.query(
-        `SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`,
-        [id],
-      );
-      return { asignado: true, elemento };
-    });
+    // Regla de negocio (pura, la cubre el self-check): un código existente es el
+    // identificador impreso en la etiqueta y no se sobrescribe. El "¿está libre?"
+    // lo decide la base con `uq_codigo`; en una base degradada —sin el UNIQUE— se
+    // chequea a mano, que es la razón por la que `validarAsignacion` sigue
+    // recibiendo `idConEseCodigo`.
+    const dueno = codigoUnicoEnBase ? null : await idDuenoDelCodigo(conn, nuevo);
+    validarAsignacion({ id, codigoActual: actual.codigo, codigoNuevo: nuevo, idConEseCodigo: dueno });
+    try {
+      await conn.query('UPDATE elementos SET codigo = ? WHERE id = ?', [nuevo, id]);
+    } catch (e) {
+      if (e?.errno === 1062) throw await errorCodigoOcupado(conn, nuevo);
+      throw e;
+    }
+    const [[elemento]] = await conn.query(
+      `SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`,
+      [id],
+    );
+    return { asignado: true, elemento };
   });
 }
 
@@ -468,20 +495,148 @@ export async function asegurarEsquemaFotos(cfg = conexionDesdeEnv()) {
   await conectar(cfg, (conn) => conn.query(DDL_FOTOS));
 }
 
-// Índice de `codigo` (NO único: la base trae el duplicado heredado IOT-79 y
-// hacer UNIQUE lo rompería). Sin índice, el check de duplicado del alta, el
-// DELETE por código y la búsqueda escaneaban los ~917 elementos en cada
-// llamada. Idempotente: crearlo si ya existe lanza ER_DUP_KEYNAME y se ignora.
-const DDL_IX_CODIGO = 'CREATE INDEX ix_codigo ON elementos (codigo)';
+/**
+ * Separa un código en familia y número final: `IOT-79` → `{familia: 'IOT-', n: 79,
+ * ancho: 2}`. Un código sin dígitos finales (`FL-MUEX2K8FXZT`) no tiene número
+ * (familia null). Pura: la cubre el self-check sin MySQL.
+ */
+export function partesCodigo(codigo) {
+  const m = /^(.*?)(\d+)$/.exec(String(codigo ?? '').trim());
+  if (!m) return { familia: null, n: null, ancho: 0 };
+  return { familia: m[1], n: Number(m[2]), ancho: m[2].length };
+}
 
-export async function asegurarIndiceCodigo(cfg = conexionDesdeEnv()) {
-  try {
-    await conectar(cfg, (conn) => conn.query(DDL_IX_CODIGO));
-    return 'creado';
-  } catch (e) {
-    if (e?.errno === 1061) return 'ya existía'; // duplicate key name
-    throw e;
+/**
+ * Siguiente código libre de la MISMA familia: `IOT-79` con 80..87 ocupados →
+ * `IOT-88`. Respeta el relleno con ceros (`VL-303-05` → `VL-303-06`, no `6`).
+ * Sin dígitos finales la familia es `código + '-'`, para no devolver un código
+ * ya usado (`FL-ABC` → `FL-ABC-2`). Pura: el self-check la cubre sin base.
+ */
+export function siguienteCodigoLibre(codigo, usados = []) {
+  const { familia, n, ancho } = partesCodigo(codigo);
+  const ocupados = usados instanceof Set ? usados : new Set(usados);
+  const base = familia ?? `${String(codigo ?? '').trim()}-`;
+  const desde = n == null ? 2 : n + 1;
+  for (let i = desde; i < desde + 10_000; i++) {
+    const texto = String(i);
+    const candidato = `${base}${texto.length < ancho ? texto.padStart(ancho, '0') : texto}`;
+    if (!ocupados.has(candidato)) return candidato;
   }
+  throw new ErrorApi(`No hay código libre en la familia de ${codigo}`, 500);
+}
+
+/**
+ * Plan para resolver códigos repetidos. Entrada: TODAS las filas que comparten
+ * código (`[{ id, codigo }]`) y los códigos en uso; salida: las recodificaciones
+ * a aplicar (`[{ id, de, a }]`).
+ *
+ * La regla: **el id más bajo conserva el código**. Es el registro que apareció
+ * primero —en el Excel original el duplicado siempre es la fila de abajo— y es
+ * la única regla que se puede aplicar sin criterio humano y sin mirar el
+ * detalle de cada elemento, que es lo que hace falta para reparar una base en el
+ * arranque. Los demás reciben el siguiente libre de su propia familia.
+ * Pura: el self-check la cubre sin MySQL.
+ */
+export function planRepararDuplicados(filas, codigosEnUso = []) {
+  const ocupados = codigosEnUso instanceof Set ? new Set(codigosEnUso) : new Set(codigosEnUso);
+  const grupos = new Map();
+  for (const f of filas || []) {
+    const codigo = String(f?.codigo ?? '').trim();
+    if (!codigo) continue; // NULL/vacío no es un duplicado: sin código no hay etiqueta
+    if (!grupos.has(codigo)) grupos.set(codigo, []);
+    grupos.get(codigo).push(Number(f.id));
+  }
+  const plan = [];
+  for (const codigo of [...grupos.keys()].sort()) {
+    const ids = grupos.get(codigo).sort((a, b) => a - b);
+    for (const id of ids.slice(1)) {
+      const nuevo = siguienteCodigoLibre(codigo, ocupados);
+      ocupados.add(nuevo);
+      plan.push({ id, de: codigo, a: nuevo });
+    }
+  }
+  return plan;
+}
+
+/** Las filas de los códigos que hoy aparecen más de una vez. */
+export async function codigosDuplicados(cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    const [filas] = await conn.query(`
+      SELECT e.id, e.codigo
+      FROM elementos e
+      JOIN (SELECT codigo FROM elementos
+             WHERE codigo IS NOT NULL AND TRIM(codigo) <> ''
+             GROUP BY codigo HAVING COUNT(*) > 1) d ON d.codigo = e.codigo
+      ORDER BY e.codigo, e.id`);
+    return filas;
+  });
+}
+
+/**
+ * Repara los códigos repetidos que quedan en la base. Es la migración de datos
+ * del `IOT-79` heredado, y sirve para cualquier duplicado futuro: la regla es
+ * determinista (`planRepararDuplicados`) y esto no hace nada cuando no hay
+ * duplicados, así que se puede llamar en cada arranque. Devuelve el plan
+ * aplicado para que quien lo llame lo registre (la reversión es un `UPDATE` con
+ * el código viejo: se imprime en el log del arranque).
+ */
+export async function repararCodigosDuplicados(cfg = conexionDesdeEnv()) {
+  const repetidos = await codigosDuplicados(cfg);
+  if (!repetidos.length) return [];
+  return conectar(cfg, async (conn) => {
+    const [todos] = await conn.query('SELECT codigo FROM elementos WHERE codigo IS NOT NULL');
+    const plan = planRepararDuplicados(repetidos, todos.map((f) => f.codigo));
+    if (!plan.length) return plan;
+    invalidarCache();
+    await conn.beginTransaction();
+    try {
+      for (const { id, a } of plan) await conn.query('UPDATE elementos SET codigo = ? WHERE id = ?', [a, id]);
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    }
+    return plan;
+  });
+}
+
+/**
+ * Deja `codigo` único en la base. Idempotente, se llama en cada arranque:
+ *   - crea `uq_codigo` (UNIQUE) si falta;
+ *   - ya creado, borra el índice normal `ix_codigo`, que pasó a ser redundante
+ *     (un UNIQUE sirve las mismas búsquedas);
+ *   - si todavía hay duplicados, MySQL rechaza el UNIQUE (errno 1062) y se
+ *     asegura `ix_codigo` para no quedarse sin ningún índice.
+ * Devuelve 'creado' | 'ya existía' | 'duplicados' para que el arranque lo diga.
+ */
+export async function asegurarCodigoUnico(cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    let estado = 'ya existía';
+    try {
+      await conn.query(DDL_UQ_CODIGO);
+      estado = 'creado';
+    } catch (e) {
+      if (e?.errno === 1062) {
+        // Duplicados vivos: la unicidad no se puede delegar a la base todavía.
+        try {
+          await conn.query(DDL_IX_CODIGO);
+        } catch (e2) {
+          if (e2?.errno !== 1061) throw e2; // duplicate key name: ya estaba
+        }
+        codigoUnicoEnBase = false;
+        return 'duplicados';
+      }
+      if (e?.errno === 1061) estado = 'ya existía'; // duplicate key name: ya estaba
+      else throw e;
+    }
+    try {
+      await conn.query('DROP INDEX ix_codigo ON elementos');
+    } catch (e) {
+      if (e?.errno !== 1091) throw e; // 1091: el índice no existía, nada que borrar
+    }
+    codigoUnicoEnBase = true;
+    return estado;
+  });
 }
 
 const FORMATOS_FOTO = new Set(['image/webp', 'image/jpeg']);
