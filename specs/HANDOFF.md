@@ -656,6 +656,36 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   posterior dio el export 2-3× más caro sin que ese código cambiara, así que las
   cifras del doc se leen como orden de magnitud, no como tercera cifra
   significativa.
+- **Rama subida, PR #2 y CI por fin ejecutándose (2026-09-28).** La rama se
+  subió y se abrió el PR contra `main`. La **primera corrida de CI falló por un
+  defecto real de "funciona en mi máquina"**: `tsc` no encontraba `*.module.css`
+  ni el import de `@/global.css` porque las declaraciones ambientales viven en
+  `expo-env.d.ts`, que Expo genera y la plantilla deja en `.gitignore` — en el
+  clon limpio no existía. Se versionó (`652a265`) y `docs:check` ahora lo exige
+  (la guarda se estrenó fallando en `5/6` justo antes de agregarlo). CI quedó en
+  **13/13 pasos verdes**.
+- **Merge con `main` resuelto y web desplegado (2026-09-28).** `origin/main` y la
+  rama partieron de `32aa4c8` e implementaron lo mismo por separado (editar/
+  trasladar, rutas de export con extensión, bump del SW): ambas sesiones con
+  Codebuff sobre el mismo repo. Resuelto en `f28b895` revisando hunk por hunk
+  (tabla en el PR #2): sobrevive la versión de la rama en los 4 archivos con
+  conflicto, y de `main` se plegaron dos cosas —`updateItem` devuelve el elemento
+  sin perder el cache, y feedback al presionar en los botones de export—. El
+  auto-merge de `inventory.ts` merece mención: pasó "limpio" pero dejó `updateItem`
+  y `exportarUrl` **duplicadas** (no compilaba); se detectó revisando, no
+  confiando en el auto-merge. Efecto neto del merge: 14 líneas en 2 archivos,
+  `server/` e `importer/` idénticos a lo desplegado (la api no necesitó
+  re-deploy). Lo único que no se trae es el `ItemEditor` inline del escáner/
+  búsqueda: la edición vive en `sala/[nombre].tsx`; devolverlo es re-portar una
+  pantalla.
+- **Web desplegado tras el merge: `172d707..f16133f`.** Bundle
+  `entry-c0c9f467c1ab3861aa1898dd3b32c131.js` (2,18 MB). Verificado en
+  producción: Render lo sirvió a los 20 s, el bundle lleva horneados la API y el
+  token de escritura, el SW sigue en `fablab-v11`, el bundle anterior sigue
+  respondiendo 200 (un cliente con `index.html` en caché no se queda sin JS) y el
+  PWA **renderiza el inventario real** —917 elementos en 11 salas, con
+  `/api/salas` y `/api/elementos` en 200 en el navegador—. Sigue en pie lo único
+  que no es código: `/sala/1` responde 404 (falta la Rewrite Rule en Render).
 
 ## Decisions
 
