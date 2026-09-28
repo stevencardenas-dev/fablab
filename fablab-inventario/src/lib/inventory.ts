@@ -227,10 +227,15 @@ export type CamposEditables = Partial<
 // PUT /elementos/:id y merge optimista en cache (sin re-descargar todo).
 // A diferencia de addItem/removeItem, aquí NO hay fallback local: una edición
 // que solo existiera en AsyncStorage sería una ilusión de guardado.
-export async function updateItem(id: number, campos: CamposEditables): Promise<void> {
+// Devuelve el elemento ya actualizado, aunque la UI de sala lo ignore: sale de
+// la misma respuesta que alimenta el cache. Al unir las dos implementaciones
+// paralelas se conservó lo mejor de cada una: esta mantiene el cache al día y
+// además devuelve el elemento (la otra solo lo devolvía).
+export async function updateItem(id: number, campos: CamposEditables): Promise<InventoryItem> {
   const res = await put<{ updated: boolean; elemento: InventoryItem }>(`/elementos/${id}`, campos);
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(cached.map((it) => (it.id === id ? { ...it, ...res.elemento } : it)));
+  return res.elemento;
 }
 
 // DELETE /elementos/:codigo. Igual que updateItem: sin fallback local, y se
@@ -450,17 +455,14 @@ export async function historialElemento(elementoId: number): Promise<TrasladoHis
   }
 }
 
-// --- Sin ubicación (fallback UI) ---
-
+// --- Export de inventario y traslados ---
 // URL de descarga del inventario/traslados. El CSV sale con BOM y
 // Content-Disposition desde el server (abre directo en Excel con acentos OK);
 // el JSON es para otros programas. La UI la abre con Linking.openURL.
-export function exportarUrl(
-  tipo: 'elementos' | 'traslados',
-  formato: 'csv' | 'json' = 'csv',
-): string {
-  return `${API_BASE}/export/${tipo}.${formato}`;
+export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'json' = 'csv'): string {
+  return `${API_BASE}/export/${qué}.${formato}`;
 }
 
+// --- Sin ubicación (fallback UI) ---
 export const SinUbicacion = 'Sin ubicación';
 

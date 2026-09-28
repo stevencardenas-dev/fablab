@@ -333,18 +333,18 @@ export default function HomeScreen() {
               Descarga el inventario completo o el historial de traslados. El CSV abre directo en Excel (con acentos correctos); el JSON es para otros programas.
             </ThemedText>
             <View style={styles.exportRow}>
-              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'csv'))} style={styles.exportButton}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'csv'))} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
                 <ThemedText style={styles.exportButtonLabel}>Inventario (CSV)</ThemedText>
               </Pressable>
-              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'csv'))} style={styles.exportButton}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'csv'))} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
                 <ThemedText style={styles.exportButtonLabel}>Traslados (CSV)</ThemedText>
               </Pressable>
             </View>
             <View style={styles.exportRow}>
-              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'json'))} style={styles.exportButtonGhost}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('elementos', 'json'))} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
                 <ThemedText style={styles.exportButtonGhostLabel}>Inventario (JSON)</ThemedText>
               </Pressable>
-              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'json'))} style={styles.exportButtonGhost}>
+              <Pressable accessibilityRole="button" onPress={() => Linking.openURL(exportarUrl('traslados', 'json'))} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
                 <ThemedText style={styles.exportButtonGhostLabel}>Traslados (JSON)</ThemedText>
               </Pressable>
             </View>
