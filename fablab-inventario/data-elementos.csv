@@ -167,8 +167,8 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 67,CNC,FabLab,CNC-38,Fresa Bauker Corte Recto 3/8(9,52 mm)-02,R1201,NULL,NULL,1,Sin rotulo de inventario
 68,CNC,FabLab,CNC-39,Fresa Bauker Corte Recto 1/4(6,35 mm)-03,R1211,NULL,NULL,1,Sin rotulo de inventario
 69,CNC,FabLab,CNC-40,Fresa Bauker Corte Recto 1/4(6,35 mm)-04,R1211,NULL,NULL,1,Sin rotulo de inventario
-70,CNC,FabLab,CNC-41,Fresa Bauker Media CaÃ±a 1/2(12,7mm),R3101,NULL,NULL,1,Sin rotulo de inventario
-71,CNC,FabLab,CNC-42,Fresa Bauker Ranura en V 90Â°,R7101,NULL,NULL,1,Sin rotulo de inventario
+70,CNC,FabLab,CNC-41,Fresa Bauker Media Caña 1/2(12,7mm),R3101,NULL,NULL,1,Sin rotulo de inventario
+71,CNC,FabLab,CNC-42,Fresa Bauker Ranura en V 90°,R7101,NULL,NULL,1,Sin rotulo de inventario
 72,CNC,FabLab,CNC-43,Calibrador digital truper 6mm,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 73,CNC,FabLab,CNC-44,Lupa Magnflying Glass,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 74,CNC,FabLab,CNC-45,Flexometro Redflag,NULL,NULL,Buen estado,1,Sin rotulo de inventario
@@ -188,15 +188,15 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 88,CNC,FabLab,CNC-59,Pistola de aire caliente Naranga BLACK DECKER,HG1500-B3,NULL,Buen estado,1,Sin rotulo de inventario
 89,CNC,FabLab,CNC-60,Filamento 3D Rollo,CFIXPLA-9,OP 2024041952,Buen estado,1,NULL
 90,CNC,FabLab,CNC-61,Desoldador Proskit,PK-366NA,NULL,Buen estado,1,Sin rotulo de inventario
-91,CNC,FabLab,CNC-62,Carrreta de soldadura estaÃ±o,TS-500,NULL,Buen estado,1,Sin rotulo de inventario
+91,CNC,FabLab,CNC-62,Carrreta de soldadura estaño,TS-500,NULL,Buen estado,1,Sin rotulo de inventario
 92,CNC,FabLab,CNC-63,Corta frio de corte diagonal de precision Xcelite,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 93,CNC,FabLab,CNC-64,Jueg de llaves Allen tipo navaja SATA-01,9121,NULL,Buen estado,1,Sin rotulo de inventario
 94,CNC,FabLab,CNC-65,Jueg de llaves Allen tipo navaja SATA-02,9121,NULL,Buen estado,1,Sin rotulo de inventario
 95,CNC,FabLab,CNC-66,Adaptador T naranja Titanium,NULL,NULL,Buen estado,1,Sin rotulo de inventario
-96,CNC,FabLab,CNC-67,Destornillador pala Uberman pequeÃ±o,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+96,CNC,FabLab,CNC-67,Destornillador pala Uberman pequeño,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
 97,CNC,FabLab,CNC-68,Destornillador pala Uberman grande,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
 98,CNC,FabLab,CNC-69,Destornillador estria  Uberman grande,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
-99,CNC,FabLab,CNC-70,Destornillador estria  Uberman pequeÃ±o,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
+99,CNC,FabLab,CNC-70,Destornillador estria  Uberman pequeño,V20200313,NULL,Buen estado,1,Sin rotulo de inventario
 100,CNC,FabLab,CNC-71,Juego de herramientas STANLEY,STMT71651,NULL,Buen estado,1,Sin rotulo de inventario
 101,CNC,FabLab,CNC-72,Juego de herramientas REDLINE,V20201112,NULL,Buen estado,1,Sin rotulo de inventario
 102,CNC,FabLab,CNC-73,Protector auditivo Samurai,NULL,NULL,Buen estado,2,Sin rotulo de inventario
@@ -210,11 +210,11 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 110,CNC,FabLab,CNC-81,Amoladora de banco STANLEY amarilla,27533,NULL,Buen estado,1,Sin rotulo de inventario
 111,CNC,FabLab,CNC-82,Prensa de banco roja,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 112,CNC,FabLab,CNC-83,Cortadora Monofab Naranja,ZEP 2612,NULL,Buen estado,1,Sin rotulo de inventario
-113,CNC,FabLab,CNC-84,ExtensiÃ³n electrica naranja,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+113,CNC,FabLab,CNC-84,Extensión electrica naranja,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 114,CNC,FabLab,CNC-85,Gafas proteccion oscuras,VICZ287+U6L3S,NULL,Buen estado,1,Sin rotulo de inventario
 115,CNC,FabLab,CNC-86,Gafas proteccion transparentes,NULL,NULL,Buen estado,6,Sin rotulo de inventario
-116,CNC,FabLab,CNC-87,Gafa protecciÃ³n azul marca KIM,NULL,NULL,Buen estado,1,Sin rotulo de inventario
-117,CNC,FabLab,CNC-88,Estanteria metalica de 6 entrepaÃ±os gris,NULL,NULL,Buen estado,9,Sin rotulo de inventario
+116,CNC,FabLab,CNC-87,Gafa protección azul marca KIM,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+117,CNC,FabLab,CNC-88,Estanteria metalica de 6 entrepaños gris,NULL,NULL,Buen estado,9,Sin rotulo de inventario
 118,CNC,FabLab,CNC-89,Impresora Plotter Roland,NET0714,NULL,Buen estado,1,Sin rotulo de inventario
 119,CNC,FabLab,CNC-90,Cortadora Laser INGEACOL,20211609003,NULL,Buen estado,1,Sin rotulo de inventario
 120,CNC,FabLab,CNC-91,Router de Mesa azul MINI 6090,210185,NULL,Buen estado,1,Sin rotulo de inventario
@@ -249,8 +249,8 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 149,CNC,FabLab,CNC-120,Mesa de almacenamiento,NULL,NULL,NULL,1,NULL
 150,CNC,FabLab,CNC-121,Mesa 1.50 X 74,NULL,NULL,NULL,1,NULL
 151,CNC,FabLab,CNC-122,Mesa  2.25 X 60,NULL,NULL,NULL,1,NULL
-152,CNC,FabLab,CNC-123,Mesa pequeÃ±a 1.66 X 1.0,NULL,NULL,NULL,1,NULL
-153,CNC,FabLab,CNC-124,Cartucho impresiÃ³n HP LaserJET,0252003G13V1BB7F36,NULL,NULL,NULL,NULL
+152,CNC,FabLab,CNC-123,Mesa pequeña 1.66 X 1.0,NULL,NULL,NULL,1,NULL
+153,CNC,FabLab,CNC-124,Cartucho impresión HP LaserJET,0252003G13V1BB7F36,NULL,NULL,NULL,NULL
 154,CNC,FabLab,CNC-125,Acrilico naranga,NULL,NULL,NULL,1,NULL
 155,CNC,FabLab,CNC-126,Acrilicos azules,NULL,NULL,NULL,2,NULL
 156,CNC,FabLab,CNC-127,Acrilicos transparentes,NULL,NULL,NULL,0,NULL
@@ -318,14 +318,14 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 520,Coworking,FabLab,CW-65,Butaco gris  Bg-1,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 521,Coworking,FabLab,CW-66,Butaco gris  Bg-2,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 522,Coworking,FabLab,CW-67,Silla giratoria azul,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
-523,Coworking,FabLab,CW-68,Telon de proyecciÃ³n para videobeam,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+523,Coworking,FabLab,CW-68,Telon de proyección para videobeam,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 524,Coworking,FabLab,CW-69,Monitor Dell P2419H,Service TAG GOZ6993,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 525,Coworking,FabLab,CW-70,CPU DELL,1GLWRB3,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 526,Coworking,FabLab,CW-71,Teclado DELL KB216T,-CH400-0CH,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 527,Coworking,FabLab,CW-72,Mouse DELL MS116 NEGRO,CN-0DMV3P-CH400-0CH-0D3P,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 528,Coworking,FabLab,CW-73,Mesa de trabajo grande 2.40M X 1.20 M,NULL,NULL,BUEN ESTADO,4,SIN ROTULO DE INVENTARIO
 529,Coworking,FabLab,CW-74,Mesa de trabajo roja  1.50x0.75,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
-530,Coworking,FabLab,CW-75,Mesa de trabajo pequeÃ±a  1.20 MX 0.6 M,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
+530,Coworking,FabLab,CW-75,Mesa de trabajo pequeña  1.20 MX 0.6 M,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 531,Coworking,FabLab,CW-76,Tablero blanco,NULL,NULL,BUEN ESTADO,2,SIN ROTULO DE INVENTARIO
 532,Coworking,FabLab,CW-77,Persiana blanco 2.46 mt ancho,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 533,Coworking,FabLab,CW-78,Persiana blanco 3.46 mt ancho,NULL,NULL,BUEN ESTADO,1,NULL
@@ -337,7 +337,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 352,Impresion 3D,FabLab,IMP3D-5,MESA DE TRABAJO DE 1.60 M X 80 METALICO , DE MADERA RECTANGULAR . AZUL,NULL,NULL,NULL,1,NULL
 353,Impresion 3D,FabLab,IMP3D-6,MESA DE 60 CMX 2.40 M,NULL,NULL,NULL,9,NULL
 354,Impresion 3D,FabLab,IMP3D-7,MESA RECTANGULAR PARA TRABAJO 1.50X 2 M,NULL,NULL,NULL,1,NULL
-355,Impresion 3D,FabLab,IMP3D-8,MESA PEQUEÃ‘A PARA MAQUINA MAQUINA 3D,NULL,NULL,NULL,1,NULL
+355,Impresion 3D,FabLab,IMP3D-8,MESA PEQUEÑA PARA MAQUINA MAQUINA 3D,NULL,NULL,NULL,1,NULL
 356,Impresion 3D,FabLab,IMP3D-9,Butaco metalico amarillo BMA-01,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
 357,Impresion 3D,FabLab,IMP3D-10,Butaco metalico amarillo BMA-02,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
 358,Impresion 3D,FabLab,IMP3D-11,Butaco metalico amarillo BMA-03,NULL,NULL,BUEN ESTADO,1,Sin rotulo de inventario
@@ -460,8 +460,8 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 173,IoT,FabLab,IOT-02,Alicate,IEC 60900,NULL,BUEN ESTADO,1,SIN ROTULO INVENTARIO
 174,IoT,FabLab,IOT-03,Arduino CNC SHIELD V3,NULL,NULL,NULL,1,SIN ROTULO INVENTARIO
 175,IoT,FabLab,IOT-04,Bateria de lipo MARCA ZIPPY,NULL,NULL,NULL,0,SIN ROTULO INVENTARIO
-176,IoT,FabLab,IOT-05,BaterÃ­as  DJI MODELO 423496,NULL,NULL,NULL,2,SIN ROTULO INVENTARIO
-177,IoT,FabLab,IOT-06,BisturÃ­,NULL,NULL,NULL,0,SIN ROTULO INVENTARIO
+176,IoT,FabLab,IOT-05,Baterías  DJI MODELO 423496,NULL,NULL,NULL,2,SIN ROTULO INVENTARIO
+177,IoT,FabLab,IOT-06,Bisturí,NULL,NULL,NULL,0,SIN ROTULO INVENTARIO
 178,IoT,FabLab,IOT-07,Brazo con lupa,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 179,IoT,FabLab,IOT-08,Cable arduino,NULL,NULL,NULL,1,SIN ROTULO DE INVENTARIO
 180,IoT,FabLab,IOT-09,Cargador DJI NEGRO,MP 1608EI063774,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
@@ -471,7 +471,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 184,IoT,FabLab,IOT-13,Destornillador de pala,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 185,IoT,FabLab,IOT-14,Destornillador miniestria,NULL,NULL,NULL,0,SIN ROTULO DE INVENTARIO
 186,IoT,FabLab,IOT-15,Destornillador mini pala,NULL,NULL,NULL,1,SIN ROTULO DE INVENTARIO
-187,IoT,FabLab,IOT-16,EstaciÃ³n de soldadura,TS-228,166001 236 002 00,BUEN ESTADO,1,NULL
+187,IoT,FabLab,IOT-16,Estación de soldadura,TS-228,166001 236 002 00,BUEN ESTADO,1,NULL
 188,IoT,FabLab,IOT-17,Estacion metereologica  (ARMADA),NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
 189,IoT,FabLab,IOT-18,Estanteria metalica de 7 niveles,NULL,NULL,BUEN ESTADO,6,SIN ROTULO DE INVENTARIO
 190,IoT,FabLab,IOT-19,Estanteria metalica de vidrio  2 M X 0.98 M,NULL,NULL,BUEN ESTADO,1,SIN ROTULO DE INVENTARIO
@@ -483,7 +483,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 196,IoT,FabLab,IOT-25,Lapiz cautin   y soporte wacon,NULL,NULL,NULL,1,Sin rotulo de inventario
 197,IoT,FabLab,IOT-26,Llave ajustable,NULL,NULL,NULL,0,Sin rotulo de inventario
 198,IoT,FabLab,IOT-29,Mesa de area de trabajo  2.40 X 60,NULL,NULL,NULL,1,Sin rotulo de inventario
-199,IoT,FabLab,IOT-30,Modulo estaciÃ³n metereologica con cable negro,NULL,NULL,NULL,0,Sin rotulo de inventario
+199,IoT,FabLab,IOT-30,Modulo estación metereologica con cable negro,NULL,NULL,NULL,0,Sin rotulo de inventario
 200,IoT,FabLab,IOT-31,Monitor  DELL P2419H,CN-0G8TVH-QDC00-0CR-5NZB-A16,NULL,BUEN ESTADO,1,Sin rotulo de inventario
 201,IoT,FabLab,IOT-32,Mouse  DELL MS116 NEGRO,CN-0DMY3P-CH400-0CH-0D48-A01,167002 101 4674 03,BUEN ESTADO,1,NULL
 202,IoT,FabLab,IOT-33,Multimetro,NULL,NULL,NULL,0,NULL
@@ -491,7 +491,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 204,IoT,FabLab,IOT-35,Pelacables,NULL,NULL,NULL,0,Sin rotulo de inventario
 205,IoT,FabLab,IOT-36,Pinza de corte diagonal,NULL,NULL,NULL,1,Sin rotulo de inventario
 206,IoT,FabLab,IOT-37,Pinza punta de acero grande,NULL,NULL,NULL,0,Sin rotulo de inventario
-207,IoT,FabLab,IOT-38,Pinza punta de acero pequeÃ±a,NULL,NULL,NULL,0,Sin rotulo de inventario
+207,IoT,FabLab,IOT-38,Pinza punta de acero pequeña,NULL,NULL,NULL,0,Sin rotulo de inventario
 208,IoT,FabLab,IOT-39,Placa con modelo de acelerador,NULL,NULL,NULL,1,Sin rotulo de inventario
 209,IoT,FabLab,IOT-40,Ponchadora REDLINE,INSUL CRIMPER 10-22,NULL,NULL,1,Sin rotulo de inventario
 210,IoT,FabLab,IOT-41,Proyecto de arduino con accesorios,NULL,NULL,NULL,1,Sin rotulo de inventario
@@ -625,7 +625,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 271,RV y Drones,FabLab,RV-D16,Silla en madera negra RV-5,NULL,166,501,143,251,BUEN ESTADO,1,NULL
 272,RV y Drones,FabLab,RV-D17,Silla en madera negra RV-6,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
 273,RV y Drones,FabLab,RV-D18,Silla marron en espuma RV-1,NULL,166501 140 166 00,MAL ESTADO,1,Sin rotulo inventario
-274,RV y Drones,FabLab,RV-D19,Silla marron en espuma RV-2,NULL,NULL,MAL ESTADO,1,Espaldar daÃ±ado
+274,RV y Drones,FabLab,RV-D19,Silla marron en espuma RV-2,NULL,NULL,MAL ESTADO,1,Espaldar dañado
 275,RV y Drones,FabLab,RV-D20,Silla marron en espuma RV-3,NULL,166501 140 167 00,BUEN ESTADO,1,NULL
 276,RV y Drones,FabLab,RV-D21,Silla marron en espuma RV-4,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
 277,RV y Drones,FabLab,RV-D22,Silla marron en espuma RV-5,NULL,NULL,BUEN ESTADO,1,Sin rotulo inventario
@@ -642,9 +642,9 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 288,RV y Drones,FabLab,RV-D33,CPU Dell precision power,5MK7DN2,NULL,Buen estado,1,Sin rotulo de inventario
 289,RV y Drones,FabLab,RV-D34,Aire tipo casette,9M1M009Q 912TAN3H3803,NULL,Buen estado,1,Sin rotulo de inventario
 290,RV y Drones,FabLab,RV-D35,Tableros blancos 2,39x1.19,NULL,NULL,Buen estado,2,Sin rotulo de inventario
-291,RV y Drones,FabLab,RV-D36,Telon de proyecciÃ³n para Videobeam,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+291,RV y Drones,FabLab,RV-D36,Telon de proyección para Videobeam,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 292,RV y Drones,FabLab,RV-D37,Videobeam EPSON,NULL,167001  162  556  00,Buen estado,1,NULL
-293,RV y Drones,FabLab,RV-D38,Mesa equipo de computaciÃ³n 1.20mt x0.60mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+293,RV y Drones,FabLab,RV-D38,Mesa equipo de computación 1.20mt x0.60mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 294,RV y Drones,FabLab,RV-D39,Mesa 1.20mt x1.20mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 295,RV y Drones,FabLab,RV-D40,Mesa 1.35mts x 1mt,NULL,NULL,Buen estado,2,Sin rotulo de inventario
 296,RV y Drones,FabLab,RV-D41,Mesa 1.66 x1mt,NULL,NULL,Buen estado,1,Sin rotulo de inventario
@@ -669,7 +669,7 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 315,RV y Drones,FabLab,RV-D60,Luz estroboscopica M2E Beacon,1D6DH42R0C774L,NULL,Buen estado,1,Sin rotulo de inventario
 316,RV y Drones,FabLab,RV-D61,Foco doble LED M2E Sporlight,1D5DH3U01BZFQF,NULL,Buen estado,1,Sin rotulo de inventario
 317,RV y Drones,FabLab,RV-D62,Altavoz megafono M2E Speaker,1D7DH4901AN061,NULL,Buen estado,1,Sin rotulo de inventario
-318,RV y Drones,FabLab,RV-D63,Cargador DJI Negro pequeÃ±o,NULL,NULL,Buen estado,1,Sin rotulo de inventario
+318,RV y Drones,FabLab,RV-D63,Cargador DJI Negro pequeño,NULL,NULL,Buen estado,1,Sin rotulo de inventario
 319,RV y Drones,FabLab,RV-D64,Dron DJI Ultra light gris,NULL,167002  226  024  00,Buen estado,1,Sin rotulo de inventario
 320,RV y Drones,FabLab,RV-D65,Control dron DJI Ultra ligh gris,5HAZL9R004LMLR,NULL,Buen estado,1,Sin rotulo de inventario
 321,RV y Drones,FabLab,RV-D66,Bateria gris dron DJI Ultra ligh gris D1,52XXL9BDG2042C,NULL,Buen estado,1,Sin rotulo de inventario
@@ -807,10 +807,10 @@ id,sala,edificio,codigo,detalle,serial,inventario,estado,cantidad,observaciones
 777,Bodega,ViveLab,VLB-08,Letrero TV (Al aire),NULL,NULL,NULL,1,NULL
 778,Bodega,ViveLab,VLB-09,Cargador Toshiba,T13100057088A03,NULL,NULL,NULL,NULL
 779,Bodega,ViveLab,VLB-10,Cable gris,NULL,NULL,NULL,1,NULL
-780,Bodega,ViveLab,VLB-11,Telon azul de grabaciÃ³n,NULL,NULL,NULL,1,NULL
+780,Bodega,ViveLab,VLB-11,Telon azul de grabación,NULL,NULL,NULL,1,NULL
 781,Bodega,ViveLab,VLB-12,Portabanner retractil gris,NULL,NULL,NULL,1,NULL
 782,Bodega,ViveLab,VLB-13,Cajon blanco,NULL,NULL,NULL,1,NULL
-783,Bodega,ViveLab,VLB-14,EstaciÃ³n de acoplamiento para discos duros MARCA SATA,NULL,NULL,NULL,1,NULL
+783,Bodega,ViveLab,VLB-14,Estación de acoplamiento para discos duros MARCA SATA,NULL,NULL,NULL,1,NULL
 784,Bodega,ViveLab,VLB-15,Tablet Wacon 1,6HAH001510,70357-01-60.56,NULL,1,NULL
 785,Bodega,ViveLab,VLB-16,Tablet Wacon 2,6HAH001508,70357-01-76.24,NULL,1,NULL
 786,Bodega,ViveLab,VLB-17,Tablet Wacon 3,6HAH001507,70357-01-60.1,NULL,1,NULL

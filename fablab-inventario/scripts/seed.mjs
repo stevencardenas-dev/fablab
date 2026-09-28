@@ -150,6 +150,40 @@ try {
   process.exit(1);
 }
 
+// ─── 4.5 Chequeo de mojibake ───
+// Si el SQL se carga con un charset de cliente equivocado, los acentos quedan
+// dobles ("proyecciÃ³n"). Es el bug que dañó el dump una vez: detectarlo aquí
+// lo atrapa en el momento, no semanas después en el PWA.
+async function filasMojibake() {
+  if (tiene('--sin-docker')) {
+    const mysql = await import('mysql2/promise');
+    const { conexionDesdeEnv } = await import('../importer/importar.mjs');
+    const conn = await mysql.createConnection(conexionDesdeEnv());
+    const [filas] = await conn.query(
+      "SELECT id, detalle FROM elementos WHERE CONCAT_WS(' ', detalle, estado, observaciones) COLLATE utf8mb4_bin REGEXP 'Ã|Â' LIMIT 5",
+    );
+    await conn.end();
+    return filas.map((f) => `${f.id}: ${String(f.detalle ?? '').slice(0, 60)}`);
+  }
+  const r = spawnSync(
+    'docker',
+    ['exec', MYSQL_CONTAINER, 'mysql', `--default-character-set=${CHARSET}`, '-u', USER,
+      `-p${PASSWORD}`, '-N', '-e',
+      "SELECT CONCAT(id, ': ', LEFT(detalle, 60)) FROM elementos WHERE CONCAT_WS(' ', detalle, estado, observaciones) COLLATE utf8mb4_bin REGEXP 'Ã|Â' LIMIT 5;",
+      DB],
+    { encoding: 'utf8', maxBuffer: 1024 * 1024 },
+  );
+  return (r.stdout || '').split('\n').filter(Boolean);
+}
+
+const mojibake = await filasMojibake();
+if (mojibake.length) {
+  console.error('\n⚠ MOJIBAKE detectado tras el seed (acentos dobles, p.ej. "proyecciÃ³n"):');
+  for (const l of mojibake) console.error(`   ${l}`);
+  console.error('Repara con: npm run fix:mojibake -- --db   (y regenera dump/CSV desde la BD)');
+  process.exit(1);
+}
+
 // ─── 5. Resumen ───
 for (const h of hojas) {
   const n = hojasDisponibles(workbook).find((x) => x.nombre === h.nombre)?.filas ?? 0;

@@ -1,0 +1,552 @@
+<title>Inventario FabLab UFPS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --crimson:#8E0E23;
+    --crimson-lit:#B3122E;
+    --blush:#FBF4F3;
+    --ink:#2A1A1C;
+    --mauve:#7C6A6C;
+    --rule:#E8D7D6;
+    --card:#FFFFFF;
+    --display:"Roboto Slab",Georgia,"Times New Roman",serif;
+    --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#1A1012;font-family:var(--body);color:var(--ink);
+    -webkit-font-smoothing:antialiased}
+
+  /* ---------- deck shell ---------- */
+  #deck{display:block}
+  .slide{
+    position:relative;width:960px;height:540px;margin:0 auto 26px;
+    background:var(--blush);overflow:hidden;display:none;
+    padding:38px 54px 46px;flex-direction:column;
+  }
+  .slide.on{display:flex}
+  body.print .slide{display:flex;margin:0 auto 8px}
+
+  /* ---------- type ---------- */
+  .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--crimson-lit);margin:0 0 10px}
+  h1{font-family:var(--display);font-weight:700;font-size:52px;line-height:1.06;
+    margin:0 0 14px;letter-spacing:-.015em;text-wrap:balance}
+  h2{font-family:var(--display);font-weight:700;font-size:34px;line-height:1.12;
+    margin:0 0 8px;letter-spacing:-.01em;text-wrap:balance}
+  .deck-sub{font-size:14.5px;color:var(--mauve);line-height:1.5;margin:0 0 20px;max-width:70ch}
+  p{margin:0}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- title slide ---------- */
+  .cover{background:var(--crimson);color:#fff;padding:52px 54px}
+  .cover .wordmark{font-size:10.5px;font-weight:700;letter-spacing:.22em;
+    text-transform:uppercase;color:#F0C9CE}
+  .cover .course{font-size:12.5px;color:#E2A7AE;margin-top:5px}
+  .cover h1{font-size:58px;color:#fff;margin:auto 0 12px;max-width:19ch}
+  .cover .tagline{font-size:15px;font-style:italic;color:#F3D3D7;max-width:52ch;margin:0 0 26px}
+  .authors{display:flex;gap:34px;background:rgba(0,0,0,.22);
+    padding:16px 22px;align-self:flex-start}
+  .authors .lbl{font-size:9.5px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:#E2A7AE;margin-bottom:9px}
+  .authors .nm{font-size:13.5px;font-weight:600;color:#fff;line-height:1.35}
+  .authors .cd{font-family:var(--mono);font-size:11px;color:#E2A7AE}
+  .dm-motif{position:absolute;right:54px;bottom:46px;width:150px;height:150px;
+    display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(12,1fr);
+    opacity:.9}
+  .dm-motif i{background:#F0C9CE}
+
+  /* ---------- shared blocks ---------- */
+  .rule{height:1px;background:var(--rule);margin:0 0 18px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;flex:1}
+  .card{background:var(--card);padding:18px 16px;display:flex;flex-direction:column;gap:8px}
+  .card h3{font-family:var(--display);font-size:15.5px;font-weight:600;margin:0;line-height:1.25}
+  .card p{font-size:11.8px;color:var(--mauve);line-height:1.5}
+  .chip{width:30px;height:30px;background:#F7E4E5;color:var(--crimson);
+    display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px}
+
+  /* objectives */
+  .obj-general{background:var(--crimson);color:#fff;padding:17px 20px;margin-bottom:16px}
+  .obj-general .lbl{font-size:9.5px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:#E2A7AE;margin-bottom:6px}
+  .obj-general p{font-size:13.5px;line-height:1.5;max-width:88ch}
+  .obj-list{display:flex;flex-direction:column;gap:11px}
+  .obj{display:grid;grid-template-columns:32px 1fr;gap:14px;align-items:start}
+  .obj .n{font-family:var(--display);font-size:22px;font-weight:700;color:var(--rule);
+    line-height:1}
+  .obj p{font-size:12.8px;line-height:1.5;color:var(--ink)}
+
+  /* comparison table */
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  thead th{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--mauve);text-align:left;padding:0 8px 8px;border-bottom:1px solid var(--rule)}
+  thead th.c,tbody td.c{text-align:center}
+  tbody td{padding:7px 8px;border-bottom:1px solid #F2E5E4;vertical-align:middle}
+  tbody tr.ours td{background:var(--crimson);color:#fff;font-weight:600}
+  tbody tr.ours td:first-child{font-family:var(--display)}
+  .yes{color:#1D7A4C;font-weight:700}
+  .no{color:#C2B4B5;font-weight:600}
+  tr.ours .yes{color:#fff}
+  .src{font-size:11px;color:var(--mauve);font-style:italic}
+
+  /* two-col */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1}
+  .stack-col h3{font-family:var(--display);font-size:14px;margin:0 0 4px}
+  .verdict{background:#F7E4E5;border-left:3px solid var(--crimson);padding:13px 16px;
+    font-size:12.5px;line-height:1.55}
+  .caveat{font-size:10.8px;color:var(--mauve);line-height:1.45;margin-top:auto;
+    padding-top:10px;border-top:1px solid var(--rule)}
+
+  /* stack */
+  .stack3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .layer{background:var(--card);padding:17px}
+  .layer .role{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--crimson-lit);margin-bottom:7px}
+  .layer .tech{font-family:var(--display);font-size:19px;font-weight:700;margin-bottom:7px}
+  .layer p{font-size:11.5px;color:var(--mauve);line-height:1.5}
+  .pkgs{font-family:var(--mono);font-size:10px;color:var(--mauve);margin-top:9px;
+    padding-top:8px;border-top:1px solid var(--rule);line-height:1.6}
+  .schema{display:flex;align-items:center;gap:9px;background:var(--card);
+    padding:13px 17px;margin-top:15px;font-size:12.5px;flex-wrap:wrap}
+  .ent{font-family:var(--mono);font-size:11.5px;background:#F7E4E5;color:var(--crimson);
+    padding:4px 9px}
+  .arrow{color:var(--mauve)}
+
+  /* screenshots */
+  .shots{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1;min-height:0}
+  .shot{display:flex;flex-direction:column;gap:9px;min-height:0}
+  .shot .frame{flex:1;min-height:0;background:var(--card);padding:7px;
+    display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+  .shot img{max-width:100%;max-height:100%;object-fit:contain;object-position:top;display:block}
+  .shot .cap{font-size:11px;font-weight:600;text-align:center}
+  .shot .cap span{display:block;font-weight:400;color:var(--mauve);font-size:10px;margin-top:2px}
+
+  /* migration data */
+  .mig{display:grid;grid-template-columns:1.05fr 1fr;gap:30px;flex:1;align-content:stretch}
+  .mig>div{display:flex;flex-direction:column}
+  .stat-row{display:flex;gap:12px;margin-bottom:18px}
+  .stat{background:var(--crimson);color:#fff;padding:18px 16px;flex:1}
+  .stat .v{font-family:var(--display);font-size:40px;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums}
+  .stat .k{font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    color:#E2A7AE;margin-top:6px}
+  .bars{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:center}
+  .bar{display:grid;grid-template-columns:96px 1fr 34px;gap:9px;align-items:center;
+    font-size:11px}
+  .bar .t{color:var(--mauve);text-align:right;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .bar .track{height:15px;background:#F2E5E4}
+  .bar .fill{height:100%;background:var(--crimson-lit)}
+  .bar .fill.vive{background:#C9737F}
+  .bar .v{font-variant-numeric:tabular-nums;font-weight:600;font-size:11px}
+  .legend{display:flex;gap:16px;font-size:10.5px;color:var(--mauve);margin-top:10px}
+  .legend i{display:inline-block;width:9px;height:9px;margin-right:5px}
+
+  /* methodology */
+  .method{display:grid;grid-template-columns:.9fr 1.1fr;gap:26px;flex:1}
+  .flow{display:flex;flex-direction:column;gap:0}
+  .step{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:9px 0;
+    border-bottom:1px solid var(--rule);font-size:12px;align-items:baseline}
+  .step:last-child{border-bottom:0}
+  .step .s{font-family:var(--mono);font-size:10.5px;color:var(--crimson-lit);font-weight:500}
+  .step em{font-style:normal;color:var(--mauve);font-size:10.5px;display:block;margin-top:2px}
+  .ind td{font-size:11.5px}
+
+  /* status */
+  .status-list{display:flex;flex-direction:column;gap:0;flex:1}
+  .st{display:grid;grid-template-columns:92px 1fr;gap:16px;padding:11px 0;
+    border-bottom:1px solid var(--rule);align-items:baseline}
+  .st:last-child{border-bottom:0}
+  .tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 8px;text-align:center;white-space:nowrap}
+  .tag.done{background:#DCEFE4;color:#14603A}
+  .tag.wip{background:#FDEFD4;color:#8A5B08}
+  .tag.next{background:#EFE7E7;color:var(--mauve)}
+  .st .txt{font-size:12.5px;line-height:1.45}
+  .st .txt em{font-style:normal;color:var(--mauve);font-size:11px;display:block;margin-top:2px}
+
+  /* closing */
+  .close{background:var(--crimson);color:#fff;justify-content:center;align-items:flex-start}
+  .close h2{color:#fff;font-size:40px;max-width:22ch}
+  .close .q{font-size:15px;color:#F3D3D7;margin-top:14px;max-width:56ch;line-height:1.55}
+  .close .meta{margin-top:auto;font-size:11.5px;color:#E2A7AE;
+    border-top:1px solid rgba(255,255,255,.22);padding-top:14px;width:100%}
+
+  /* page number */
+  .pn{position:absolute;right:54px;bottom:18px;font-family:var(--mono);font-size:10px;
+    color:var(--mauve);font-variant-numeric:tabular-nums}
+  .cover .pn,.close .pn{color:#E2A7AE}
+
+  /* nav */
+  #nav{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;
+    align-items:center;background:rgba(26,16,18,.92);padding:7px 13px;z-index:9;
+    border:1px solid rgba(255,255,255,.14)}
+  #nav button{font:inherit;font-size:12px;background:transparent;color:#F0C9CE;
+    border:0;cursor:pointer;padding:3px 7px}
+  #nav button:focus-visible{outline:2px solid #F0C9CE;outline-offset:1px}
+  #cnt{font-family:var(--mono);font-size:11px;color:#F0C9CE;font-variant-numeric:tabular-nums}
+  body.print #nav{display:none}
+  @media print{
+    @page{size:960px 540px;margin:0}
+    html,body{background:#fff;margin:0;padding:0}
+    #nav{display:none}
+    #deck{display:block}
+    .slide{display:flex !important;margin:0;break-after:page;page-break-after:always;
+      width:960px;height:540px;min-height:540px;max-height:540px;overflow:hidden}
+    .grid4,.two,.mig,.method,.shots,.status-list{min-height:0}
+    .slide:last-child{break-after:auto;page-break-after:auto}
+    .cover,.close{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+
+<div id="deck">
+
+  <!-- 1 — cover -->
+  <section class="slide cover on">
+    <div>
+      <div class="wordmark">Universidad Francisco de Paula Santander</div>
+      <div class="course">Seminario Integrador II · Sustentación</div>
+    </div>
+    <h1>Sistema de control de inventario del FabLab</h1>
+    <p class="tagline">Identificación y trazabilidad de activos mediante códigos DataMatrix</p>
+    <div class="authors">
+      <div>
+        <div class="lbl">Autores</div>
+        <div class="nm">Juan David Llanos Castañeda<br><span class="cd">Cód. 1152462</span></div>
+      </div>
+      <div>
+        <div class="lbl">&nbsp;</div>
+        <div class="nm">Álvaro Sneider Portillo Mora<br><span class="cd">Cód. 1152497</span></div>
+      </div>
+    </div>
+    <div class="dm-motif" id="motif" aria-hidden="true"></div>
+    <div class="pn">01</div>
+  </section>
+
+  <!-- 2 — diagnosis -->
+  <section class="slide">
+    <p class="eyebrow">Diagnóstico</p>
+    <h2>Cuatro fallas del esquema actual</h2>
+    <p class="deck-sub">El laboratorio administra maquinaria, mobiliario, componentes electrónicos e insumos en hojas de cálculo de Excel — un método que dejó de sostener la operación al crecer el número de salas.</p>
+    <div class="grid4">
+      <div class="card">
+        <div class="chip">01</div>
+        <h3>Falta de trazabilidad</h3>
+        <p>La ubicación registrada depende de que alguien recuerde anotar el traslado. En la práctica no corresponde a la ubicación real.</p>
+      </div>
+      <div class="card">
+        <div class="chip">02</div>
+        <h3>Proceso manual</h3>
+        <p>La columna <span style="font-family:var(--mono);font-size:10.5px">CANTIDAD</span> mezcla números, guiones y la palabra <span style="font-family:var(--mono);font-size:10.5px">INCONTABLE</span>: ninguna suma es confiable.</p>
+      </div>
+      <div class="card">
+        <div class="chip">03</div>
+        <h3>Componentes diminutos</h3>
+        <p>Un microcontrolador o una resistencia no ofrece superficie para una etiqueta de código lineal o QR legible.</p>
+      </div>
+      <div class="card">
+        <div class="chip">04</div>
+        <h3>Pérdida de información</h3>
+        <p>De cuatro copias entregadas por la coordinación, tres omitían las cantidades de doce elementos de recepción. Ninguna declara ser la vigente.</p>
+      </div>
+    </div>
+    <div class="pn">02</div>
+  </section>
+
+  <!-- 3 — objectives -->
+  <section class="slide">
+    <p class="eyebrow">Estructura metodológica</p>
+    <h2>Objetivos</h2>
+    <div class="rule"></div>
+    <div class="obj-general">
+      <div class="lbl">Objetivo general</div>
+      <p>Desarrollar e implementar un aplicativo móvil y web, soportado en una base de datos relacional desplegada, que permita gestionar, controlar e identificar automáticamente el inventario del FabLab mediante códigos DataMatrix.</p>
+    </div>
+    <div class="obj-list">
+      <div class="obj">
+        <div class="n">01</div>
+        <p><strong>Arquitectura de datos.</strong> Diseñar y desplegar el esquema relacional normalizado, migrando la información contenida hoy en hojas de cálculo.</p>
+      </div>
+      <div class="obj">
+        <div class="n">02</div>
+        <p><strong>Identificación.</strong> Desarrollar el módulo móvil y web con lectura y generación de códigos DataMatrix, con consulta de stock en tiempo real.</p>
+      </div>
+      <div class="obj">
+        <div class="n">03</div>
+        <p><strong>Gestión espacial.</strong> Implementar administración de edificios y salas, reubicación de elementos y registro histórico de traslados.</p>
+      </div>
+    </div>
+    <p class="caveat">Los tres objetivos son secuenciales y corresponden a las tres capas del sistema: sin datos no hay qué identificar; sin identificación no hay cómo registrar movimientos.</p>
+    <div class="pn">03</div>
+  </section>
+
+  <!-- 4 — state of the art -->
+  <section class="slide">
+    <p class="eyebrow">Estado del arte</p>
+    <h2>Siete antecedentes, ningún DataMatrix</h2>
+    <p class="deck-sub">Revisión de trabajos 2018–2025 en gestión de inventario con código bidimensional y captura móvil en contextos institucionales.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Antecedente</th><th>Simbología</th>
+          <th class="c">Móvil</th><th class="c">BD relacional</th><th class="c">Historial de traslados</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Rizqi et al. (2018) · Tailandia</td><td>QR</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+        <tr><td>Hidalgo Santos (2019) · Perú</td><td>QR</td><td class="c yes">Sí</td><td class="c yes">MySQL</td><td class="c no">No</td></tr>
+        <tr><td>Lora et al. (2019) · Colombia</td><td>Barras / QR</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+        <tr><td>Sahetapy y Suhirman (2025)</td><td>Código de barras</td><td class="c yes">Sí</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+        <tr><td>E-Inventory · UTeM, Malasia</td><td>Código de barras</td><td class="c yes">Sí</td><td class="c yes">Nube</td><td class="c no">No</td></tr>
+        <tr><td>Sistema web con QR · UMSA, Bolivia</td><td>QR</td><td class="c no">No</td><td class="c yes">Sí</td><td class="c no">No</td></tr>
+        <tr><td>Makerspaces · RFID / NFC / QR</td><td>Varias</td><td class="c no">Parcial</td><td class="c no">Variable</td><td class="c no">No</td></tr>
+        <tr class="ours"><td>Este proyecto</td><td>DataMatrix</td><td class="c yes">Sí</td><td class="c yes">MySQL</td><td class="c yes">Sí</td></tr>
+      </tbody>
+    </table>
+    <p class="caveat">Dos vacíos concretos: ninguno emplea una simbología viable en componentes de pocos milímetros, y ninguno guarda la <em>historia</em> de ubicaciones — solo la ubicación actual. En un laboratorio donde el material circula, importa desde dónde llegó.</p>
+    <div class="pn">04</div>
+  </section>
+
+  <!-- 5 — why datamatrix -->
+  <section class="slide">
+    <p class="eyebrow">Decisión de diseño</p>
+    <h2>Por qué DataMatrix</h2>
+    <div class="rule"></div>
+    <div class="two">
+      <div class="stack-col">
+        <h3>Frente a QR y código lineal</h3>
+        <p style="font-size:12.3px;line-height:1.55;color:var(--mauve);margin-bottom:13px">El QR tiene mayor capacidad máxima (≈4.296 caracteres frente a ≈2.335), pero gasta área en tres patrones de localización. Para una carga útil corta —un identificador de inventario— esa capacidad es irrelevante; lo que decide es el tamaño físico mínimo legible.</p>
+        <div class="verdict">El requisito crítico es etiquetar componentes de pocos milímetros. El código lineal queda descartado por requerir longitud horizontal incompatible con esos componentes.</div>
+      </div>
+      <div class="stack-col">
+        <h3>Frente a RFID</h3>
+        <p style="font-size:12.3px;line-height:1.55;color:var(--mauve);margin-bottom:13px">RFID permite lectura sin línea de vista y captura masiva, ventajas reales en grandes volúmenes. Pero el costo por unidad etiquetada es muy superior y exige lectores dedicados.</p>
+        <div class="verdict">La práctica documentada en laboratorios es híbrida: RFID en contenedor o estante, código bidimensional en la unidad. Para este alcance se adopta solo el código impreso, cuyo costo marginal es papel y tinta.</div>
+      </div>
+    </div>
+    <p class="caveat"><strong>Nota de honestidad metodológica.</strong> Las cifras de tamaño mínimo legible (≈3 mm frente a ≈20 mm) y tolerancia al daño (≈50 % frente a ≈30 %) provienen de documentación técnica de fabricantes, no de fuente académica ni normativa. Se presentan como órdenes de magnitud y se validarán por medición propia sobre el equipo del laboratorio.</p>
+    <div class="pn">05</div>
+  </section>
+
+  <!-- 6 — stack -->
+  <section class="slide">
+    <p class="eyebrow">Arquitectura de software</p>
+    <h2>Stack e implementación</h2>
+    <div class="rule"></div>
+    <div class="stack3">
+      <div class="layer">
+        <div class="role">Cliente móvil y web</div>
+        <div class="tech">Expo · React Native</div>
+        <p>Un solo desarrollo atiende Android, iOS y web, con acceso nativo a la cámara para el escaneo.</p>
+        <div class="pkgs">expo-camera · expo-router<br>react-native-svg</div>
+      </div>
+      <div class="layer">
+        <div class="role">Servicio de datos</div>
+        <div class="tech">Node.js</div>
+        <p>Capa de acceso a datos e importación masiva desde los libros de Excel existentes.</p>
+        <div class="pkgs">mysql2 · xlsx</div>
+      </div>
+      <div class="layer">
+        <div class="role">Persistencia</div>
+        <div class="tech">MySQL</div>
+        <p>Motor relacional: la integridad referencial la garantiza el motor, no la disciplina del usuario.</p>
+        <div class="pkgs">3FN · claves foráneas</div>
+      </div>
+    </div>
+    <div class="schema">
+      <strong style="font-size:11.5px">Modelo:</strong>
+      <span class="ent">edificios</span><span class="arrow">→</span>
+      <span class="ent">salas</span><span class="arrow">→</span>
+      <span class="ent">elementos</span>
+      <span class="arrow" style="margin:0 4px">+</span>
+      <span class="ent">traslados</span>
+      <span style="font-size:11.5px;color:var(--mauve)">jerarquía de contención con registro de eventos</span>
+    </div>
+    <p class="caveat">La generación del símbolo se resuelve en el cliente con <span style="font-family:var(--mono);font-size:10.5px">datamatrix-svg-ts</span>, que produce el vector listo para impresión — no un mapa de bits.</p>
+    <div class="pn">06</div>
+  </section>
+
+  <!-- 7 — screenshots -->
+  <section class="slide">
+    <p class="eyebrow">Avance del desarrollo</p>
+    <h2>Aplicación en funcionamiento</h2>
+    <p class="deck-sub">Registro de un elemento, generación automática del código y consulta por sala. Capturas del cliente Expo sobre datos reales del laboratorio.</p>
+    <div class="shots">
+      <div class="shot">
+        <div class="frame"><img src="img/inicio.png" alt="Pantalla de inicio con las acciones de escanear, agregar y buscar"></div>
+        <div class="cap">Inicio<span>Escanear · agregar · buscar</span></div>
+      </div>
+      <div class="shot">
+        <div class="frame"><img src="img/generacion.png" alt="Formulario de alta con el código DataMatrix generado automáticamente"></div>
+        <div class="cap">Generación<span>DataMatrix automático</span></div>
+      </div>
+      <div class="shot">
+        <div class="frame"><img src="img/formulario.png" alt="Formulario completo con selección de sala, estado y cantidad"></div>
+        <div class="cap">Alta de elemento<span>Sala, estado, cantidad</span></div>
+      </div>
+      <div class="shot">
+        <div class="frame"><img src="img/detalle.png" alt="Ficha de un Arduino Uno R3 en la Sala IOT con foto y datos"></div>
+        <div class="cap">Ficha del elemento<span>Código, serial, ubicación</span></div>
+      </div>
+    </div>
+    <div class="pn">07</div>
+  </section>
+
+  <!-- 8 — migration results -->
+  <section class="slide">
+    <p class="eyebrow">Resultado verificado</p>
+    <h2>Migración completada</h2>
+    <div class="rule"></div>
+    <div class="mig">
+      <div>
+        <div class="stat-row">
+          <div class="stat"><div class="v">916</div><div class="k">Elementos</div></div>
+          <div class="stat"><div class="v">11</div><div class="k">Salas</div></div>
+          <div class="stat"><div class="v">2</div><div class="k">Edificios</div></div>
+        </div>
+        <p style="font-size:12.8px;line-height:1.6;color:var(--mauve)">Los libros de Excel se cargaron a la base relacional con verificación de conteos contra las hojas de origen. Esta cifra es el resultado de la migración, no una estimación: cuantifica por primera vez la población real del inventario.</p>
+        <div class="verdict" style="margin-top:16px">La sala CNC concentra el 19 % del inventario; las cuatro salas del ViveLab suman 216 elementos frente a los 700 del FabLab.</div>
+        <p class="caveat">Fuente: migración del libro de inventario institucional, verificada hoja por hoja.</p>
+      </div>
+      <div>
+        <div class="bars">
+          <div class="bar"><div class="t">CNC</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="v">171</div></div>
+          <div class="bar"><div class="t">Impresión 3D</div><div class="track"><div class="fill" style="width:73.7%"></div></div><div class="v">126</div></div>
+          <div class="bar"><div class="t">Almacén</div><div class="track"><div class="fill" style="width:57.9%"></div></div><div class="v">99</div></div>
+          <div class="bar"><div class="t">RV y Drones</div><div class="track"><div class="fill" style="width:53.8%"></div></div><div class="v">92</div></div>
+          <div class="bar"><div class="t">IoT</div><div class="track"><div class="fill" style="width:49.1%"></div></div><div class="v">84</div></div>
+          <div class="bar"><div class="t">Lab Imagen 305</div><div class="track"><div class="fill vive" style="width:40.4%"></div></div><div class="v">69</div></div>
+          <div class="bar"><div class="t">Recepción</div><div class="track"><div class="fill" style="width:39.2%"></div></div><div class="v">67</div></div>
+          <div class="bar"><div class="t">Coworking</div><div class="track"><div class="fill" style="width:35.7%"></div></div><div class="v">61</div></div>
+          <div class="bar"><div class="t">Aula 303</div><div class="track"><div class="fill vive" style="width:28.7%"></div></div><div class="v">49</div></div>
+          <div class="bar"><div class="t">Aula 304</div><div class="track"><div class="fill vive" style="width:28.7%"></div></div><div class="v">49</div></div>
+          <div class="bar"><div class="t">Bodega</div><div class="track"><div class="fill vive" style="width:28.7%"></div></div><div class="v">49</div></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--crimson-lit)"></i>FabLab</span>
+          <span><i style="background:#C9737F"></i>ViveLab</span>
+        </div>
+      </div>
+    </div>
+    <div class="pn">08</div>
+  </section>
+
+  <!-- 9 — methodology -->
+  <section class="slide">
+    <p class="eyebrow">Marco metodológico</p>
+    <h2>Cómo se medirá el resultado</h2>
+    <div class="rule"></div>
+    <div class="method">
+      <div>
+        <h3 style="font-family:var(--display);font-size:14px;margin:0 0 9px">Diseño pre-test / post-test</h3>
+        <div class="flow">
+          <div class="step"><div class="s">01</div><div>Diagnóstico documental<em>Ejecutado</em></div></div>
+          <div class="step"><div class="s">02</div><div>Línea base: tiempos y errores bajo el procedimiento actual</div></div>
+          <div class="step"><div class="s">03</div><div>Introducción del sistema<em>Variable independiente</em></div></div>
+          <div class="step"><div class="s">04</div><div>Post-test con los mismos instrumentos</div></div>
+        </div>
+        <p class="caveat">Diseño <strong>pre-experimental</strong> de un solo grupo: sin grupo de control no se aísla del todo el efecto de aprendizaje del operario. Se declara como limitación; un cuasi-experimento con un segundo laboratorio excedía los recursos.</p>
+      </div>
+      <div>
+        <h3 style="font-family:var(--display);font-size:14px;margin:0 0 9px">Indicadores</h3>
+        <table class="ind">
+          <thead><tr><th>Variable</th><th>Indicador</th></tr></thead>
+          <tbody>
+            <tr><td>Tiempo de registro</td><td>segundos por elemento</td></tr>
+            <tr><td>Tiempo de localización</td><td>segundos hasta ubicar</td></tr>
+            <tr><td>Integridad</td><td>duplicados e inconsistencias</td></tr>
+            <tr><td>Exactitud de ubicación</td><td>% sala registrada = real</td></tr>
+            <tr><td>Fiabilidad de lectura</td><td>% lecturas al primer intento</td></tr>
+          </tbody>
+        </table>
+        <p class="caveat"><strong>Referencia de la literatura, no resultado propio.</strong> Sahetapy y Suhirman (2025) reportan captura 43 % más rápida, 98,5 % de exactitud de escaneo y 72 % menos errores de digitación. Son las cifras contra las que compararemos nuestras mediciones.</p>
+      </div>
+    </div>
+    <div class="pn">09</div>
+  </section>
+
+  <!-- 10 — status / close -->
+  <section class="slide close">
+    <p class="eyebrow" style="color:#E2A7AE">Estado y siguientes pasos</p>
+    <h2>Tres capas: datos, identificación, trazabilidad</h2>
+    <div class="status-list" style="margin-top:18px">
+      <div class="st" style="border-color:rgba(255,255,255,.22)">
+        <span class="tag done">Ejecutado</span>
+        <div class="txt" style="color:#fff">Arquitectura de datos y migración<em style="color:#E2A7AE">916 elementos · 11 salas · 2 edificios, verificados</em></div>
+      </div>
+      <div class="st" style="border-color:rgba(255,255,255,.22)">
+        <span class="tag wip">En curso</span>
+        <div class="txt" style="color:#fff">Módulo de identificación DataMatrix<em style="color:#E2A7AE">Generación e impresión operativas; lectura por cámara en integración</em></div>
+      </div>
+      <div class="st" style="border-color:rgba(255,255,255,.22)">
+        <span class="tag wip">En curso</span>
+        <div class="txt" style="color:#fff">Gestión espacial y traslados<em style="color:#E2A7AE">Esquema de datos implementado; interfaz de historial pendiente</em></div>
+      </div>
+      <div class="st" style="border-color:transparent">
+        <span class="tag next">Siguiente</span>
+        <div class="txt" style="color:#fff">Medición post-test y análisis<em style="color:#E2A7AE">Aplicación de instrumentos y comparación contra la línea base</em></div>
+      </div>
+    </div>
+    <div class="meta">Universidad Francisco de Paula Santander · Seminario Integrador II · Prof. Carlos Eduardo Pardo García · Septiembre de 2026</div>
+    <div class="pn">10</div>
+  </section>
+
+</div>
+
+<div id="nav">
+  <button id="prev" aria-label="Diapositiva anterior">←</button>
+  <span id="cnt">01 / 10</span>
+  <button id="next" aria-label="Diapositiva siguiente">→</button>
+  <button id="all" aria-label="Ver todas las diapositivas">todas</button>
+</div>
+
+<script>
+  // DataMatrix-style motif: deterministic, with the L-shaped finder pattern the symbology uses
+  (function(){
+    var m=document.getElementById('motif'); if(!m) return;
+    var N=12, seed=20260913;
+    function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+    for(var r=0;r<N;r++){
+      for(var c=0;c<N;c++){
+        var on;
+        if(c===0) on = true;                    // solid left edge
+        else if(r===N-1) on = true;             // solid bottom edge
+        else if(r===0) on = c%2===0;            // alternating top
+        else if(c===N-1) on = r%2===1;          // alternating right
+        else on = rnd()>0.47;
+        var i=document.createElement('i');
+        if(!on) i.style.background='transparent';
+        m.appendChild(i);
+      }
+    }
+  })();
+
+  (function(){
+    var slides=[].slice.call(document.querySelectorAll('.slide'));
+    var i=0, cnt=document.getElementById('cnt'), allMode=false;
+    function pad(n){ return (n<10?'0':'')+n; }
+    function show(n){
+      if(allMode) return;
+      i=Math.max(0,Math.min(slides.length-1,n));
+      slides.forEach(function(s,k){ s.classList.toggle('on',k===i); });
+      cnt.textContent=pad(i+1)+' / '+pad(slides.length);
+      window.scrollTo(0,0);
+    }
+    document.getElementById('next').onclick=function(){ show(i+1); };
+    document.getElementById('prev').onclick=function(){ show(i-1); };
+    document.getElementById('all').onclick=function(){
+      allMode=!allMode;
+      document.body.classList.toggle('print',allMode);
+      this.textContent=allMode?'una':'todas';
+      if(!allMode) show(i);
+    };
+    document.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){ e.preventDefault(); show(i+1); }
+      else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); show(i-1); }
+      else if(e.key==='Home'){ show(0); }
+      else if(e.key==='End'){ show(slides.length-1); }
+    });
+    show(0);
+  })();
+</script>

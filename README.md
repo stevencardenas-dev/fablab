@@ -4,12 +4,14 @@ Sistema de gestión y control de inventario para el FabLab de la Universidad Fra
 
 **Seminario Integrador II** — UFPS
 
+> **Documentación técnica completa:** [`fablab-inventario/docs/`](fablab-inventario/docs/README.md)
+> (arquitectura, API, base de datos, fotos, importación, operación, rendimiento,
+> pruebas y problemas conocidos).
+
 ## Equipo
 
-- Kevin Steven Marin Cardenas
-- Juan David Llanos Castañeda
-- Gian Karlo Abril Fierro
-- Alvaro Sneider Portillo Mora
+- 1152462 - Juan David Llanos Castañeda
+- 1152497 - Álvaro Sneider Portillo Mora
 
 ## Arquitectura
 
@@ -85,11 +87,25 @@ Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/api/salas` | Salas con edificio y conteo de elementos |
+| GET | `/api/elementos` | Todo el inventario en una respuesta |
 | GET | `/api/salas/:id/elementos` | Elementos de una sala |
 | GET | `/api/elementos/:id/historial` | Historial de traslados |
 | POST | `/api/elementos` | Agregar elemento |
+| PUT | `/api/elementos/:id` | Editar campos del elemento |
+| POST | `/api/elementos/:id/codigo` | Asignar código a un elemento que no tiene (409 si ya tiene) |
 | DELETE | `/api/elementos/:codigo` | Eliminar elemento |
 | POST | `/api/traslados` | Registrar traslado (transaccional) |
+| GET·HEAD | `/api/elementos/:id/foto[?tam=miniatura]` | Foto o miniatura (ETag/304) |
+| POST | `/api/elementos/:id/foto` | Subir/reemplazar foto ya reducida |
+| DELETE | `/api/elementos/:id/foto` | Quitar la foto |
+| GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar inventario o traslados |
+
+Contrato completo (auth, CORS, gzip, códigos de estado y ejemplos) en
+[`fablab-inventario/docs/api.md`](fablab-inventario/docs/api.md).
+
+Los errores de cliente responden con su código real: `400` campo inválido o
+faltante, `404` id/código inexistente, `409` conflicto (p. ej. trasladar a la
+sala en la que ya está). `500` queda para fallos del servidor o de la base.
 
 ## Estructura del proyecto
 
@@ -102,6 +118,7 @@ fablab/
 │   ├── documento-integrador.md  ← Documento académico (3 capítulos)
 │   └── documento-integrador.odt
 └── fablab-inventario/           ← App + API + BD (todo en un repo)
+    ├── docs/                     ← Documentación técnica completa
     ├── src/
     │   ├── app/                  ← Pantallas (expo-router)
     │   │   ├── (tabs)/           ← Inicio (scan, add, search) + Inventario
@@ -133,8 +150,11 @@ fablab/
 - **Escanear** — Lee códigos DataMatrix con la cámara
 - **Agregar** — Crea elementos con DataMatrix generado automáticamente, foto opcional, selección de sala
 - **Buscar** — Búsqueda por nombre (case-insensitive, substring)
+- **Etiquetas** — Descarga el Data Matrix de un elemento (SVG en mm, listo para imprimir) o una hoja A4 con las etiquetas de una sala o de los resultados de búsqueda
+- **Exportar** — Descarga el inventario o los traslados en CSV (abre directo en Excel) o JSON
 - **Inventario** — Lista de salas con conteo de elementos
-- **Sala** — Elementos de una sala, detalles, eliminar con confirmación
+- **Sala** — Elementos de una sala, detalles, editar campos, mover a otra sala (traslado con historial), eliminar con confirmación
+- **Códigos** — Los elementos importados sin N° de inventario pueden recibir un código desde su ficha (o en bloque con `npm run asignar:codigos`) para poder etiquetarlos
 - **PWA** — Instalable en pantalla de inicio del teléfono
 
 ## Base de datos
@@ -148,16 +168,25 @@ Esquema normalizado (4 tablas):
 | `elementos` | id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad | FK → salas |
 | `traslados` | id, elemento_id, sala_anterior_id, sala_nueva_id, fecha, nota | FK → elementos + salas |
 
-Datos cargados: **916 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
+Datos cargados: **917 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
+A `elementos` se suman `elemento_fotos` (foto + miniatura por elemento, 1:1) y
+los índices que el servidor asegura al arrancar (`ix_codigo`, no único).
 
 ## Pruebas
 
 ```bash
 cd fablab/fablab-inventario
-npm test                        # 20/20 tests (Jest)
+npm run gate                    # tipos + lint + 99 tests + self-check + datamatrix + docs
+npm test                        # 99/99 tests (Jest)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
-node scripts/verify-datamatrix.mjs  # Verifica códigos DataMatrix
+npm run qa                      # 61-72 checks contra la API (según los datos)
+npm run bench                   # Latencia de todas las operaciones
+npm run docs:check              # Enlaces, rutas documentadas y sintaxis de los scripts
+npm run asignar:codigos         # Dry-run: códigos para elementos sin código (--api, --escribir, --sql)
 ```
+
+El mismo gate corre en cada push y PR (`.github/workflows/ci.yml`). Qué cubre
+cada prueba en [`fablab-inventario/docs/qa.md`](fablab-inventario/docs/qa.md).
 
 ## Variables de entorno
 
@@ -171,6 +200,7 @@ node scripts/verify-datamatrix.mjs  # Verifica códigos DataMatrix
 | `MYSQL_SOCKET` | — | Socket (alternativa) |
 | `PORT` | `3001` | Puerto del API server |
 | `EXPO_PUBLIC_API_URL` | `http://localhost:3001/api` | URL de la API para la app |
+| `API_TOKEN` | *(vacío = escrituras abiertas)* | Si se define en el server, POST/PUT/DELETE exigen `Authorization: Bearer <API_TOKEN>`. Lectura siempre pública. |
 
 ## Desarrollo
 
@@ -189,3 +219,41 @@ git@github.com:stevencardenas-dev/fablab.git
   main → documento + DDL
   feature/inventario-scan → app conectada a MySQL + API + PWA
 ```
+
+## Deploy (Render + hosting estático)
+
+El stack desplegado vive en dos repos espejo bajo la cuenta `Masterkillerr`:
+
+| Repo | Contenido | Consumidor |
+|---|---|---|
+| `Masterkillerr/fablab-api` (privado) | `server/` + `importer/` + dump (`data/ddl-data.sql`) | Render (Web Service, healthcheck `/health`) → Aiven MySQL |
+| `Masterkillerr/fablab-web` (público) | Export estático de Expo (`dist/`) | Hosting estático (PWA) |
+
+La API desplegada: `https://fablab-api-sr1q.onrender.com` (free tier, con
+keep-alive y watchdog horario vía GitHub Actions en el repo api).
+
+Para sincronizar el monorepo hacia los repos de deploy (clona en
+`~/.cache/fablab-deploy/`, nunca ensucia este árbol):
+
+```bash
+cd fablab-inventario
+npm run sync:deploy                    # vista previa (api + web)
+npm run sync:deploy -- --push api,web  # commit + push en los repos de deploy
+```
+
+Notas:
+
+- **web** exige antes `npx expo export --platform web` (genera `dist/`, gitignored);
+  el script regenera `404.html` como copia de `index.html` (fallback SPA de deep links).
+- **api** copia `server/`, `importer/` y `fablab-inventario/ddl-data.sql` tal cual;
+  el repo deploy tiene su propio `package.json` mínimo (solo mysql2 + xlsx).
+- `--push` nunca toca este monorepo, solo los repos de deploy.
+
+### Acceso a Aiven (operaciones)
+
+El token de API de Aiven vive SOLO en la máquina local, fuera del repo:
+`~/.config/fablab/aiven-token` (chmod 600). Se usa vía header
+`Authorization: aivenv1 <token>` contra `https://api.aiven.io/v1/...` (proyecto
+`fablab`, servicio `mysql-2eb5feb2`). Ojo: la contraseña de `avnadmin` que
+reporta la API NO es la que Render usa — no resetearla sin coordinar.
+Si se rota el token, actualizar ese archivo. Nunca copiar el token al repo.

@@ -1,0 +1,47 @@
+# Gate de calidad del monorepo: todo lo que hasta ahora se corría a mano.
+# No toca producción ni necesita base de datos: son los chequeos que deben
+# pasar SIEMPRE antes de sincronizar los repos de deploy.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fablab-inventario
+    env:
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: fablab-inventario/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tipos (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Pruebas unitarias
+        run: npm test
+
+      - name: Self-check (sin MySQL)
+        run: node importer/self-check.mjs
+
+      - name: Data Matrix
+        run: node scripts/verify-datamatrix.mjs
+
+      - name: Enlaces de la documentación y sintaxis de los scripts
+        run: npm run docs:check

@@ -3,6 +3,11 @@
 Servidor ligero que expone los datos de la base de datos MySQL como API REST.
 Es el puente entre la app Expo (React Native) y la base de datos.
 
+> El contrato completo (todas las rutas, autenticación, CORS, gzip, ETag/304 y
+> códigos de estado) está en
+> [`fablab-inventario/docs/api.md`](fablab-inventario/docs/api.md). Aquí van el
+> arranque y lo mínimo para consumirla.
+
 ## Requisitos
 
 - Docker (para MySQL) — o MySQL local ya corriendo
@@ -37,6 +42,18 @@ npx expo start
 | GET | `/api/salas/:id/elementos` | Elementos de una sala (por id numérico) |
 | GET | `/api/elementos/:id/historial` | Historial de traslados de un elemento |
 | POST | `/api/traslados` | Registrar traslado (transaccional) |
+| GET·HEAD | `/api/elementos/:id/foto[?tam=miniatura]` | Foto o miniatura (ETag/304, immutable) |
+| POST | `/api/elementos/:id/foto` | Subir foto ya reducida (≤ 400 KB; miniatura ≤ 80 KB) |
+| DELETE | `/api/elementos/:id/foto` | Quitar la foto |
+| POST | `/api/elementos` · PUT `/api/elementos/:id` | Alta · edición de campos |
+| POST | `/api/elementos/:id/codigo` | Asignar código a un elemento sin código |
+| GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar |
+| DELETE | `/api/elementos/:codigo` | Eliminar elemento |
+
+La **lectura es pública**; si el server corre con `API_TOKEN`, `POST/PUT/DELETE`
+exigen `Authorization: Bearer <token>` (401 si falta). Al arrancar, el server
+asegura la tabla `elemento_fotos` y el índice de `codigo`, y precarga las
+miniaturas en RAM.
 
 ## Variables de entorno del servidor
 

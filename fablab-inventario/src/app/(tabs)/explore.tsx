@@ -6,25 +6,56 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { getAllItems, listarSalas, SinUbicacion, type InventoryItem, type Room } from '@/lib/inventory';
+import { listarSalas, resetCache, type Room } from '@/lib/inventory';
 
 export default function InventoryScreen() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
   const [salas, setSalas] = useState<Room[]>([]);
+  // listarSalas devuelve [] tanto si falló la red como si no hay salas; con 11
+  // salas cargadas, un resultado vacío tras terminar la carga es un fallo.
+  const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      Promise.all([getAllItems().then(setItems), listarSalas().then(setSalas)]);
-    }, []),
-  );
+  const cargar = useCallback(() => {
+    setCargando(true);
+    listarSalas().then((lista) => {
+      setSalas(lista);
+      setCargando(false);
+    });
+  }, []);
 
-  const total = items.length;
+  useFocusEffect(useCallback(() => { cargar(); }, [cargar]));
+
+  // Olvida la cache (memoria + AsyncStorage) y vuelve a pedir: el botón de
+  // reintento que funciona igual en web y en nativo.
+  async function refrescar() {
+    if (refrescando) return;
+    setRefrescando(true);
+    try {
+      await resetCache();
+      cargar();
+    } finally {
+      setRefrescando(false);
+    }
+  }
+
+  // /salas ya trae el conteo de elementos por sala (COUNT en SQL):
+  // no hace falta descargar los 916 elementos para contarlos.
+  const total = salas.reduce((sum, s) => sum + s.elementos, 0);
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <SafeAreaView style={styles.content}>
-          <ThemedText type="title" style={styles.title}>Inventario</ThemedText>
+          <View style={styles.titleRow}>
+            <ThemedText type="title" style={styles.title}>Inventario</ThemedText>
+            {salas.length > 0 && (
+              <Pressable accessibilityRole="button" disabled={refrescando} onPress={refrescar} hitSlop={8}>
+                <ThemedText style={styles.refreshLabel}>
+                  {refrescando ? 'Actualizando…' : 'Actualizar'}
+                </ThemedText>
+              </Pressable>
+            )}
+          </View>
           <ThemedText themeColor="textSecondary" style={styles.intro}>
             {total === 0
               ? 'Sin elementos cargados todavía.'
@@ -33,7 +64,7 @@ export default function InventoryScreen() {
 
           <View style={styles.roomList}>
             {salas.map((sala) => {
-              const count = items.filter((i) => i.sala_id === sala.id).length;
+              const count = sala.elementos;
               return (
                 <ThemedView key={sala.id} type="backgroundElement" style={styles.roomCard}>
                   <View style={styles.roomAccent} />
@@ -50,10 +81,20 @@ export default function InventoryScreen() {
                 </ThemedView>
               );
             })}
-            {!salas.length && (
+            {!salas.length && cargando && (
               <ThemedText themeColor="textSecondary" style={styles.empty}>
                 Cargando salas…
               </ThemedText>
+            )}
+            {!salas.length && !cargando && (
+              <View style={styles.errorBox}>
+                <ThemedText style={styles.errorText}>
+                  No se pudieron cargar las salas. Revisa tu conexión.
+                </ThemedText>
+                <Pressable accessibilityRole="button" onPress={refrescar} style={styles.retryButton}>
+                  <ThemedText style={styles.viewButtonLabel}>Reintentar</ThemedText>
+                </Pressable>
+              </View>
             )}
           </View>
         </SafeAreaView>
@@ -66,7 +107,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { flexGrow: 1, alignItems: 'center' },
   content: { width: '100%', maxWidth: MaxContentWidth, paddingHorizontal: Spacing.four, paddingBottom: BottomTabInset + Spacing.four },
-  title: { color: '#C8102E', marginTop: Spacing.six },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two, marginTop: Spacing.six },
+  title: { color: '#C8102E' },
+  refreshLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14 },
   intro: { marginTop: Spacing.one, lineHeight: 21 },
   roomList: { gap: Spacing.three, marginTop: Spacing.five, width: '100%' },
   roomCard: { minHeight: 112, borderRadius: 12, padding: Spacing.four, paddingLeft: Spacing.four + Spacing.one, overflow: 'hidden', gap: Spacing.two },
@@ -75,4 +118,7 @@ const styles = StyleSheet.create({
   viewButton: { alignSelf: 'flex-start', minHeight: 36, borderRadius: 8, backgroundColor: '#C8102E', paddingHorizontal: Spacing.three, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
   viewButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   empty: { marginTop: Spacing.four, lineHeight: 21 },
+  errorBox: { marginTop: Spacing.four, gap: Spacing.three, alignItems: 'flex-start' },
+  errorText: { color: '#C8102E', lineHeight: 21 },
+  retryButton: { minHeight: 36, borderRadius: 8, backgroundColor: '#C8102E', paddingHorizontal: Spacing.three, alignItems: 'center', justifyContent: 'center' },
 });

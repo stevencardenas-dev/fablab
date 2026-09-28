@@ -1,17 +1,19 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as Linking from 'expo-linking';
 import { useState, useEffect } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DataMatrixCode } from '@/components/data-matrix';
+import { DataMatrixCode, DataMatrixDownloadButton, DataMatrixSheetButton, descargarDataMatrix } from '@/components/data-matrix';
 import { Scanner } from '@/components/scanner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
-import { addItem, findByCodigo, findByDetalle, generateCodigo, listarSalas, buscarElementos, registrarTraslado, updateItem, exportarUrl, type InventoryItem, type Room } from '@/lib/inventory';
+import { prepararFotoParaSubir, type FotoOptimizada } from '@/lib/foto-optimizar';
+import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, listarSalas, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -22,7 +24,6 @@ function newElement(): InventoryItem {
     estado: '',
     observaciones: '',
     cantidad: '',
-    foto: undefined,
   };
 }
 
@@ -31,10 +32,20 @@ export default function HomeScreen() {
   const themeMode = useThemeMode();
   const toggleTheme = useToggleTheme();
   const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | 'export' | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [element, setElement] = useState<InventoryItem>(newElement);
+  // Sala de destino: la BD la guarda como FK (sala_id), NO dentro del campo
+  // `inventario` (ese es el "N° INVENTARIO" de la hoja). Sin sala_id el server
+  // rechaza el POST con 400.
+  const [salaId, setSalaId] = useState<number | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [addSaving, setAddSaving] = useState(false);
   const [savedCodigo, setSavedCodigo] = useState<string | null>(null);
+  // La foto se optimiza al capturarla, no al guardar: el usuario ve de una
+  // cuánto pasó a pesar (2,3 MB → 26 KB) y el momento de guardar no se alarga
+  // con una espera de conversión.
+  const [foto, setFoto] = useState<FotoOptimizada | null>(null);
+  const [fotoEstado, setFotoEstado] = useState<string | null>(null);
+  const [fotoError, setFotoError] = useState<string | null>(null);
   const [scannedItem, setScannedItem] = useState<InventoryItem | null | undefined>(undefined);
   const [searchName, setSearchName] = useState('');
   const [searchResults, setSearchResults] = useState<InventoryItem[] | null>(null);
@@ -54,8 +65,13 @@ export default function HomeScreen() {
     setSearchName('');
     setAddError(null);
     setSavedCodigo(null);
-    setEditingId(null);
-    if (next === 'add') setElement(newElement());
+    setFotoError(null);
+    if (next === 'add') {
+      setElement(newElement());
+      setSalaId(null);
+      setFoto(null);
+      setFotoEstado(null);
+    }
   }
 
   async function handleScanned(codigo: string) {
@@ -64,28 +80,86 @@ export default function HomeScreen() {
   }
 
   async function handleAdd() {
-    if (!element.detalle || !element.inventario) {
+    if (!element.detalle || salaId == null) {
       setAddError('Detalle y sala son obligatorios.');
       return;
     }
+    if (addSaving) return;
+    setAddSaving(true);
     setAddError(null);
-    await addItem(element);
-    setSavedCodigo(element.codigo);
-    setElement(newElement());
+    const fotoPendiente = foto;
+    try {
+      const guardado = await addItem({ ...element, sala_id: salaId });
+      const codigo = guardado.codigo || element.codigo;
+      // La foto se sube DESPUÉS del alta porque necesita el id que asigna la
+      // base. Si falla, el elemento ya está guardado: se avisa y no se finge
+      // que todo salió bien (pero tampoco se pierde el elemento).
+      if (fotoPendiente && guardado.id != null) {
+        try {
+          await subirFoto(guardado.id, fotoPendiente);
+        } catch (e) {
+          setFotoError(
+            e instanceof Error
+              ? `El elemento se guardó, pero la foto no se pudo subir: ${e.message}`
+              : 'El elemento se guardó, pero la foto no se pudo subir.',
+          );
+        }
+      }
+      // El bloque de "Guardado" sale cuando ya no queda nada pendiente (tampoco
+      // la foto): si apareciera antes, el botón diría "Guardando…" debajo del
+      // cartel de éxito.
+      setSavedCodigo(codigo);
+      setElement(newElement());
+      setSalaId(null);
+      setFoto(null);
+      // En web el archivo se entrega solo: el usuario acaba de crear el elemento
+      // y necesita la etiqueta ya, sin un clic extra. En nativo la descarga abre
+      // la hoja de compartir, y abrirla sin que la pidan interrumpe el flujo:
+      // ahí queda el botón. Si esta descarga automática falla, el botón sigue
+      // ahí como respaldo (por eso no se reporta el error aquí).
+      if (Platform.OS === 'web') descargarDataMatrix(codigo).catch(() => {});
+    } catch (e) {
+      setAddError(e instanceof Error ? `No se pudo guardar: ${e.message}` : 'No se pudo guardar.');
+    } finally {
+      setAddSaving(false);
+    }
   }
 
   async function handleSearch() {
     setSearchResults(await buscarElementos(searchName));
   }
 
+  // Sin `quality` en el selector: el original entra tal cual y la única
+  // compresión con pérdida la hace nuestra reducción a 800 px (comprimir dos
+  // veces solo acumula artefactos sin bajar el peso final).
+  async function optimizarFoto(asset: ImagePicker.ImagePickerAsset) {
+    setFotoError(null);
+    setFotoEstado('Optimizando foto…');
+    try {
+      setFoto(
+        await prepararFotoParaSubir({
+          uri: asset.uri,
+          ancho: asset.width,
+          alto: asset.height,
+          pesoOriginalBytes: asset.fileSize,
+        }),
+      );
+    } catch (e) {
+      setFoto(null);
+      setFotoError(e instanceof Error ? e.message : 'No se pudo procesar la foto.');
+    } finally {
+      setFotoEstado(null);
+    }
+  }
+
   async function handleTakePhoto() {
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
-    if (!result.canceled) setElement((current) => ({ ...current, foto: result.assets[0].uri }));
+    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled) await optimizarFoto(result.assets[0]);
   }
 
   async function handlePickPhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.6, allowsEditing: true, aspect: [4, 3] });
-    if (!result.canceled) setElement((current) => ({ ...current, foto: result.assets[0].uri }));
+    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [4, 3] });
+    if (!result.canceled) await optimizarFoto(result.assets[0]);
   }
 
   return (
@@ -107,14 +181,12 @@ export default function HomeScreen() {
             {scannedItem === null && <ThemedText themeColor="textSecondary" style={styles.description}>No se encontró ningún elemento con ese código.</ThemedText>}
             {scannedItem && (
               <View style={styles.resultBox}>
-                <ThemedText type="smallBold" style={styles.codeLabel}>{scannedItem.codigo}</ThemedText>
-                <ItemEditor
-                  key={scannedItem.codigo}
-                  item={scannedItem}
-                  salas={salas}
-                  theme={theme}
-                  onSaved={(updated) => setScannedItem(updated)}
-                />
+                {(['codigo', 'detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
+                  <ThemedText key={field} style={styles.resultLine}>{field.toUpperCase()}: {scannedItem[field] || '-'}</ThemedText>
+                ))}
+                {scannedItem.codigo && (
+                  <DataMatrixDownloadButton codigo={scannedItem.codigo} label="Descargar Data Matrix" />
+                )}
               </View>
             )}
           </ActionPanel>}
@@ -130,45 +202,52 @@ export default function HomeScreen() {
 
             <View style={styles.inputGroup}>
               <ThemedText type="smallBold" style={styles.inputLabel}>FOTO (opcional)</ThemedText>
-              {element.foto && <Image source={{ uri: element.foto }} style={styles.photoPreview} contentFit="cover" />}
+              {foto && <Image source={{ uri: foto.uri }} style={styles.photoPreview} contentFit="cover" />}
+              {foto && (
+                <ThemedText themeColor="textSecondary" type="small" style={styles.photoMeta}>
+                  Optimizada en el teléfono: {foto.resumen} · {foto.ancho}×{foto.alto} · miniatura de lista incluida
+                </ThemedText>
+              )}
+              {fotoEstado && <ThemedText themeColor="textSecondary" type="small">{fotoEstado}</ThemedText>}
               <View style={styles.roomChips}>
-                <Pressable accessibilityRole="button" onPress={handleTakePhoto} style={styles.photoButton}>
+                <Pressable accessibilityRole="button" disabled={Boolean(fotoEstado)} onPress={handleTakePhoto} style={styles.photoButton}>
                   <ThemedText style={styles.photoButtonLabel}>Tomar foto</ThemedText>
                 </Pressable>
-                <Pressable accessibilityRole="button" onPress={handlePickPhoto} style={styles.photoButton}>
+                <Pressable accessibilityRole="button" disabled={Boolean(fotoEstado)} onPress={handlePickPhoto} style={styles.photoButton}>
                   <ThemedText style={styles.photoButtonLabel}>Elegir de galería</ThemedText>
                 </Pressable>
-                {element.foto && (
-                  <Pressable accessibilityRole="button" onPress={() => setElement({ ...element, foto: undefined })} style={styles.photoButton}>
+                {foto && (
+                  <Pressable accessibilityRole="button" onPress={() => { setFoto(null); setFotoError(null); }} style={styles.photoButton}>
                     <ThemedText style={styles.photoButtonLabel}>Quitar</ThemedText>
                   </Pressable>
                 )}
               </View>
+              {fotoError && <ThemedText style={styles.errorText}>{fotoError}</ThemedText>}
             </View>
 
             {(['detalle', 'serial'] as const).map((field) => (
               <FormInput key={field} label={field.toUpperCase()} value={element[field]} onChangeText={(value) => setElement({ ...element, [field]: value })} theme={theme} />
             ))}
             <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.inputLabel}>INVENTARIO</ThemedText>
+              <ThemedText type="smallBold" style={styles.inputLabel}>SALA</ThemedText>
               <View style={styles.roomChips}>
                 {salas.map((sala) => (
                   <Pressable
                     key={sala.id}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: element.inventario === sala.nombre }}
-                    onPress={() => setElement({ ...element, inventario: sala.nombre })}
-                    style={[styles.roomChip, element.inventario === sala.nombre && styles.roomChipSelected]}>
-                    <ThemedText style={element.inventario === sala.nombre ? styles.roomChipLabelSelected : styles.roomChipLabel}>{sala.nombre}</ThemedText>
+                    accessibilityState={{ selected: salaId === sala.id }}
+                    onPress={() => setSalaId(sala.id)}
+                    style={[styles.roomChip, salaId === sala.id && styles.roomChipSelected]}>
+                    <ThemedText style={salaId === sala.id ? styles.roomChipLabelSelected : styles.roomChipLabel}>{sala.nombre}</ThemedText>
                   </Pressable>
                 ))}
                 {!salas.length && <ThemedText themeColor="textSecondary" type="small">Cargando salas…</ThemedText>}
               </View>
             </View>
-            {(['estado', 'observaciones', 'cantidad'] as const).map((field) => (
+            {(['inventario', 'estado', 'observaciones', 'cantidad'] as const).map((field) => (
               <FormInput key={field} label={field.toUpperCase()} value={element[field]} onChangeText={(value) => setElement({ ...element, [field]: value })} theme={theme} />
             ))}
-            <PanelButton label="Agregar" onPress={handleAdd} />
+            <PanelButton label={addSaving ? 'Guardando…' : 'Agregar'} onPress={handleAdd} disabled={addSaving} />
 
             {addError && (
               <ThemedText style={styles.errorText}>{addError}</ThemedText>
@@ -176,10 +255,13 @@ export default function HomeScreen() {
             {savedCodigo && (
               <View style={styles.codePreview}>
                 <ThemedText themeColor="textSecondary" style={styles.description}>
-                  Guardado. Imprime este Data Matrix y pégalo en el elemento:
+                  {Platform.OS === 'web'
+                    ? 'Guardado. El archivo para imprimir ya se descargó; si lo necesitas de nuevo, está aquí:'
+                    : 'Guardado. Descarga el Data Matrix para imprimirlo y pegarlo en el elemento:'}
                 </ThemedText>
                 <DataMatrixCode value={savedCodigo} size={120} />
                 <ThemedText type="smallBold" style={styles.codeLabel}>{savedCodigo}</ThemedText>
+                <DataMatrixDownloadButton codigo={savedCodigo} label="Descargar para imprimir" />
               </View>
             )}
           </ActionPanel>}
@@ -194,10 +276,18 @@ export default function HomeScreen() {
                 {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
               </ThemedText>
             )}
+            {searchResults !== null && searchResults.length > 0 && (
+              <DataMatrixSheetButton
+                codigos={searchResults.map((item) => item.codigo)}
+                omitidos={searchResults.filter((item) => !item.codigo).length}
+                label={`Imprimir etiquetas de los resultados (${searchResults.filter((item) => item.codigo).length})`}
+                archivo={`busqueda-${searchName}`}
+                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja A4."
+              />
+            )}
             {searchResults?.map((item, idx) => {
               const room = salas.find((s) => s.id === item.sala_id);
               const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
-              const itemId = item.id; // narrowing se pierde en callbacks → const local
               return (
                 <View key={item.id ?? item.codigo ?? `sr-${idx}`} style={styles.searchCard}>
                   <View style={styles.searchCardHeader}>
@@ -222,25 +312,8 @@ export default function HomeScreen() {
                       <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
                     )}
                   </View>
-                  {itemId != null && (
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={() => setEditingId(editingId === itemId ? null : itemId)}
-                      style={styles.editToggle}>
-                      <ThemedText style={styles.editToggleLabel}>{editingId === itemId ? 'Cerrar' : 'Editar / Trasladar'}</ThemedText>
-                    </Pressable>
-                  )}
-                  {editingId === item.id && (
-                    <ItemEditor
-                      key={`${item.id}-${item.codigo}`}
-                      item={item}
-                      salas={salas}
-                      theme={theme}
-                      onSaved={(updated) => {
-                        setSearchResults((current) => (current ?? []).map((it) => (it.id === updated.id ? updated : it)));
-                        setEditingId(null);
-                      }}
-                    />
+                  {item.codigo && (
+                    <DataMatrixDownloadButton codigo={item.codigo} compacta label="Data Matrix" />
                   )}
                 </View>
               );
@@ -248,7 +321,7 @@ export default function HomeScreen() {
             {searchResults?.length === 0 && (
               <View style={styles.searchEmpty}>
                 <ThemedText style={styles.searchEmptyIcon}>🔍</ThemedText>
-                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para "{searchName}"</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para &ldquo;{searchName}&rdquo;</ThemedText>
                 <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
               </View>
             )}
@@ -344,98 +417,6 @@ function ExportIcon() {
       <Path d="M12 3v12M12 3l-4 4M12 3l4 4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       <Path d="M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
     </Svg>
- );
-}
-
-const EDIT_FIELDS = ['detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'] as const;
-
-// Formulario de edición + traslado para un elemento existente. Se usa desde el
-// resultado del escaneo y desde las tarjetas de búsqueda.
-function ItemEditor({ item, salas, theme, onSaved }: {
-  item: InventoryItem;
-  salas: Room[];
-  theme: ReturnType<typeof useTheme>;
-  onSaved: (updated: InventoryItem) => void;
-}) {
-  const [draft, setDraft] = useState<InventoryItem>(item);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const currentSala = salas.find((s) => s.id === item.sala_id);
-  const otrasSalas = salas.filter((s) => s.id !== item.sala_id);
-
-  async function handleSave() {
-    if (!item.id) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const updated = await updateItem(item.id, {
-        detalle: draft.detalle,
-        serial: draft.serial,
-        inventario: draft.inventario,
-        estado: draft.estado,
-        observaciones: draft.observaciones,
-        cantidad: draft.cantidad,
-      });
-      onSaved({ ...updated, sala_id: item.sala_id });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo guardar');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleTraslado(salaId: number) {
-    if (!item.id) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await registrarTraslado({ elementoId: item.id, salaNuevaId: salaId });
-      onSaved({ ...item, sala_id: salaId });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo trasladar');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <View style={styles.editor}>
-      {EDIT_FIELDS.map((field) => (
-        <FormInput
-          key={field}
-          label={field.toUpperCase()}
-          value={draft[field] ?? ''}
-          onChangeText={(value) => setDraft({ ...draft, [field]: value })}
-          theme={theme}
-        />
-      ))}
-      <Pressable accessibilityRole="button" onPress={handleSave} disabled={saving} style={({ pressed }) => [styles.panelButton, pressed && styles.pressed]}>
-        <ThemedText style={styles.panelButtonLabel}>{saving ? 'Guardando…' : 'Guardar cambios'}</ThemedText>
-      </Pressable>
-      {otrasSalas.length > 0 && (
-        <View style={styles.inputGroup}>
-          <ThemedText type="smallBold" style={styles.inputLabel}>TRASLADAR A OTRA SALA</ThemedText>
-          {currentSala && (
-            <ThemedText themeColor="textSecondary" type="small">
-              Actualmente en: {currentSala.edificio} · {currentSala.nombre}
-            </ThemedText>
-          )}
-          <View style={styles.roomChips}>
-            {otrasSalas.map((sala) => (
-              <Pressable
-                key={sala.id}
-                accessibilityRole="button"
-                disabled={saving}
-                onPress={() => handleTraslado(sala.id)}
-                style={[styles.roomChip, styles.roomChipTraslado]}>
-                <ThemedText style={styles.roomChipLabel}>{sala.nombre}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-    </View>
-      )}
-      {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
-    </View>
   );
 }
 
@@ -443,8 +424,8 @@ function ActionPanel({ children }: { children: React.ReactNode }) {
   return <ThemedView type="backgroundElement" style={styles.actionPanel}>{children}</ThemedView>;
 }
 
-function PanelButton({ label, onPress }: { label: string; onPress?: () => void }) {
-  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.panelButton, pressed && styles.pressed]}><ThemedText style={styles.panelButtonLabel}>{label}</ThemedText></Pressable>;
+function PanelButton({ label, onPress, disabled }: { label: string; onPress?: () => void; disabled?: boolean }) {
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.panelButton, disabled && styles.panelButtonDisabled, pressed && !disabled && styles.pressed]}><ThemedText style={styles.panelButtonLabel}>{label}</ThemedText></Pressable>;
 }
 
 function FormInput({ label, value, onChangeText, theme }: { label: string; value: string; onChangeText: (value: string) => void; theme: ReturnType<typeof useTheme> }) {
@@ -483,6 +464,7 @@ const styles = StyleSheet.create({
   input: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: Spacing.two, fontSize: 16 },
   roomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   photoPreview: { width: '100%', aspectRatio: 4 / 3, borderRadius: 8, marginBottom: Spacing.one },
+  photoMeta: { lineHeight: 18 },
   photoButton: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: '#C8102E', paddingHorizontal: Spacing.two, alignItems: 'center', justifyContent: 'center' },
   photoButtonLabel: { color: '#C8102E', fontSize: 13, fontWeight: '700' },
   codePreview: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.two },
@@ -507,16 +489,13 @@ const styles = StyleSheet.create({
   searchEmptyIcon: { fontSize: 32 },
   searchEmptyText: { marginTop: Spacing.two, textAlign: 'center' },
   searchEmptyHint: { textAlign: 'center' },
-  panelButton: { minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
-  panelButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
-  pressed: { opacity: 0.78 },
-  editor: { gap: Spacing.two, paddingTop: Spacing.two },
-  editToggle: { alignSelf: 'flex-start', marginTop: Spacing.one, minHeight: 32, borderRadius: 16, borderWidth: 1, borderColor: '#C8102E', paddingHorizontal: Spacing.two, alignItems: 'center', justifyContent: 'center' },
-  editToggleLabel: { color: '#C8102E', fontSize: 13, fontWeight: '700' },
-  roomChipTraslado: { opacity: 0.9 },
   exportRow: { flexDirection: 'row', gap: Spacing.two },
   exportButton: { flex: 1, minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
   exportButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 14, textAlign: 'center' },
   exportButtonGhost: { flex: 1, minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: '#C8102E', alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.two },
   exportButtonGhostLabel: { color: '#C8102E', fontWeight: '700', fontSize: 14, textAlign: 'center' },
+  panelButton: { minHeight: 48, borderRadius: 8, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.one },
+  panelButtonDisabled: { opacity: 0.6 },
+  panelButtonLabel: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
+  pressed: { opacity: 0.78 },
 });
