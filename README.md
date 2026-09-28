@@ -179,7 +179,7 @@ cd fablab/fablab-inventario
 npm run gate                    # tipos + lint + 99 tests + self-check + datamatrix + docs
 npm test                        # 99/99 tests (Jest)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
-npm run qa                      # 69 checks contra la API
+npm run qa                      # 61-69 checks contra la API (según los datos)
 npm run bench                   # Latencia de todas las operaciones
 npm run docs:check              # Enlaces, rutas documentadas y sintaxis de los scripts
 npm run asignar:codigos         # Dry-run: códigos para elementos sin código (--api, --escribir, --sql)

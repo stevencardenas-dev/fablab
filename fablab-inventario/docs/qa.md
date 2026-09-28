@@ -9,7 +9,7 @@ salvo el QA y el benchmark (que también aceptan un server local).
 | Sin base | `node importer/self-check.mjs` | DDL/DML, capa de API, códigos, ids | **OK** (5 bloques) |
 | Tipos/lint | `npx tsc --noEmit` · `npm run lint` | TypeScript y ESLint | limpios |
 | Simbología | `npm run verify:datamatrix` | Los Data Matrix son decodificables | OK (con limitación) |
-| Integración | `npm run qa` | **69 checks** contra la API real | verde en producción y local |
+| Integración | `npm run qa` | **61-69 checks** contra la API real (el número depende de los datos) | verde en producción (61) y local (69) |
 | Rendimiento | `npm run bench` | Todas las operaciones, vs. piso de red | ver [`rendimiento.md`](rendimiento.md) |
 | Doc y scripts | `npm run docs:check` | Enlaces, rutas documentadas vs. server, sintaxis de los `.mjs` | 5/5 |
 
@@ -61,7 +61,7 @@ push y PR: `npm ci`, `tsc`, `lint`, `npm test`, `self-check`,
 `verify:datamatrix` y `docs:check`. Es el gate que antes dependía de que alguien
 se acordara; **no** necesita base de datos ni toca producción.
 
-## `npm run qa` (integrativo, 69 checks)
+## `npm run qa` (integrativo, 61-69 checks)
 
 ```bash
 npm run qa                                        # producción
@@ -94,6 +94,12 @@ cortada, primero barre esos restos.
   `traslados.csv|json`.
 
 El token sale de `API_TOKEN` o de `~/.config/fablab/api-token`.
+
+**¿Por qué el conteo cambia?** El contrato de fotos de la sección B solo corre
+si la base tiene alguna foto real; en la sección C corre siempre sobre la foto
+temporal del QA. Con la base de producción sin fotos (hoy) salen **61 checks**;
+en una base con fotos salen **69**. Los dos números son verde; lo que no cambia
+es que no haya fallos.
 
 **Qué NO cubre**: la UI en sí (eso se valida en el navegador a mano o con
 Playwright en sesiones puntuales), el camino nativo (hoja de compartir, cámara

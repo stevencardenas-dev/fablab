@@ -580,6 +580,32 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   Verificado: `npm run gate` 5/5 + 99 tests + tsc/lint limpios, y `npm run qa`
   contra el server local **69 OK · 0 fallos**.
 
+- **Deploy del endurecimiento + verificación en producción (2026-09-25).** El
+  trabajo se contó en 4 commits temáticos (`c84fcea` fotos+API, `bf78e59`
+  harness, `488aed0` docs, `e2adb07` CI/trazabilidad) y se desplegó **solo la
+  api**: `sync:deploy --push api` → **api `5e67754..143bdbb`**. El mensaje salió
+  con `+dirty` por un falso positivo del chequeo nuevo (el único cambio era
+  `.freebuff/` sin trackear): arreglado en `43761fc`, que ahora mira solo las
+  rutas que alimentan cada artefacto (`server/`, `importer/` y el dump para la
+  api; todo el proyecto para el web) — el artefacto desplegado **sí** corresponde
+  a `e2adb07`. Verificado en producción, propagado en menos de un minuto:
+  JSON roto → **400**, `/elementos/1.5/historial` → **400**, `/elementos/999999/historial`
+  → **404**, `/salas/1.5/elementos` → **400**, escritura sin token → **401**;
+  `npm run qa` → **61 OK · 0 fallos** (61 con la base sin fotos: la sección B se
+  salta con aviso y el contrato de fotos se prueba sobre la foto temporal del QA;
+  con fotos reales son 69); y sigue **917 elementos · 0 fotos · 0 residuos QA**.
+- **El benchmark medía un 404 y decía otra cosa (2026-09-25).** `benchmark.mjs`
+  leía la foto del «elemento 1», que tenía foto solo durante la prueba de demo:
+  con la base sin fotos, esos `GET foto` medían una consulta + 404 y los números
+  salían planos (+69) sin significar lo mismo que antes. Ahora el benchmark
+  **se autoabastece** (crea su elemento temporal, le sube foto, mide y borra) y
+  suma la op que faltaba: **POST alta con código nuevo**. Corrida nueva en
+  producción (p50, delta contra piso de ~135 ms): lecturas en el piso (salas −2,
+  sala CNC +14, historial +2, miniatura +9, foto grande +2, 304 +1, listado +8 de
+  media con +80 en la muestra que expira TTL); escrituras PUT +139, traslado
+  +200, foto +226, DELETE foto +68, DELETE elemento +72, **alta +337** (los ~+135
+  sobre el alta anterior son el lock de código), HEAD +113 (artefacto del proxy).
+
 ## Decisions
 
 - **Esquema normalizado en vez de una tabla por sala** (2026-09-12). El primer

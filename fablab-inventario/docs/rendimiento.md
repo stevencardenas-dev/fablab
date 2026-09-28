@@ -72,39 +72,57 @@ Miniatura como placeholder del modal, `cachePolicy="memory"`, `transition={150}`
 y **prefetch en `onPressIn`/`onHoverIn`** del chip; `loading="lazy"` en los chips
 (solo se descargan los visibles). Reabrir el mismo modal sirve la foto en **3 ms**.
 
-## Mediciones (producción, 2026-09-24)
+## Mediciones (producción, 2026-09-25)
 
 `npm run bench` (`scripts/benchmark.mjs`): 1 hit de calentamiento + 8 muestras
-por operación, y **delta contra el piso de red** medido con `/health` (que no
-toca la BD, ~140 ms). Ese delta es lo que la app realmente añade.
+por operación (4 en las escrituras caras), y **delta contra el piso de red**
+medido con `/health` (que no toca la BD, ~135 ms). Ese delta es lo que la app
+realmente añade.
+
+El benchmark **se autoabastece**: crea su propio elemento temporal, le sube una
+foto y mide contra eso, borrándolo al final. Antes apuntaba a elementos fijos
+(«el elemento 1»), que tenían foto solo durante la prueba de demo: con la base
+sin fotos, esas «lecturas de foto» medían en realidad una consulta + `404`, y los
+números no eran comparables entre corridas.
 
 ### Lecturas
 
 | Operación | Delta p50 vs `/health` |
 |---|---|
-| `GET /api/salas` | +2 ms |
-| `GET /api/salas/7/elementos` (sala CNC, 171) | −4 ms |
-| `GET /api/elementos/:id/historial` | −3 ms |
-| `GET /api/elementos/:id/foto?tam=miniatura` (RAM) | +0 ms |
-| `GET …/foto` (foto grande, en LRU) | −1 ms |
-| `GET …/foto` con `If-None-Match` (304) | −2 ms |
-| `GET /api/elementos` (917) | +78 ms en la muestra que expira el TTL; las demás en el piso |
+| `GET /api/salas` | −2 ms |
+| `GET /api/salas/7/elementos` (sala CNC, 171) | +14 ms |
+| `GET /api/elementos/:id/historial` | +2 ms |
+| `GET …/foto?tam=miniatura` (RAM) | +9 ms |
+| `GET …/foto` (foto grande, en LRU) | +2 ms |
+| `GET …/foto` con `If-None-Match` (304) | +1 ms |
+| `HEAD …/foto` | +113 ms (artefacto del proxy: la app nunca usa HEAD) |
+| `GET /api/elementos` (917) | +8 ms de media; +80 ms en la muestra que expira el TTL de 60 s |
 
-Los valores negativos son ruido de red: **todas las lecturas están en el piso**.
+Los valores negativos o de un dígito son ruido de red: **todas las lecturas
+están en el piso**. El listado promedia así porque solo una de cada N muestras
+paga la consulta; en la app, la caché SWR del cliente tapa esa ventana.
 
 ### Escrituras (round-trips WAN inherentes)
 
 | Operación | Delta p50 |
 |---|---|
-| `PUT /api/elementos/:id` (1 query) | +141 ms |
-| `POST /api/elementos` con código duplicado (409, 1 query + índice) | +66 ms |
-| `DELETE /api/elementos/:id/foto` | +70 ms |
-| `DELETE /api/elementos/:codigo` (transacción de 3) | +61 ms |
+| `PUT /api/elementos/:id` (1 query) | +139 ms |
+| `POST /api/elementos` con código duplicado (409: lock + 2 consultas) | +273 ms |
+| `POST /api/elementos` con código nuevo (la ruta real del alta) | +337 ms |
 | `POST /api/traslados` (4 consultas transaccionales) | +200 ms |
-| `POST …/foto` (25,6 KB: validación + upsert de 60 KB) | +223 ms |
+| `POST …/foto` (25,6 KB: validación + upsert de 60 KB) | +226 ms |
+| `DELETE /api/elementos/:id/foto` | +68 ms |
+| `DELETE /api/elementos/:codigo` (transacción de 3) | +72 ms |
 | `GET /api/export/elementos.json` | +76 ms |
-| `GET /api/export/traslados.json` | +67 ms |
-| `GET /api/export/elementos.csv` (917 filas, sin gzip) | +141 ms |
+| `GET /api/export/traslados.csv` | +69 ms |
+| `GET /api/export/elementos.csv` (917 filas, sin gzip) | +82 ms |
+
+El **alta** es la escritura más cara (+337 ms): valida la sala, toma el lock de
+código, chequea el duplicado, inserta y libera el lock — cinco viajes. Antes del
+endurecimiento habría sido ~+200 ms con el chequeo sin lock; los ~135 ms extra
+son el precio de que dos altas simultáneas del mismo código no puedan pasar las
+dos. Cuando `IOT-79` se resuelva y `codigo` sea `UNIQUE`, el lock desaparece y el
+alta vuelve a su costo anterior.
 
 Lo único por encima del piso son las escrituras reales (cada una paga sus
 consultas) y el arranque en frío del free tier.
@@ -115,9 +133,11 @@ consultas) y el arranque en frío del free tier.
 |---|---|---|
 | Inventario completo (11 salas en serie) | ~30 s | 1 petición, ~300 ms |
 | Abrir una sala | 2 queries (~+140 ms) | caché TTL / piso |
-| Abrir el modal (historial) | +67 ms | piso |
-| Revalidar una foto (ETag) | 629 ms | ~200 ms → RAM |
+| Abrir el modal (historial) | +67 ms | +2 ms |
+| Revalidar una foto (ETag) | 629 ms | +1 ms (hash en RAM) |
+| Miniatura de un elemento | +204 ms (query) | +9 ms (precargada en RAM) |
 | Primer hit tras 70 s idle | 0,6 s+ con query | 0,43-0,47 s **en `/health` también** (CPU del free tier) |
+| Alta de un elemento | ~+200 ms | +337 ms (**a cambio** de cerrar la carrera de códigos) |
 
 ## Cómo medir sin engañarte
 
@@ -149,11 +169,12 @@ corrida se corta, la siguiente limpia el resto.
   Si algún día molestan, el siguiente paso sería agrupar (batch) o mover la base
   a una región más cercana.
 - **Primera carga del listado con TTL expirado**: +78 ms una vez por minuto.
-- **Los códigos se escriben bajo un lock con nombre** (`GET_LOCK`): el alta y
-  `POST /:id/codigo` pagan 2 round-trips extra (~+60-140 ms sobre el piso). Es
-  deliberado: sin él, dos altas simultáneas del mismo código pasaban las dos
-  (se probó con 5 en paralelo). Son operaciones poco frecuentes y la alternativa
-  —un `UNIQUE` en la columna— no es posible mientras exista `IOT-79`.
+- **Los códigos se escriben bajo un lock con nombre** (`GET_LOCK`): medidos
+  **+135 ms** sobre el piso (el alta pasó de ~+200 a **+337 ms**). Es deliberado:
+  sin él, dos altas simultáneas del mismo código podían pasar las dos (con el
+  lock, 5 en paralelo dan 1×201 y 4×409). Son operaciones poco frecuentes y la
+  alternativa —un `UNIQUE` en la columna— no es posible mientras exista `IOT-79`:
+  cuando se resuelva, el lock se va y el alta vuelve a su costo anterior.
 - **El historial solo hace una consulta extra cuando está vacío**: si el
   elemento existe y no tiene traslados, paga un `SELECT` de existencia para
   poder responder `404` cuando el id no existe. Con traslados, una sola query.
