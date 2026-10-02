@@ -836,6 +836,30 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   alternativos citan los códigos de estado **reales** (`409` de código
   duplicado, `413` de foto pesada, `404` de id mal tecleado), así que se pueden
   confrontar con `npm run qa`. Está en `fablab-inventario/docs/casos-de-uso.md`.
+- **Hoja paginada y gate de impresión comprometidos y desplegados (2026-10-02).**
+  Las dos entradas anteriores estaban sin commitear y la rama
+  (`feature/inventario-scan`) era **ancestro** de `main`, así que el commit salió
+  directo en `main` —donde ya viven los marcadores de deploy— y se subió a
+  `origin` (`5a0c18a..431688f`, 23 archivos). El gate completo quedó en verde
+  antes de commitear: tests, self-check, Data Matrix, **impresión 12/12** y
+  **docs 6/6** (81 enlaces). El web se desplegó sin tocar la api (`server/` e
+  `importer/` siguen idénticos a lo desplegado): `sync:deploy --push web` subió
+  `f16133f..8dbf842` con marcador `fablab@431688f` (**sin** `+dirty`), bundle
+  nuevo `entry-19ede31388d50b17b1ac9d696f20eb15.js` (2,2 MB) y **SW en
+  `fablab-v12`** —el bump es parte del cambio: sin él, un cliente con el SW viejo
+  se queda con la UI vieja para siempre—. Verificado contra producción: el index
+  sirve el bundle nuevo, el bundle lleva `Oficio` y la API horneada, el bundle
+  anterior sigue 200 (`entry-c0c9f467…`, un cliente con `index.html` en caché no
+  se queda sin JS), `404.html` 200, `/health` ok y `/api/salas` responde. En el
+  navegador (Brave headless por CDP, porque el panel de preview no adjuntaba): la
+  home carga con `/api/salas` y `/api/elementos` en **200**, la sala 1 (CNC)
+  muestra su botón nuevo «**Imprimir etiquetas de la sala (171)**», y el clic
+  abre la hoja real de 1,44 MB con el selector **Carta (default) / A4 / Oficio**,
+  una página en cada papel para esas 171 etiquetas (240, 252 y 300 por hoja), el
+  botón de imprimir y el aviso de imprimir al 100 %. Único error de consola: el
+  404 del documento de `/sala/1` —la Rewrite Rule de Render sigue pendiente, ya
+  documentada—. Y `npm run qa` en producción: **64 OK · 0 fallos** (20,9 s; 917
+  elementos, la foto temporal del QA se borra sola).
 
 ## Contexto
 
