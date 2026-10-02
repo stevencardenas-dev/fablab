@@ -87,7 +87,7 @@ curl -s https://fablab-web.onrender.com/index.html | grep -o 'entry-[a-z0-9]*\.j
 curl -s https://fablab-web.onrender.com/_expo/static/js/web/<entry>.js | grep -c onrender
 ```
 
-- Si cambió el bundle, **sube `CACHE_NAME` en `public/sw.js`** (`fablab-v11` hoy):
+- Si cambió el bundle, **sube `CACHE_NAME` en `public/sw.js`** (`fablab-v12` hoy):
   el SW es cache-first sobre el shell y los bundles, y sin cambiar el nombre los
   clientes con el SW viejo seguirían con la UI vieja.
 - Render propaga en 1-3 min; los `502/503` durante el arranque son normales (la
@@ -145,8 +145,9 @@ fotos" en vez de caerse. La vía manual para revisar el esquema es
 
 1. `npm run backup:remoto` (y leer el manifiesto si la operación toca datos).
 2. Probar el cambio contra el server local (`--base http://127.0.0.1:3101/api`).
-3. Correr el gate completo (`npm run gate`: tipos, lint, 99 tests, self-check,
-   Data Matrix y verificación de docs/scripts) y `npm run qa -- --base …`.
+3. Correr el gate completo (`npm run gate`: tipos, lint, 120 tests, self-check,
+   Data Matrix, impresión de la hoja de etiquetas y verificación de docs y
+   scripts) y `npm run qa -- --base …`.
    El mismo gate corre solo en cada push vía GitHub Actions
    (`.github/workflows/ci.yml`).
 4. Tener el `API_TOKEN` a mano (o fallar los POST/PUT/DELETE con 401, que es el

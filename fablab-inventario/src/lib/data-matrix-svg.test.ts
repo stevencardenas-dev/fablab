@@ -1,6 +1,12 @@
 import {
+  HOLGURA_PAGINA_MM,
+  medidasPapel,
   nombreArchivoDataMatrix,
   nombreArchivoHoja,
+  paginasHojaEtiquetas,
+  PAPELES,
+  PAPELES_DISPONIBLES,
+  planHojaEtiquetas,
   svgDataMatrix,
   svgHojaEtiquetas,
   type MatrizDataMatrix,
@@ -74,9 +80,22 @@ describe('svgDataMatrix', () => {
     const svg = svgDataMatrix(MATRIZ, { etiqueta: 'FL-ABC123' });
     expect(svg).toContain('>FL-ABC123</text>');
     expect(svg).toContain('text-anchor="middle"');
+    // 9 caracteres a 0,6 em de 4 módulos de cuerpo: 21,6 módulos de texto; el
+    // lienzo es el más ancho de los dos (el símbolo son 5)
+    expect(svg).toContain('viewBox="0 0 21.6 9"');
     // la etiqueta ocupa alto extra: 4 módulos del símbolo + 5 de texto
-    expect(svg).toContain('viewBox="0 0 5 9"');
     expect(svg).toContain('height="4.5mm"');
+  });
+
+  it('ensancha el lienzo si el código no cabe bajo el símbolo', () => {
+    const svg = svgDataMatrix(MATRIZ, { etiqueta: 'FL-ABC123' });
+    expect(svg).toContain('width="10.8mm"');
+    // El ancho del texto queda declarado (`textLength`): la caja no depende de la
+    // fuente que tenga el sistema, así que el texto no se sale de la etiqueta ni
+    // queda recortado por el borde del lienzo.
+    expect(svg).toContain('textLength="21.6" lengthAdjust="spacingAndGlyphs"');
+    // El símbolo se centra: 5 módulos en un lienzo de 21,6 → 8,3 a la izquierda
+    expect(rectsNegros(svg)[0].x).toBe(9.3);
   });
 
   it('escapa la etiqueta y la omite si viene vacía', () => {
@@ -243,5 +262,151 @@ describe('svgHojaEtiquetas', () => {
     const svg = svgHojaEtiquetas([]);
     expect(tamanioHoja(svg)).toEqual({ ancho: 210, alto: 297 });
     expect(gruposHoja(svg)).toHaveLength(0);
+  });
+
+  it('ensancha la celda cuando el código impreso no cabe bajo el símbolo', () => {
+    const plan = planHojaEtiquetas([{ codigo: 'FL-M00000000009', matriz: matrizDe(16) }], {
+      papel: 'carta',
+    });
+    // 15 caracteres × 0,6 em × 2 mm de texto = 18 mm, contra 9 mm de símbolo: la
+    // celda la fija el texto, o el texto se saldría de la etiqueta (y del margen
+    // de la impresora, que es como lo encontró scripts/verificar-impresion.mjs).
+    expect(plan.medidas[0].anchoMm).toBe(9);
+    expect(plan.medidas[0].anchoTextoMm).toBe(18);
+    expect(plan.celdaAnchoMm).toBe(18);
+    expect(plan.columnas).toBe(9); // (215,9 − 20 + 4) / (18 + 4)
+  });
+
+  it('nunca deja el texto fuera de su celda', () => {
+    const mixtas = ['IOT-79', 'M-01', 'IMP3D-121', 'FL-M00000000009', 'VL-303-05'].map((codigo) => ({
+      codigo,
+      matriz: matrizDe(16),
+    }));
+    for (const papel of PAPELES_DISPONIBLES) {
+      const plan = planHojaEtiquetas(mixtas, { papel });
+      for (const medida of plan.medidas) {
+        expect(medida.anchoTextoMm).toBeLessThanOrEqual(plan.celdaAnchoMm);
+      }
+    }
+  });
+
+  it('mide la página con el papel elegido', () => {
+    expect(tamanioHoja(svgHojaEtiquetas(ETIQUETAS, { papel: 'carta' }))).toEqual({ ancho: 215.9, alto: 279.4 });
+    expect(tamanioHoja(svgHojaEtiquetas(ETIQUETAS, { papel: 'oficio' }))).toEqual({ ancho: 215.9, alto: 330.2 });
+  });
+});
+
+describe('medidasPapel', () => {
+  it('usa A4 si no se pide papel y respeta el que se pida', () => {
+    expect(medidasPapel()).toEqual({ nombre: 'A4', anchoMm: 210, altoMm: 297 });
+    expect(medidasPapel({ papel: 'carta' })).toEqual({ nombre: 'Carta', anchoMm: 215.9, altoMm: 279.4 });
+  });
+
+  it('deja forzar una medida propia, que gana sobre el papel', () => {
+    expect(medidasPapel({ papel: 'carta', anchoHojaMm: 100, altoHojaMm: 50 })).toEqual({
+      nombre: 'Carta',
+      anchoMm: 100,
+      altoMm: 50,
+    });
+  });
+});
+
+// --- Paginado ---
+// El bug que esto cubre: la hoja era un solo SVG alto y el navegador la cortaba
+// donde terminaba el papel, rebanando la etiqueta que cayera justo ahí. Ahora
+// cada página es un SVG que mide el papel, así que el corte es entre etiquetas.
+
+describe('paginasHojaEtiquetas', () => {
+  function etiquetasDe(cantidad: number, lado = 16) {
+    return Array.from({ length: cantidad }, (_, i) => ({ codigo: `FL-${i}`, matriz: matrizDe(lado) }));
+  }
+
+  it('calcula la grilla contra el papel, no contra un tamaño fijo', () => {
+    const a4 = planHojaEtiquetas(etiquetasDe(300), { papel: 'a4' });
+    const carta = planHojaEtiquetas(etiquetasDe(300), { papel: 'carta' });
+    const oficio = planHojaEtiquetas(etiquetasDe(300), { papel: 'oficio' });
+    // Celda de 9 × 11,5 mm con 4 mm de aire (paso 13 × 15,5) y 10 mm de margen:
+    // Carta es 5,9 mm más ancha que A4 (una columna más) y 17,6 mm más baja
+    // (dos filas menos), así que la misma cantidad de etiquetas no da el mismo
+    // número de páginas.
+    expect([a4.columnas, a4.filasPorPagina, a4.porPagina]).toEqual([14, 18, 252]);
+    expect([carta.columnas, carta.filasPorPagina, carta.porPagina]).toEqual([15, 16, 240]);
+    expect([oficio.columnas, oficio.filasPorPagina, oficio.porPagina]).toEqual([15, 20, 300]);
+    expect(a4.paginas).toHaveLength(2);
+    expect(carta.paginas).toHaveLength(2);
+    expect(oficio.paginas).toHaveLength(1); // 300 justo
+  });
+
+  it('reparte en páginas sin perder ni repetir etiquetas', () => {
+    const etiquetas = etiquetasDe(300);
+    for (const papel of PAPELES_DISPONIBLES) {
+      const paginas = paginasHojaEtiquetas(etiquetas, { papel, columnas: 4 });
+      expect(paginas.length).toBeGreaterThan(1);
+      const codigos = paginas.flatMap((pagina) => gruposHoja(pagina).map((g) => g.codigo));
+      expect(codigos).toEqual(etiquetas.map((e) => e.codigo));
+    }
+  });
+
+  it('cada página mide el papel y deja toda la etiqueta dentro del área imprimible', () => {
+    const etiquetas = etiquetasDe(300);
+    for (const papel of PAPELES_DISPONIBLES) {
+      const { anchoMm, altoMm } = PAPELES[papel];
+      for (const pagina of paginasHojaEtiquetas(etiquetas, { papel, columnas: 4 })) {
+        // Alto del papel menos la holgura de paginado: entra en una hoja sola
+        expect(tamanioHoja(pagina)).toEqual({ ancho: anchoMm, alto: altoMm - HOLGURA_PAGINA_MM });
+        const grupos = gruposHoja(pagina);
+        expect(grupos.length).toBeGreaterThan(0);
+        for (const { guia, negros } of grupos) {
+          // La guía de corte rodea la etiqueta por fuera (1 mm): si entra ella,
+          // entra el código impreso completo.
+          expect(guia.x).toBeGreaterThanOrEqual(9);
+          expect(guia.y).toBeGreaterThanOrEqual(9);
+          expect(guia.x + guia.width).toBeLessThanOrEqual(anchoMm - 9);
+          expect(guia.y + guia.height).toBeLessThanOrEqual(altoMm - 9);
+          for (const negro of negros) {
+            expect(negro.y + negro.height).toBeLessThanOrEqual(altoMm - 10);
+          }
+        }
+      }
+    }
+  });
+
+  it('no mete más etiquetas por página de las que anuncia el plan', () => {
+    const etiquetas = etiquetasDe(300, 12);
+    const plan = planHojaEtiquetas(etiquetas, { papel: 'carta' });
+    for (const pagina of paginasHojaEtiquetas(etiquetas, { papel: 'carta' })) {
+      expect(gruposHoja(pagina).length).toBeLessThanOrEqual(plan.porPagina);
+    }
+  });
+
+  it('usa la misma grilla que la hoja de una pieza en su primera página', () => {
+    const etiquetas = etiquetasDe(60);
+    const hoja = svgHojaEtiquetas(etiquetas, { papel: 'carta' });
+    const [primera] = paginasHojaEtiquetas(etiquetas, { papel: 'carta' });
+    const guiasPagina = gruposHoja(primera).map((g) => g.guia);
+    expect(gruposHoja(hoja).slice(0, guiasPagina.length).map((g) => g.guia)).toEqual(guiasPagina);
+  });
+
+  it('no solapa etiquetas de distinto tamaño dentro de una página', () => {
+    const mixtas = [12, 16, 18, 14].flatMap((lado) =>
+      Array.from({ length: 65 }, (_, i) => ({ codigo: `FL-${lado}-${i}`, matriz: matrizDe(lado) })),
+    );
+    const paginas = paginasHojaEtiquetas(mixtas, { papel: 'a4' });
+    expect(paginas.length).toBeGreaterThan(1);
+    for (const pagina of paginas) {
+      const guias = gruposHoja(pagina).map((g) => g.guia);
+      for (let i = 0; i < guias.length; i++) {
+        for (let j = i + 1; j < guias.length; j++) {
+          expect(seSolapan(guias[i], guias[j])).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('una hoja vacía también ocupa una página', () => {
+    const paginas = paginasHojaEtiquetas([], { papel: 'carta' });
+    expect(paginas).toHaveLength(1);
+    expect(tamanioHoja(paginas[0])).toEqual({ ancho: 215.9, alto: 279.4 - 1 });
+    expect(gruposHoja(paginas[0])).toHaveLength(0);
   });
 });

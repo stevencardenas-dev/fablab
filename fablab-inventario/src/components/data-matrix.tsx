@@ -12,9 +12,11 @@ import {
   nombreArchivoHoja,
   svgDataMatrix,
   svgHojaEtiquetas,
+  type EtiquetaDataMatrix,
   type OpcionesHojaEtiquetas,
   type OpcionesSvgDataMatrix,
 } from '@/lib/data-matrix-svg';
+import { hojasImprimibles, htmlHojaImprimible, type HojaImprimible } from '@/lib/hoja-imprimible';
 
 export function DataMatrixCode({ value, size = 160 }: { value: string; size?: number }) {
   const { matrix, width, height } = encodeToMatrix(value);
@@ -88,14 +90,17 @@ export async function descargarDataMatrix(codigo: string, opciones?: OpcionesSvg
 
 // --- Hoja de etiquetas (varios elementos de una vez) ---
 // Reponer una etiqueta perdida de a una no sirve cuando hay que reetiquetar una
-// sala completa. La hoja es un solo SVG con la grilla de etiquetas: se imprime
-// de una pasada (o se guarda como PDF desde el diálogo de impresión).
+// sala completa. La hoja se imprime **paginada** (un SVG por página, del tamaño
+// exacto del papel elegido) para que ninguna etiqueta quede cortada por el
+// borde de la hoja, y además se puede bajar de una pieza para un visor o una
+// cortadora.
 
 // Una hoja más grande que esto deja de ser útil (y de a 300 etiquetas el SVG
 // ya pesa cientos de KB): mejor imprimir por sala o por búsqueda.
 const MAXIMO_ETIQUETAS_POR_HOJA = 300;
 
-export function svgHojaDeCodigos(codigos: readonly string[], opciones?: OpcionesHojaEtiquetas): string {
+/** Etiquetas de una lista de códigos, ya codificadas y con el tope validado. */
+export function etiquetasDeCodigos(codigos: readonly string[]): EtiquetaDataMatrix[] {
   const limpios = codigos.filter(Boolean);
   if (!limpios.length) throw new Error('No hay elementos para etiquetar.');
   if (limpios.length > MAXIMO_ETIQUETAS_POR_HOJA) {
@@ -103,51 +108,19 @@ export function svgHojaDeCodigos(codigos: readonly string[], opciones?: Opciones
       `Son ${limpios.length} etiquetas y una hoja admite ${MAXIMO_ETIQUETAS_POR_HOJA}. Imprime por sala o por búsqueda.`,
     );
   }
-  return svgHojaEtiquetas(
-    limpios.map((codigo) => ({ codigo, matriz: encodeToMatrix(codigo) })),
-    opciones,
+  return limpios.map((codigo) => ({ codigo, matriz: encodeToMatrix(codigo) }));
+}
+
+function abrirHojaEnNavegador(
+  hojas: readonly HojaImprimible[],
+  cantidad: number,
+  nombreArchivo: string,
+  svgUnaPieza: string,
+): boolean {
+  const urlDescarga = URL.createObjectURL(
+    new Blob([svgUnaPieza], { type: 'image/svg+xml;charset=utf-8' }),
   );
-}
-
-// Página de impresión: el SVG va embebido (nítido, sin depender de un archivo
-// adjunto) y la barra de arriba ofrece imprimir/guardar PDF o bajar el SVG.
-// La barra se oculta al imprimir. Se intenta abrir el diálogo solo: si el
-// navegador lo bloquea, el botón queda a la vista.
-function htmlHojaImprimible(svg: string, nombreArchivo: string, cantidad: number, urlDescarga: string): string {
-  return `<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<title>Etiquetas FabLab (${cantidad})</title>
-<style>
-  @page { size: A4 portrait; margin: 0; }
-  html, body { margin: 0; padding: 0; background: #ffffff; }
-  main { padding: 0; }
-  main > svg { display: block; width: 210mm; height: auto; }
-  .barra { display: flex; gap: 12px; align-items: center; padding: 10px 14px; font: 600 14px system-ui, sans-serif; background: #f0f0f3; }
-  .barra button { font: inherit; color: #ffffff; background: #C8102E; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
-  .barra a { color: #C8102E; }
-  .barra span { color: #60646C; font-weight: 500; }
-  @media print { .barra { display: none; } }
-</style>
-</head>
-<body>
-<div class="barra">
-  <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
-  <a href="${urlDescarga}" download="${nombreArchivo}">Descargar SVG</a>
-  <span>${cantidad} etiqueta${cantidad === 1 ? '' : 's'} en hoja A4</span>
-</div>
-<main>
-${svg}
-</main>
-<script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 400); });</script>
-</body>
-</html>`;
-}
-
-function abrirHojaEnNavegador(svg: string, nombreArchivo: string, cantidad: number): boolean {
-  const urlDescarga = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
-  const html = htmlHojaImprimible(svg, nombreArchivo, cantidad, urlDescarga);
+  const html = htmlHojaImprimible(hojas, cantidad, nombreArchivo, urlDescarga);
   const urlHoja = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   const ventana = window.open(urlHoja, '_blank');
   if (!ventana) {
@@ -163,20 +136,24 @@ function abrirHojaEnNavegador(svg: string, nombreArchivo: string, cantidad: numb
 
 /**
  * Entrega la hoja con las etiquetas de varios elementos.
- * Web: abre una pestaña A4 lista para imprimir (imprime sola, con opción de
- * bajar el SVG). Nativo: comparte el archivo SVG de la hoja.
+ * Web: abre una pestaña lista para imprimir, con el papel elegible ahí mismo
+ * (imprime sola, con opción de bajar el SVG de una pieza). Nativo: comparte el
+ * archivo SVG de la hoja.
  */
 export async function descargarHojaEtiquetas(
   codigos: readonly string[],
   opciones: { nombre?: string } & OpcionesHojaEtiquetas = {},
 ): Promise<string> {
   const { nombre = 'lote', ...opcionesHoja } = opciones;
-  const cantidad = codigos.filter(Boolean).length;
-  const svg = svgHojaDeCodigos(codigos, opcionesHoja);
+  const etiquetas = etiquetasDeCodigos(codigos);
+  const cantidad = etiquetas.length;
   const archivo = `${nombreArchivoHoja(nombre)}.svg`;
+  const svg = svgHojaEtiquetas(etiquetas, opcionesHoja);
 
   if (Platform.OS === 'web') {
-    if (!abrirHojaEnNavegador(svg, archivo, cantidad)) descargarEnNavegador(svg, archivo);
+    if (!abrirHojaEnNavegador(hojasImprimibles(etiquetas, opcionesHoja), cantidad, archivo, svg)) {
+      descargarEnNavegador(svg, archivo);
+    }
     return archivo;
   }
   await compartirArchivoNativo(svg, archivo, `Etiquetas FabLab (${cantidad})`);
@@ -260,7 +237,7 @@ export function DataMatrixSheetButton({
       await descargarHojaEtiquetas(codigos, { nombre: archivo });
       setAviso(
         Platform.OS === 'web'
-          ? `Abriendo la hoja con ${cantidad} etiqueta${cantidad === 1 ? '' : 's'}…`
+          ? `Abriendo la hoja con ${cantidad} etiqueta${cantidad === 1 ? '' : 's'} (elige A4 o Carta al imprimir)…`
           : `Compartiendo ${cantidad} etiqueta${cantidad === 1 ? '' : 's'}…`,
       );
     } catch (e) {

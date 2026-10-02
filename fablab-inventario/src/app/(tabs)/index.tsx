@@ -282,7 +282,7 @@ export default function HomeScreen() {
                 omitidos={searchResults.filter((item) => !item.codigo).length}
                 label={`Imprimir etiquetas de los resultados (${searchResults.filter((item) => item.codigo).length})`}
                 archivo={`busqueda-${searchName}`}
-                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja A4."
+                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja paginada, en A4 o Carta."
               />
             )}
             {searchResults?.map((item, idx) => {

@@ -56,6 +56,7 @@
     "lint": "expo lint",
     "test": "jest",
     "verify:datamatrix": "node scripts/verify-datamatrix.mjs",
+    "verify:impresion": "node scripts/verificar-impresion.mjs",
     "seed": "node scripts/seed.mjs",
     "fix:mojibake": "node scripts/fix-mojibake.mjs",
     "asignar:codigos": "node scripts/asignar-codigos.mjs",
@@ -67,7 +68,7 @@
     "docs:check": "node scripts/verificar-docs.mjs",
     "typecheck": "tsc --noEmit",
     "self-check": "node importer/self-check.mjs",
-    "gate": "npm run typecheck && npm run lint && npm test -- --silent && npm run self-check && npm run verify:datamatrix && npm run docs:check",
+    "gate": "npm run typecheck && npm run lint && npm test -- --silent && npm run self-check && npm run verify:datamatrix && npm run verify:impresion && npm run docs:check",
     "sync:deploy": "node scripts/sync-deploy.mjs"
   },
   "jest": {

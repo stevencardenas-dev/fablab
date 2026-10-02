@@ -115,7 +115,7 @@ eso:
 ### Subir el número de caché del SW al desplegar
 
 El service worker es cache-first sobre el shell y los bundles. Si despliegas un
-bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v11` hoy),
+bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v12` hoy),
 los clientes con el SW viejo quedan con la UI vieja para siempre.
 
 ### El token de escritura viaja en el bundle web

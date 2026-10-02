@@ -176,8 +176,8 @@ los índices que el servidor asegura al arrancar (`ix_codigo`, no único).
 
 ```bash
 cd fablab/fablab-inventario
-npm run gate                    # tipos + lint + 99 tests + self-check + datamatrix + docs
-npm test                        # 99/99 tests (Jest)
+npm run gate                    # tipos + lint + 120 tests + self-check + datamatrix + impresión + docs
+npm test                        # 120/120 tests (Jest)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
 npm run qa                      # 61-72 checks contra la API (según los datos)
 npm run bench                   # Latencia de todas las operaciones

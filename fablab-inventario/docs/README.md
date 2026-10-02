@@ -12,6 +12,8 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 
 | Si quieres… | Lee |
 |---|---|
+| Saber quién usa el sistema y qué puede hacer cada quien | [`actores.md`](actores.md) |
+| Ver cada operación con su flujo principal y sus alternativos | [`casos-de-uso.md`](casos-de-uso.md) |
 | Entender qué es el sistema y cómo encajan sus piezas | [`arquitectura.md`](arquitectura.md) |
 | Consumir la API desde otro programa | [`api.md`](api.md) |
 | Entender/tocar la base de datos | [`base-de-datos.md`](base-de-datos.md) |
@@ -25,6 +27,13 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 
 ## Los documentos
 
+- **[actores.md](actores.md)** — actores del sistema (responsable de inventario,
+  coordinación, equipo desarrollador, usuario del laboratorio) y el sistema como
+  actor no humano, con las brechas de roles y la trazabilidad actor → pantalla →
+  ruta.
+- **[casos-de-uso.md](casos-de-uso.md)** — 22 casos de uso con flujo principal y
+  flujos alternativos (los códigos de estado reales de la API), agrupados por
+  objetivo, más los cuatro declarados y no implementados.
 - **[arquitectura.md](arquitectura.md)** — componentes del monorepo, flujo de
   datos, stack y versiones, decisiones de diseño con su motivo.
 - **[api.md](api.md)** — contrato completo de las 14 rutas HTTP: autenticación,

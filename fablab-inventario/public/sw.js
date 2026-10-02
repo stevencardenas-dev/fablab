@@ -1,9 +1,9 @@
 // Service Worker para FabLab Inventario PWA
 // Cachea la app shell y permite uso offline básico.
 
-// v11: el server responde 304/HEAD sin leer el blob y el modal muestra la
-// miniatura como placeholder mientras llega la foto grande.
-const CACHE_NAME = 'fablab-v11';
+// v12: hoja de etiquetas paginada (Carta/A4/Oficio) sin cortes, la impresión
+// entra al gate y los actores y casos de uso quedan documentados.
+const CACHE_NAME = 'fablab-v12';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

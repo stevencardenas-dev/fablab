@@ -85,16 +85,39 @@ Es el único punto de contacto con la API desde la app.
 
 - `src/lib/data-matrix-svg.ts` (**puro y testeado**) arma el SVG **en
   milímetros**: módulo de 0,5 mm, zona de silencio de 1 módulo, fondo blanco
-  explícito y el código impreso debajo del símbolo. `svgHojaEtiquetas()` acomoda
-  una hoja **A4 vertical** (10 mm de margen) en celdas del tamaño de la etiqueta
-  más grande, con guía de corte punteada; si hay más etiquetas que las que
-  entran, la hoja **crece hacia abajo** (el navegador pagina al imprimir).
-  Tope: 300 etiquetas por hoja.
+  explícito y el código impreso debajo del símbolo. El texto es de 2 mm con
+  `textLength` (ancho declarado, no el que tenga la fuente del sistema) y la
+  **celda de la hoja se mide con el texto y con el símbolo**, el que sea más
+  ancho: un `FL-…` de 15 caracteres pide ~18 mm, el doble que su símbolo, y con
+  una celda de 9 mm el código se salía de la etiqueta, pisaba la celda vecina y
+  podía caer fuera del margen de la impresora (lo encontró
+  `npm run verify:impresion`). `planHojaEtiquetas()` decide
+  la grilla (margen de 10 mm, celdas del tamaño de la etiqueta más grande, guía
+  de corte punteada) contra el **papel elegido** —Carta 215,9 × 279,4, A4
+  210 × 297, Oficio 215,9 × 330,2, medidas de norma para que el driver reconozca
+  la hoja— y reparte las etiquetas en páginas: entran
+  `columnas × filasPorPagina`, que en Carta son 16 × 18 y en A4 16 × 19 para
+  códigos de 14 módulos. Tope: 300 etiquetas por hoja.
+  - `paginasHojaEtiquetas()` devuelve **un SVG por página**, cada uno del tamaño
+    del papel menos 1 mm (holgura que evita que el redondeo del navegador meta
+    una página en blanco). Es lo que se imprime: un bloque que cabe en la hoja
+    no se parte, así que la paginación cae **entre** etiquetas y no por encima
+    de una.
+  - `svgHojaEtiquetas()` devuelve la hoja **de una pieza** (crece hacia abajo):
+    es el archivo para un visor o una cortadora.
+- `src/lib/hoja-imprimible.ts` (**puro y testeado**) arma la pestaña de
+  impresión: embebe las páginas de los tres papeles y una barra con
+  "Imprimir / Guardar PDF", el **selector de papel** (por defecto **Carta**), el
+  resumen de etiquetas y páginas, "Descargar SVG (una pieza)" y el recordatorio
+  de imprimir al 100 %. Vive aparte del componente porque es una función pura de
+  cadenas: así el archivo que se imprime se prueba sin montar la app. El default
+  es Carta porque una hoja de Carta **entra en A4** (4 mm de margen de sobra),
+  mientras que al revés se perdería la última fila: A4 es 17,6 mm más alto.
 - `src/components/data-matrix.tsx` conecta eso con el sistema de archivos:
-  - Web: `Blob` + `<a download>` → `datamatrix-<CODIGO>.svg`; las hojas abren una
-    pestaña A4 que **se imprime sola** (con barra "Imprimir / Guardar PDF" y
-    "Descargar SVG" que se oculta al imprimir). Si el navegador bloquea la
-    pestaña, cae a descargar el SVG.
+  - Web: `Blob` + `<a download>` → `datamatrix-<CODIGO>.svg`; las hojas abren la
+    pestaña que **se imprime sola**, ya paginada y con el papel elegible ahí
+    mismo (la app no puede saber qué papel tiene cargada la impresora). Si el
+    navegador bloquea la pestaña, cae a descargar el SVG.
   - Nativo: `expo-file-system` escribe en cache y `expo-sharing` abre la hoja de
     compartir (un archivo SVG único para las hojas por lote).
   - La hoja por lote **avisa cuántos elementos saltea** por no tener código, en
@@ -110,7 +133,7 @@ Es el único punto de contacto con la API desde la app.
 - `public/sw.js`: cache-first para el **shell** (`/`, `/index.html`) y para los
   bundles que el navegador pida; **network-first para `/api/`** (si no hay red
   devuelve `503`, y la caché SWR de la app responde con lo último conocido).
-- **Versión de caché**: `CACHE_NAME = 'fablab-v11'`. Al desplegar un bundle
+- **Versión de caché**: `CACHE_NAME = 'fablab-v12'`. Al desplegar un bundle
   nuevo hay que **subir el número**, o los clientes con el SW viejo quedan con la
   UI vieja para siempre (el `activate` borra las cachés de nombres distintos).
 - `src/components/service-worker.ts` registra el SW y ya no se pierde la primera

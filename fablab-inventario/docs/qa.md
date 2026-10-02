@@ -5,17 +5,18 @@ salvo el QA y el benchmark (que también aceptan un server local).
 
 | Nivel | Comando | Qué cubre | Estado |
 |---|---|---|---|
-| Unitarias | `npm test` | Lógica pura y cliente (`inventory`, `foto`, `data-matrix-svg`) | **99/99** |
+| Unitarias | `npm test` | Lógica pura y cliente (`inventory`, `foto`, `data-matrix-svg`, `hoja-imprimible`) | **117/117** |
 | Sin base | `node importer/self-check.mjs` | DDL/DML, capa de API, códigos, ids | **OK** (5 bloques) |
 | Tipos/lint | `npx tsc --noEmit` · `npm run lint` | TypeScript y ESLint | limpios |
 | Simbología | `npm run verify:datamatrix` | Los Data Matrix son decodificables | OK (con limitación) |
+| Impresión | `npm run verify:impresion` | Imprime la hoja con Chrome y mide el PDF: páginas, papel y que nada quede cortado | 12/12 (~30 s) |
 | Integración | `npm run qa` | **61-72 checks** contra la API real (el número depende de los datos) | verde en producción y en local |
 | Rendimiento | `npm run bench` | Todas las operaciones, vs. piso de red | ver [`rendimiento.md`](rendimiento.md) |
 | Doc y scripts | `npm run docs:check` | Enlaces, rutas documentadas vs. server, sintaxis de los `.mjs`, tipos versionados | 6/6 |
 
 ## Unitarias (`npm test`)
 
-Jest con `jest-expo`, 3 suites:
+Jest con `jest-expo`, 4 suites:
 
 - **`src/lib/inventory.test.ts`** — cliente de la API: `urlFoto` (null sin foto,
   cambio de URL al cambiar el hash), retry con backoff solo en GET,
@@ -24,9 +25,18 @@ Jest con `jest-expo`, 3 suites:
 - **`src/lib/foto.test.ts`** — pipeline de fotos puro: dimensiones que no
   deforman ni agrandan, peso desde base64, firma de bytes (WebP/JPEG), escalones
   de calidad, topes de límites, ahorro topado en 99%, `revisarPayload`.
-- **`src/lib/data-matrix-svg.test.ts`** — geometría de la etiqueta y de la hoja
-  A4 (sin solapes, dentro del área imprimible, crece hacia abajo cuando hace
-  falta).
+- **`src/lib/data-matrix-svg.test.ts`** — geometría de la etiqueta y de la hoja:
+  grilla contra el papel pedido (16 × 18 en Carta, 16 × 19 en A4, 16 × 21 en
+  Oficio para códigos de 14 módulos), paginado sin perder ni repetir etiquetas,
+  cada página del tamaño de su papel y **cada etiqueta entera dentro del área
+  imprimible** (la guía de corte es lo más externo: si entra, entra el código),
+  hoja de una pieza que crece hacia abajo, mezcla de matrices de distinto tamaño
+  sin solapes, y que la celda se ensancha con el **texto** cuando el código es
+  más ancho que el símbolo (un `FL-…` de 15 caracteres pide ~18 mm).
+- **`src/lib/hoja-imprimible.test.ts`** — la pestaña que se imprime: una sección
+  por papel, una caja por página, un SVG por caja con la medida del papel, sin
+  declaración XML embebida, selector con Carta por defecto y arranque en el
+  papel que entra también en A4 si la impresora tiene otra hoja cargada.
 
 ## `self-check` (sin MySQL)
 
@@ -54,12 +64,80 @@ temporización) y de un código real solo afirma que el patrón se **codifica** 
 lanzar. **No prueba que una cámara lea una etiqueta impresa**: eso exige prueba
 en dispositivo con `expo-camera`.
 
+## `npm run verify:impresion` (la hoja impresa de verdad)
+
+El paginado y el tamaño de papel los decide el navegador al imprimir, así que no
+se pueden dar por buenos leyendo el código. Este chequeo **imprime**: arma la
+hoja con el código de verdad, la manda a PDF con Chrome headless por el mismo
+camino que la app (`@page` + saltos de página) y mide el PDF.
+
+```bash
+npm run verify:impresion                    # imprime Carta, A4 y Oficio
+npm run verify:impresion -- --exigir        # en CI: falla si no hay navegador
+npm run verify:impresion -- --guardar /tmp/hoja   # deja HTML y PDF para mirarlos
+```
+
+Qué comprueba, por papel (130 etiquetas con grilla de 6 columnas: más de una
+página en los tres, que es el caso donde el corte aparecería):
+
+1. **Páginas exactas**: el PDF tiene las que dice el plan. Un bloque de una hoja
+   que se pasara de alto dejaría una página de más.
+2. **Tamaño de hoja**: cada página mide el papel pedido (612 × 792 pts para
+   Carta, 594,96 × 841,92 para A4, 612 × 936 para Oficio). Si el `@page` no se
+   aplicara, el PDF saldría con el papel por defecto del navegador.
+3. **Tinta en el borde**: en ninguna página hay píxel oscuro a menos de 9 mm del
+   borde. Esto es lo que revela una etiqueta cortada, y es lo que **no** detecta
+   contar códigos por página: con la hoja vieja (un solo SVG de 291,5 mm en un
+   papel de 279,4 mm) el texto de la etiqueta rebanada quedaba entero en la
+   primera página y el conteo daba bien; la medición de tinta daba **9.488 px
+   pegados al borde inferior** (margen 0,0 mm) y el símbolo de la fila 19 partido
+   entre las dos hojas.
+
+El PDF se lee sin dependencias (`scripts/pdf.mjs`: `/MediaBox` por página y caja
+de tinta recorriendo el stream de contenido), así que lo único externo que hace
+falta es un navegador. Tarda ~30 s porque imprime tres hojas con Chrome; para el
+bucle rápido de desarrollo está `npm test`.
+
+También **encontró un bug real el primer día**: el código impreso bajo el símbolo
+podía ser más ancho que la etiqueta (un `FL-…` de 15 caracteres mide ~18 mm con
+fuente de 2 mm), se salía de la celda, pisaba la vecina y en A4 quedaba tinta a
+**5,5 mm** del borde. Ahora la celda se mide con el texto (`anchoTextoModulos()`)
+además del símbolo, y el texto se dibuja con `textLength` para que su caja no
+dependa de la fuente del sistema.
+
+### Comprobarlo a mano (con las herramientas del sistema)
+
+El lector propio se validó contra una medición independiente: `pdftoppm` para
+rasterizar y PIL para la caja de tinta, sobre los mismos PDF. Coinciden dentro de
+0,5 mm (el lector propio cuenta el origen del texto, PIL los píxeles de las
+letras) y **los dos marcan la hoja vieja como cortada**, así que el chequeo no
+pasa por vacío:
+
+| PDF | lector propio (página 1 / 2) | PIL |
+|---|---|---|
+| hoja paginada | inf **13,4** / 259,9 mm → OK | inf **13,5** / 259,9 mm → OK |
+| hoja vieja (una pieza) | inf **−1,1** → FALLA | inf **0,0** → FALLA |
+
+```bash
+pdftoppm -r 150 -png hoja.pdf pagina && python3 - <<'PY'
+from PIL import Image; im = Image.open('pagina-1.png').convert('L'); w, h = im.size; px = im.load()
+print(min(x for y in range(h) for x in range(w) if px[x, y] < 128) / (150/25.4), 'mm de margen izquierdo')
+PY
+```
+
 ## CI
 
 El monorepo tiene un workflow (`.github/workflows/ci.yml`) que corre en cada
 push y PR: `npm ci`, `tsc`, `lint`, `npm test`, `self-check`,
-`verify:datamatrix` y `docs:check`. Es el gate que antes dependía de que alguien
-se acordara; **no** necesita base de datos ni toca producción.
+`verify:datamatrix`, `verify:impresion -- --exigir` y `docs:check`. Es el gate que
+antes dependía de que alguien se acordara; **no** necesita base de datos ni toca
+producción.
+
+La impresión es el único chequeo que necesita algo de fuera: un navegador. Los
+runners de Ubuntu traen Google Chrome preinstalado y el script también busca
+Chromium, Brave o Edge (`CHROME_BIN` o `--chrome <ruta>` para forzarlo), así que
+en CI corre de verdad; `--exigir` hace que **falle** si no encuentra ninguno, en
+vez de dar por bueno un chequeo que no corrió.
 
 ## `npm run qa` (integrativo, 61-72 checks)
 
@@ -128,7 +206,7 @@ en [`fotos.md`](fotos.md).
 **Antes de cada commit** (es lo que corre el CI, y `npm run gate` lo agrupa)
 
 ```bash
-npm run gate    # tipos + lint + tests + self-check + datamatrix + docs:check
+npm run gate    # tipos + lint + tests + self-check + datamatrix + impresión + docs:check
 ```
 
 **Antes de cada deploy**: lo anterior + `npm run qa -- --base <local>` contra el
@@ -141,6 +219,11 @@ server local (`PORT=3101 node server/index.mjs`).
 
 - **Sin pruebas en dispositivo**: leer un Data Matrix impreso con la cámara y
   abrir la hoja de compartir en iOS/Android solo se probaron de forma indirecta.
+- **Sin pasar papel por una impresora**: lo automático llega hasta el PDF de
+  Chrome con la tinta medida en el borde (sección de arriba), que es lo que el
+  navegador decide; falta la prueba con impresora y escáner físicos, que es la
+  única que puede decir si el código impreso se lee con la cámara a esa densidad
+  (0,5 mm por módulo).
 - **Error #418 de React** (hidratación del export estático): se reprodujo en
   incógnito y en `/`; es cosmético y de nivel SDK, no de nuestra app.
 - **El deep link devuelve 404** aunque renderiza: falta la Rewrite Rule en Render

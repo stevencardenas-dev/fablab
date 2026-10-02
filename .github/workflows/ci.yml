@@ -43,5 +43,12 @@ jobs:
       - name: Data Matrix
         run: node scripts/verify-datamatrix.mjs
 
+      # Imprime la hoja de etiquetas con el Chrome preinstalado del runner y mide
+      # el PDF: páginas, tamaño de papel y que ninguna etiqueta quede cortada.
+      # `--exigir` hace que un runner sin navegador falle en vez de saltarse el
+      # chequeo en silencio.
+      - name: Impresión de la hoja de etiquetas
+        run: npm run verify:impresion -- --exigir
+
       - name: Enlaces de la documentación y sintaxis de los scripts
         run: npm run docs:check

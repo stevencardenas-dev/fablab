@@ -686,6 +686,55 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   PWA **renderiza el inventario real** —917 elementos en 11 salas, con
   `/api/salas` y `/api/elementos` en 200 en el navegador—. Sigue en pie lo único
   que no es código: `/sala/1` responde 404 (falta la Rewrite Rule en Render).
+- **Hoja de etiquetas paginada, y en Carta/A4/Oficio (2026-09-27).** Pedido:
+  «que ninguna etiqueta quede cortada al paginar» y «que se pueda imprimir en
+  Carta además de A4». La hoja era **un solo SVG** que crecía hacia abajo en
+  página fija A4; el navegador la cortaba donde terminaba el papel, así que una
+  etiqueta podía quedar rebanada (símbolo repartido entre dos hojas) aunque su
+  texto quedara entero. Ahora `planHojaEtiquetas()` (pura) decide la grilla
+  contra el papel elegido —Carta 215,9 × 279,4, A4 210 × 297, Oficio
+  215,9 × 330,2 **medidas de norma**, no redondeadas: con 216 × 279 el diálogo de
+  impresión cae en «personalizado»— y `paginasHojaEtiquetas()` devuelve **un SVG
+  por página**, del tamaño del papel menos 1 mm de holgura (un bloque que mide
+  exacto el alto del papel depende del redondeo y puede meter una página en
+  blanco). La pestaña de impresión embebe las tres variantes y un selector que
+  cambia el `@page`; el default es **Carta** porque una hoja de Carta entra en A4
+  (4 mm de sobra) y al revés se perdería la última fila. `svgHojaEtiquetas()`
+  queda como la hoja de **una pieza** para visor o cortadora. La parte pura se
+  movió a `src/lib/hoja-imprimible.ts` para poder probarla sin montar la app y,
+  sobre todo, **imprimirla de verdad**: Chrome headless a PDF con los 300
+  primeros códigos reales de producción → Carta **2 páginas** de 612 × 792 pts con
+  288 + 12 códigos y **0 px de tinta en la banda exterior de 9 mm**; A4 1 página de
+  594,96 × 841,92 pts con los 300; Oficio 1 de 612 × 936 pts con los 300. Con el
+  código anterior, la misma medición sobre el mismo caso daba **9.488 px de tinta
+  en el borde inferior, con margen inferior 0,0 mm** y la fila 19 partida: la
+  contraprueba de que el corte era real. Receta, criterios y números en
+  `docs/qa.md`; **117/117** tests (+18) y documentación al día. Nada de esto
+  toca la api: es todo app/web.
+- **La impresión pasa a ser un chequeo automático — y encontró un bug el primer
+  día (2026-09-27).** Pedido: convertir la verificación manual en gate. Ahora
+  `npm run verify:impresion` (`scripts/verificar-impresion.mjs`) arma la hoja con
+  el código de verdad, la imprime con Chrome headless por el mismo camino que la
+  app y **lee el PDF sin dependencias** (`scripts/pdf.mjs`: `/MediaBox` por
+  página y caja de tinta recorriendo el stream de contenido, con el detalle de
+  que la tinta se acumula al **pintar** y no al construir el camino — si no, los
+  rectángulos de recorte de la hoja entera daban márgenes de 0). Comprueba 4
+  cosas en cada uno de los tres papeles (Carta, A4 y Oficio) —12 controles en
+  total—: páginas exactas, tamaño de papel y que no haya tinta a menos de 9 mm
+  del borde en ninguna página. Está en `npm run gate` y en CI con
+  `--exigir` (falla si no hay navegador en vez de saltarse en silencio).
+  **Y encontró un defecto real:** el código impreso bajo el símbolo podía ser más
+  ancho que la etiqueta (un `FL-…` de 15 caracteres mide ~18 mm con fuente de
+  2 mm) y en A4 quedaba tinta a **5,5 mm** del borde, con posibilidad de que la
+  impresora la recorte y de pisar la celda vecina. Arreglado en la maqueta: la
+  celda se mide con `anchoTextoModulos()` (texto o símbolo, el que sea más ancho)
+  y el texto se dibuja con `textLength`, así que su caja no depende de la fuente
+  del sistema (y de paso la etiqueta **suelta** ya no recorta el código: su
+  lienzo también se ensancha). Validado contra una medición independiente
+  (`pdftoppm` + PIL) sobre los mismos PDF: coinciden dentro de 0,5 mm y las dos
+  marcan la hoja vieja como cortada (inf **−1,1** / **0,0** mm) mientras la
+  paginada queda en 13,4 / 13,5 mm. **120/120** tests (+3) y el gate tarda ~30 s
+  de más porque imprime tres hojas.
 
 ## Decisions
 
@@ -764,6 +813,29 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   tabla comparativa y limitaciones metodológicas explícitas. Lo único en que nos
   ganaban era citar literatura en el planteamiento del problema —ya está
   corregido— y **ninguno de los dos tenía cronograma**, que ahora sí está.
+- **Doc de actores del sistema** (2026-09-27). El otro proyecto del semestre
+  (SINCOCO) tiene su `ACTORES_DEL_NEGOCIO.md`; FabLab no tenía ninguno, aunque
+  el diagnóstico hable del "personal del laboratorio" y de la coordinación.
+  Ahora está en
+  `fablab-inventario/docs/actores.md`, levantado contra el código y no contra la
+  intención: cada actor apunta a una ruta real, el **Sistema** aparece como actor
+  no humano (código único, sello de fecha, Data Matrix, ETag, validaciones del
+  borde) y los actores que **no** usan el sistema (quien recibe un préstamo,
+  quien imprime la etiqueta, el proveedor) quedan por escrito. Lo más útil que
+  salió: la tabla de brechas, con las seis cosas que hoy impiden que esos roles
+  sean permisos —empezando por que no hay login y `traslados` **no tiene columna
+  de autor**, así que el historial dice dónde y cuándo, nunca quién—.
+- **Casos de uso del inventario** (2026-09-27). Mismo formato que el
+  `CASOS_DE_USO.md` del otro proyecto, pero con una diferencia que conviene tener
+  clara: allá se transcribe un anexo oficial y aquí **no hay anexo que
+  transcribir**, así que el archivo declara sus dos fuentes —lo implementado se
+  lee del código (cada caso anota la ruta de `api.md` o el archivo de la app), lo
+  declarado y no implementado vive en su propia épica, **EP-05**, marcado—. Son
+  22 casos: 18 implementados y 4 que hoy no existen (salas, entradas/salidas,
+  alertas de reabastecimiento y préstamo con responsable). Los flujos
+  alternativos citan los códigos de estado **reales** (`409` de código
+  duplicado, `413` de foto pesada, `404` de id mal tecleado), así que se pueden
+  confrontar con `npm run qa`. Está en `fablab-inventario/docs/casos-de-uso.md`.
 
 ## Contexto
 
