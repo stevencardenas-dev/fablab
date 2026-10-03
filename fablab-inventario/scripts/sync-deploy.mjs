@@ -118,7 +118,7 @@ function syncApi(t) {
     }
     copyInto(src, join(t.dir, to));
   }
-  console.log('[api] copiado: server/ + importer/ + data/ddl-data.sql');
+  console.log('[api] copiado: server/ + importer/ + data/ddl-data.sql + deploy-workflows/');
 }
 
 function syncWeb(t) {

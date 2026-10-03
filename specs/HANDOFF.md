@@ -904,7 +904,12 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   máquina ajena. Queda escrito también que GitHub apaga los cron a los 60 días
   sin actividad en el repo, por lo que se recomienda un pinger externo
   (UptimeRobot/cron-job.org contra `/api/salas`) y que el tope de 750 h y la
-  banda finita son el riesgo residual asumido.
+  banda finita son el riesgo residual asumido. Los dos workflows quedaron
+  **versionados en `deploy-workflows/`** y ya no son commits manuales del repo
+  de deploy: `sync:deploy --push api` los copia desde el monorepo
+  (`3104569..92c9601`, marcador `fablab@27481b1`). Tras ese push la API se
+  redeployó y quedó verificada: `/health` 200, `/api/salas` 200 y el QA final
+  **64 OK · 0 fallos**.
 
 ## Contexto
 
