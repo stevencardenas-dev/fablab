@@ -107,6 +107,20 @@ curl -s https://fablab-web.onrender.com/_expo/static/js/web/<entry>.js | grep -c
   cliente lo tapa reintentando los GET y sirviendo caché por detrás.
 - El plan de Aiven es 1 GB: por eso la foto se reduce en el dispositivo (ver
   [`fotos.md`](fotos.md)).
+- **El plan free de Render tiene un tope de 750 horas de instancia por workspace
+  al mes**, y una sola API siempre despierta ya consume ~744 h: **no puede haber
+  una segunda *free compute* en el workspace** o Render suspende todas las free
+  hasta el mes siguiente. El sitio estático no consume horas y no duerme; la
+  banda y los minutos de build sí son finitos y, sin tarjeta, agotarlos también
+  suspende los servicios free. Y la doc de Render lo dice explícito: las
+  instancias free **no son para producción**. Con eso en la mano, el equipo
+  decidió (2026-10-02) quedarse en free con vigilancia mientras el uso sea el del
+  laboratorio.
+- **GitHub desactiva los workflows programados tras 60 días sin actividad en el
+  repo** (los runs programados no cuentan como actividad): `keep-alive` y
+  `db-watchdog` se apagarían solos si el repo se enfría. El ping interno del
+  server no depende de GitHub; para las capas externas conviene además un pinger
+  fuera de GitHub (ver *Traspaso al FabLab*).
 
 ## Al arrancar el server
 
@@ -162,6 +176,31 @@ fotos" en vez de caerse. La vía manual para revisar el esquema es
 8. Verificar con las sondas de arriba y `npm run qa`.
 9. Dejar constancia en `specs/HANDOFF.md` (fecha, commits, qué se verificó).
 
+## Traspaso al FabLab
+
+Decisión del 2026-10-02: la app queda para el laboratorio, así que las cuentas
+deben quedar **a nombre del FabLab o de un docente**, no de un estudiante. La
+entrega debería incluir:
+
+1. **Cuentas** (que sobrevivan al egreso de los estudiantes): Render (servicios
+   `fablab-api` y `fablab-web`), Aiven (proyecto `fablab`, servicio
+   `mysql-2eb5feb2`) y GitHub (el monorepo y los dos repos de deploy).
+2. **Secretos a rotar:** `API_TOKEN` (env de Render y
+   `~/.config/fablab/api-token`), `AIVEN_TOKEN` (secreto del repo de deploy) y el
+   acceso a la cuenta de Aiven. El token viejo queda horneado en el bundle
+   público, así que después de rotarlo hay que **volver a exportar y desplegar
+   la web** (`sync:deploy --push web`) con el nuevo.
+3. **Alertas:** configurar el secreto `ALERTA_WEBHOOK` (Discord, Slack o Google
+   Chat) en el repo `fablab-api` para que `keep-alive` y `db-watchdog` avisen
+   cuando la API no responde. Sin él, un fallo solo queda como rojo en Actions.
+4. **Pinger externo** (recomendado, no depende de GitHub): un monitor gratuito
+   (UptimeRobot, cron-job.org…) contra
+   `https://fablab-api-sr1q.onrender.com/api/salas` cada 10-14 min; mantiene
+   despierto el servicio y avisa por correo si se cae.
+5. **Ensayo de entrega:** correr `npm run qa` y `npm run sync:deploy -- --push
+   web` desde una máquina que **no** sea la del estudiante que se gradúa, con las
+   cuentas del FabLab ya transferidas.
+
 ## Lo que NO se hace
 
 - Reimportar `seed` sobre producción (borra traslados y fotos).
@@ -172,6 +211,10 @@ fotos" en vez de caerse. La vía manual para revisar el esquema es
 
 ## Pendiente de infraestructura
 
+- **Vigilancia externa y alertas**: el secreto `ALERTA_WEBHOOK` del repo de
+  deploy está sin configurar y no hay pinger fuera de GitHub; como los cron de
+  GitHub se apagan a los 60 días de inactividad, es lo primero a dejar listo en
+  el traspaso (ver *Traspaso al FabLab*).
 - **Deep links con 404** (`/sala/1` renderiza bien pero devuelve `404`): el fix
   correcto es una **Rewrite Rule en el Dashboard de Render** (`/*` → `/index.html`,
   acción *Rewrite*; los archivos reales siguen ganando). El `public/_redirects`

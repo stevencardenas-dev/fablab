@@ -860,6 +860,27 @@ node importer/self-check.mjs && node scripts/verify-datamatrix.mjs && npm test
   404 del documento de `/sala/1` —la Rewrite Rule de Render sigue pendiente, ya
   documentada—. Y `npm run qa` en producción: **64 OK · 0 fallos** (20,9 s; 917
   elementos, la foto temporal del QA se borra sola).
+- **Disponibilidad y traspaso: free con vigilancia, cuentas del FabLab
+  (2026-10-02).** La app queda para el equipo del laboratorio y debe estar
+  disponible sin que la use mucha gente. La web es un sitio estático (no duerme);
+  lo frágil es la API de Render free y la BD de Aiven free, ya cubiertas por tres
+  capas: el ping interno cada 10 min en `server/index.mjs`, `keep-alive.yml`
+  externo cada 10 min y `db-watchdog.yml` horario (enciende Aiven si se apagó).
+  Se decidió **no pagar por ahora**: la doc de Render dice que las instancias
+  free no son para producción y el workspace tiene 750 h/mes —una sola API
+  despierta consume ~744, así que no puede entrar otra free compute sin que
+  Render suspenda todas— y se asume un arranque en frío de ~1 min tras un
+  reinicio de plataforma. Lo que sí se endureció: los dos workflows de vigilancia
+  **ya avisan por `ALERTA_WEBHOOK`** (Discord/Slack/Google Chat; sin el secreto
+  el fallo solo se ve como rojo en Actions) — commit `3104569` del repo de deploy
+  de la api, con los workflows dispatchados en verde — y el **traspaso quedó
+  documentado** en `operacion.md`: cuentas de Render/Aiven/GitHub a nombre del
+  FabLab o de un docente, rotación del `API_TOKEN` (va horneado en el bundle
+  público, así que hay que re-exportar la web) y ensayo de deploy/QA desde una
+  máquina ajena. Queda escrito también que GitHub apaga los cron a los 60 días
+  sin actividad en el repo, por lo que se recomienda un pinger externo
+  (UptimeRobot/cron-job.org contra `/api/salas`) y que el tope de 750 h y la
+  banda finita son el riesgo residual asumido.
 
 ## Contexto
 

@@ -112,6 +112,16 @@ eso:
 - `npm run migrar:esquema` sirve para local, no para producción;
 - cualquier operación de datos en producción pasa por la API pública.
 
+### GitHub apaga los cron de un repo inactivo
+
+GitHub desactiva los workflows programados —`keep-alive` y `db-watchdog` de los
+repos de deploy— tras **60 días sin actividad en el repositorio**; los propios
+runs programados no cuentan como actividad. Son el respaldo externo del ping que
+el server se hace a sí mismo, así que el síntoma sería un fallo que nadie ve. La
+mitigación es un pinger externo (UptimeRobot, cron-job.org…, contra
+`/api/salas`) y el secreto `ALERTA_WEBHOOK` para que el fallo llegue por
+Discord/Slack/correo. Ver *Traspaso al FabLab* en [`operacion.md`](operacion.md).
+
 ### Subir el número de caché del SW al desplegar
 
 El service worker es cache-first sobre el shell y los bundles. Si despliegas un
