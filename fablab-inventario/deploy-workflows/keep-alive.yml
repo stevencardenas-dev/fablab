@@ -1,0 +1,41 @@
+name: keep-alive
+
+# Golpea /api/salas cada 10 min para que el free tier de Render no duerma
+# (duerme tras ~15 min sin tráfico) y para mantener activa la BD de Aiven
+# (la consulta genera actividad real en MySQL). El propio servicio también
+# se hace ping a sí mismo (server/index.mjs → iniciarKeepAlive); este
+# workflow es el respaldo EXTERNO: puede despertar el servicio si llegó a
+# dormir. Si falla, revisar si Aiven apagó la BD (Actions mostrará rojo).
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {} # permite lanzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping de mantenimiento a la API pública
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/api/salas)
+          echo "GET /api/salas → HTTP $code"
+          test "$code" = "200"
+
+      - name: Avisar si el ping falló
+        if: failure()
+        env:
+          ALERTA_WEBHOOK: ${{ secrets.ALERTA_WEBHOOK }}
+        run: |
+          if [ -z "$ALERTA_WEBHOOK" ]; then
+            echo "Sin secreto ALERTA_WEBHOOK: este fallo solo queda en la pestaña de Actions."
+            echo "Configúralo con: gh secret set ALERTA_WEBHOOK --repo Masterkillerr/fablab-api"
+            exit 0
+          fi
+          msg="⚠️ FabLab: la API no respondió 200 en el ping de mantenimiento. Revisar https://fablab-api-sr1q.onrender.com/health y la consola de Aiven. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          curl -sS -X POST -H 'Content-Type: application/json' \
+            --data "$(printf '{"text":"%s","content":"%s"}' "$msg" "$msg")" \
+            "$ALERTA_WEBHOOK" > /dev/null
+          echo "Aviso enviado."

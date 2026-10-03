@@ -44,7 +44,7 @@ propagar; se verifica con sondas (abajo).
 
 | Destino | Origen | Contenido |
 |---|---|---|
-| `Masterkillerr/fablab-api` (privado) | `server/`, `importer/`, `ddl-data.sql` → `data/` | El server arranca con su propio `package.json` mínimo (mysql2 + xlsx) |
+| `Masterkillerr/fablab-api` (privado) | `server/`, `importer/`, `ddl-data.sql` → `data/` y `deploy-workflows/` → `.github/workflows/` | El server arranca con su propio `package.json` mínimo (mysql2 + xlsx); los workflows de vigilancia se versionan en el monorepo |
 | `Masterkillerr/fablab-web` (público) | `dist/` recién exportado | Sitio estático + `404.html` |
 
 ### Reglas de seguridad del script (no las saltes)
@@ -100,8 +100,9 @@ curl -s https://fablab-web.onrender.com/_expo/static/js/web/<entry>.js | grep -c
 - **La API duerme** tras ~15 min sin tráfico. Para evitarlo, el server se hace
   **ping a sí mismo cada 10 min** (`RENDER_EXTERNAL_URL` la inyecta Render) contra
   **`/api/salas`**, no `/health`: así la consulta también mantiene despierta la
-  base de Aiven (que se apaga por inactividad). El repo de deploy tiene además un
-  watchdog horario por GitHub Actions.
+  base de Aiven (que se apaga por inactividad). El repo de deploy tiene además
+  `keep-alive` externo cada 10 min y un watchdog horario, versionados en
+  `deploy-workflows/` y copiados por el sync.
 - El primer hit tras un rato idle cuesta ~0,43-0,47 s **incluso en `/health`**
   (que no toca la BD): es el despertar de CPU del plan free, no MySQL. El
   cliente lo tapa reintentando los GET y sirviendo caché por detrás.

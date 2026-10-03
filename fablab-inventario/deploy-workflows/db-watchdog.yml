@@ -1,0 +1,88 @@
+name: db-watchdog
+
+# Watchdog de auto-recuperación de la BD.
+# 1. Comprueba la API pública. Si responde 200, no hay nada que hacer.
+# 2. Si falla, consulta el estado del servicio MySQL en la API de Aiven.
+# 3. Si está apagado (POWEROFF), envía powered=true (así lo hace el CLI oficial
+#    de Aiven: PUT service con body {"powered": true} — NO "power_on") para
+#    reactivarlo. Aiven restaura el último backup automáticamente al encender.
+#
+# El token de Aiven vive en el secreto cifrado AIVEN_TOKEN (repo secrets).
+
+on:
+  schedule:
+    - cron: '23 * * * *' # cada hora, offset impar para no chocar con las horas puntas de GH
+  workflow_dispatch: {} # permite lanzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar API pública
+        id: api
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/api/salas || echo 000)
+          echo "GET /api/salas → HTTP $code"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Estado del servicio en Aiven
+        id: estado
+        if: steps.api.outputs.code != '200'
+        env:
+          AIVEN_TOKEN: ${{ secrets.AIVEN_TOKEN }}
+        run: |
+          resp=$(curl -s --max-time 30 -H "Authorization: aivenv1 $AIVEN_TOKEN" \
+            "https://api.aiven.io/v1/project/fablab/service/mysql-2eb5feb2")
+          state=$(echo "$resp" | grep -o '"state":"[A-Za-z_]*"' | head -1 | cut -d'"' -f4)
+          echo "estado del servicio: ${state:-DESCONOCIDO}"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+      - name: Encender la BD si está apagada
+        if: steps.api.outputs.code != '200'
+        env:
+          AIVEN_TOKEN: ${{ secrets.AIVEN_TOKEN }}
+          STATE: ${{ steps.estado.outputs.state }}
+        run: |
+          if echo "$STATE" | grep -qiE '^(OFF|POWEROFF)$'; then
+            echo "BD apagada → enviando powered=true..."
+            code=$(curl -s -o /tmp/pw.json -w "%{http_code}" --max-time 30 -X PUT \
+              -H "Authorization: aivenv1 $AIVEN_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"powered": true}' \
+              "https://api.aiven.io/v1/project/fablab/service/mysql-2eb5feb2")
+            echo "PUT powered → HTTP $code"
+            head -c 300 /tmp/pw.json; echo
+            test "$code" = "200"
+          else
+            echo "BD no está OFF (estado: ${STATE:-DESCONOCIDO}) — no se hace nada."
+            echo "Si la API sigue fallando, revisar Render (servicio caído) o Aiven (consola)."
+          fi
+
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "## Watchdog BD"
+            echo "- API pública: HTTP ${{ steps.api.outputs.code }}"
+            echo "- Estado Aiven: ${STATE:-no consultado}"
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          STATE: ${{ steps.estado.outputs.state }}
+
+      - name: Avisar si el watchdog no dejó la API en 200
+        if: failure()
+        env:
+          ALERTA_WEBHOOK: ${{ secrets.ALERTA_WEBHOOK }}
+        run: |
+          if [ -z "$ALERTA_WEBHOOK" ]; then
+            echo "Sin secreto ALERTA_WEBHOOK: este fallo solo queda en la pestaña de Actions."
+            exit 0
+          fi
+          msg="⚠️ FabLab: el watchdog de la BD no pudo dejar la API en 200. Revisar si Aiven quedó apagada y la consola de Render. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          curl -sS -X POST -H 'Content-Type: application/json' \
+            --data "$(printf '{"text":"%s","content":"%s"}' "$msg" "$msg")" \
+            "$ALERTA_WEBHOOK" > /dev/null
+          echo "Aviso enviado."

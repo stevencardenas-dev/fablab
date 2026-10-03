@@ -10,3 +10,6 @@ fablab-inventario/backups/
 
 # LibreOffice
 .~lock.*#
+
+# Metadatos locales de la herramienta de agentes (Freebuff)
+.freebuff/

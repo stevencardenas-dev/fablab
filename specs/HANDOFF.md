@@ -1,12 +1,30 @@
 # HANDOFF — Inventario FabLab / Seminario Integrador II
 
-Última sesión: 2026-09-13 (sesión 2 — documento, APA, presentación)
+Última sesión: 2026-10-02 (hoja de etiquetas paginada desplegada, impresión como gate y disponibilidad endurecida)
 
 ## State
 
-**Base de datos: hecha y verificada.** El inventario de Excel está migrado a
-MySQL con esquema normalizado. 917 elementos, 11 salas, 2 edificios (FabLab y
-ViveLab). Conteos verificados uno a uno contra las hojas de origen.
+**App y base: desplegadas y verificadas.** El inventario de Excel está migrado a
+MySQL con esquema normalizado: 917 elementos, 11 salas, 2 edificios (FabLab y
+ViveLab) y códigos únicos garantizados por `uq_codigo`. La PWA
+(https://fablab-web.onrender.com, bundle `entry-19ede313…`, SW `fablab-v12`)
+corre contra la API (https://fablab-api-sr1q.onrender.com). Última verificación
+en producción (2026-10-02): QA **64 OK · 0 fallos**, la hoja de etiquetas
+paginada abre en Carta/A4/Oficio desde una sala real y `/api/salas` +
+`/api/elementos` responden 200.
+
+**Gate y CI: verdes.** `npm run gate` — tipos, lint, 120 tests, self-check, Data
+Matrix, impresión 12/12 y docs 6/6 — y CI en cada push a `main`. Los workflows de
+vigilancia del repo de deploy (`keep-alive` cada 10 min, `db-watchdog` horario)
+corren verdes, ahora versionados en `deploy-workflows/` y con **aviso por
+webhook** (`ALERTA_WEBHOOK`) si fallan.
+
+**Disponibilidad (decisión 2026-10-02):** seguir en Render/Aiven free con las
+tres capas de keep-alive (ping interno cada 10 min, `keep-alive` externo y
+`db-watchdog`), cuentas a nombre del FabLab o de un docente y traspaso
+documentado en `fablab-inventario/docs/operacion.md`. Riesgos asumidos: arranque
+en frío de ~1 min tras un reinicio de plataforma, tope de 750 h/mes por workspace
+y banda finita.
 
 **Documento: capítulos 1-3 escritos y pasada de APA HECHA.** 15 páginas.
 Portada APA, 12 referencias, 16 citas en texto, 5 tablas numeradas, cronograma
@@ -24,19 +42,19 @@ exportado a PDF 16:9. Reemplaza el deck viejo de 10 slides, que **nunca se
 mostró** y tenía dos errores: decía Spring Boot (no existe en el repo) y las
 capturas estaban mal rotuladas.
 
-**App: sin tocar.** Sigue leyendo AsyncStorage con 5 salas hardcodeadas. No lee
-la base de datos. Este es el hueco para el "avance tangible".
-
-7 commits sin pushear en `feature/inventario-scan`.
-
 ## Next
 
-1. **Pushear.** `git push origin feature/inventario-scan` (7 commits).
-2. **Conectar la app a la base.** Es lo único que falta para la demo. La API ya
-   está lista y probada (`importer/api.mjs`); falta consumirla desde
-   `src/lib/inventory.ts`, que hoy usa AsyncStorage con `Rooms` hardcodeado
-   (5 salas, sin ViveLab; la base tiene 11 en 2 edificios).
-3. **Completar 3 referencias que no se pudieron resolver.** Hay que sacar autor
+1. **Traspaso al FabLab**: transferir las cuentas de Render, Aiven y GitHub al
+   laboratorio o a un docente, rotar el `API_TOKEN` (va horneado en el bundle
+   público, así que después hay que re-exportar la web) y ensayar un deploy/QA
+   desde una máquina ajena. Procedimiento en `docs/operacion.md`.
+2. **Ponerle voz a las alertas**: crear el secreto `ALERTA_WEBHOOK` (Discord,
+   Slack o Google Chat) en el repo `fablab-api` y montar el pinger externo
+   (UptimeRobot, cron-job.org…) contra `/api/salas` cada 10-14 min, porque
+   GitHub apaga los cron a los 60 días sin actividad del repo.
+3. **Deep links con 200**: la Rewrite Rule `/*` → `/index.html` en el Dashboard
+   de Render (`/sala/1` hoy renderiza pero responde 404).
+4. **Completar 3 referencias que no se pudieron resolver.** Hay que sacar autor
    y año de la portada de cada documento; los repositorios no los exponen:
    - **UTeM** (*E-Inventory*): Academia.edu devuelve 403.
    - **UMSA** (Bolivia): no quedó localizador, no hay nada que consultar.
@@ -45,11 +63,11 @@ la base de datos. Este es el hueco para el "avance tangible".
    Mientras estén incompletas se citan como `(*Título*, s. f.)`, que es la forma
    APA 7 correcta para obra sin autor. Hay una nota en la lista de referencias
    que lo explica.
-4. ~~Copiar `ref-custom.odt` al repo.~~ **HECHO.** Está en
-   `documento/ref-custom.odt` y el rebuild se probó desde ahí. El fuente del
-   deck también quedó en `documento/deck-presentacion/`.
 5. **Decidir qué pasa con `schema.mjs`.** Quedaron dos generadores. Si el
    normalizado es el definitivo, el otro sobra y `importer/` adelgaza.
+6. **Pruebas en dispositivo del camino nativo**: escanear un Data Matrix impreso
+   con la cámara y abrir la hoja de compartir solo están validados de forma
+   indirecta (ver `problemas-conocidos.md`).
 
 ## Pointers
 
@@ -58,11 +76,17 @@ la base de datos. Este es el hueco para el "avance tangible".
   sala; agregar una sala se hace acá.
 - `fablab-inventario/importer/normalizado.mjs:30` — `DDL`, el esquema completo
   (edificios/salas/elementos/traslados).
-- `fablab-inventario/importer/api.mjs` — lectura para el frontend:
-  `listarSalas`, `listarElementos`, `registrarTraslado` (transaccional),
-  `historialElemento`.
-- `fablab-inventario/src/lib/inventory.ts:14` — `Rooms` hardcodeado. Punto de
-  entrada para el paso 2.
+- `fablab-inventario/importer/api.mjs` — capa de datos que usa el server (y los
+  scripts): `listarSalas`, `listarElementos`, `registrarTraslado`
+  (transaccional), `historialElemento`, validaciones de id y de campos.
+- `fablab-inventario/src/lib/inventory.ts` — cliente HTTP de la app (caché SWR,
+  reintentos de GET, token para las escrituras).
+- `fablab-inventario/src/lib/hoja-imprimible.ts` — HTML de la pestaña de
+  impresión (selector Carta/A4/Oficio); se verifica imprimiendo de verdad en
+  `npm run verify:impresion`.
+- `fablab-inventario/deploy-workflows/` — cron de vigilancia del repo de deploy
+  (se editan acá; `sync:deploy` los copia).
+- `fablab-inventario/docs/operacion.md` — despliegue, free tier y traspaso.
 - `fablab-inventario/importer/self-check.mjs` — 3 bloques de checks, corre sin
   MySQL: `node importer/self-check.mjs`.
 - `documento/documento-integrador.md` — fuente del documento. El ODT se

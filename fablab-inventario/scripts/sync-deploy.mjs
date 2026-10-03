@@ -19,6 +19,9 @@
 //     ahí y se perderían. Pórtalas al monorepo primero.
 //  3. El monorepo es la fuente de verdad: si editas algo directo en un repo
 //     deploy, es un cambio temporal que el próximo sync (correcto) borra.
+//  4. Los workflows de vigilancia del repo de la api (keep-alive, db-watchdog)
+//     viven en deploy-workflows/ y se copian en cada sync: antes eran commits
+//     manuales que solo existían en el repo de deploy.
 //
 // Requiere git y acceso SSH a Masterkillerr/*.
 
@@ -41,10 +44,12 @@ const TARGETS = {
     dir: join(CACHE, 'fablab-api'),
     // server/ e importer/ enteros + el dump real; el deploy repo tiene su
     // propio package.json (mínimo, sin deps de Expo) y su README de Render.
+    // deploy-workflows/ son los cron de vigilancia (se editan acá, no allá).
     copy: [
       { from: 'server', to: 'server' },
       { from: 'importer', to: 'importer' },
       { from: 'ddl-data.sql', to: 'data/ddl-data.sql' },
+      { from: 'deploy-workflows', to: '.github/workflows' },
     ],
   },
   web: {
@@ -171,7 +176,7 @@ function readFileSyncSafe(p) {
 // primera versión de esto marcaba +dirty por un untracked irrelevante), pero un
 // archivo nuevo dentro de server/ sí — y ese se copia igual, así que cuenta.
 const RUTAS_ARTEFACTO = {
-  api: ['server', 'importer', 'ddl-data.sql'],
+  api: ['server', 'importer', 'ddl-data.sql', 'deploy-workflows'],
   web: ['.'], // el export web se arma con todo el proyecto
 };
 
