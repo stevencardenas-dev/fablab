@@ -69,7 +69,8 @@
     "typecheck": "tsc --noEmit",
     "self-check": "node importer/self-check.mjs",
     "gate": "npm run typecheck && npm run lint && npm test -- --silent && npm run self-check && npm run verify:datamatrix && npm run verify:impresion && npm run docs:check",
-    "sync:deploy": "node scripts/sync-deploy.mjs"
+    "sync:deploy": "node scripts/sync-deploy.mjs",
+    "verify:import": "node scripts/verify-import.mjs"
   },
   "jest": {
     "preset": "jest-expo",

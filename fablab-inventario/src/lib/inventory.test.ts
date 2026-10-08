@@ -18,6 +18,7 @@ import {
   listarSalas,
   registrarTraslado,
   historialElemento,
+  importarInventario,
   resetCache,
   SinUbicacion,
   type InventoryItem,
@@ -591,5 +592,41 @@ describe('eliminarFoto', () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }));
     await expect(eliminarFoto(1)).rejects.toThrow('API 500');
+  });
+});
+
+const decodificarBase64 = (b64: string): number[] => Array.from(atob(b64), (c) => c.charCodeAt(0));
+
+describe('importarInventario', () => {
+  afterEach(() => {
+    (globalThis as any).fetch = undefined;
+  });
+
+  it('manda el archivo en base64 tal cual, bytes binarios incluidos', async () => {
+    const bytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0xff, 0x00, 0x7f]);
+    const fetchMock = jest.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ importados: 1, omitidos: [] }) }),
+    );
+    (globalThis as any).fetch = fetchMock;
+    const res = await importarInventario(bytes.buffer);
+    expect(res).toEqual({ importados: 1, omitidos: [] });
+    const [url, opts] = fetchMock.mock.calls[0] as unknown as [string, { method: string; body: string }];
+    expect(url).toMatch(/\/import\/elementos$/);
+    expect(opts.method).toBe('POST');
+    expect(decodificarBase64(JSON.parse(opts.body).archivo)).toEqual(Array.from(bytes));
+  });
+
+  it('archivos grandes se codifican completos (más de un bloque)', async () => {
+    const bytes = new Uint8Array(200_000).map((_, i) => i % 251);
+    const fetchMock = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ importados: 0, omitidos: [] }) }));
+    (globalThis as any).fetch = fetchMock;
+    await importarInventario(bytes.buffer);
+    const [, opts] = fetchMock.mock.calls[0] as unknown as [string, { body: string }];
+    expect(decodificarBase64(JSON.parse(opts.body).archivo)).toEqual(Array.from(bytes));
+  });
+
+  it('un error del servidor se propaga con su estatus', async () => {
+    (globalThis as any).fetch = jest.fn(() => Promise.resolve({ ok: false, status: 400 }));
+    await expect(importarInventario(new Uint8Array([1]).buffer)).rejects.toThrow('API 400');
   });
 });
