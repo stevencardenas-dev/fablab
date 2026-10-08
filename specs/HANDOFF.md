@@ -6,7 +6,7 @@
 
 **Importación de inventario: CSV y Excel, verificada (2026-10-08).** Commits
 monorepo `209a80f` (CSV), `c80a96c` (Excel), `17f84ea` (endurecimiento); api
-`099d981`, web `73d34b5` (SW `fablab-v15`). `POST /api/import/elementos` acepta
+`099d981`, web `6220b1d` (SW `fablab-v16`, resumen legible del resultado en `resumenImportacion`). `POST /api/import/elementos` acepta
 `{archivo: base64}` (CSV, xlsx, xls u ods) o `{csv}`. En un libro, cada hoja es
 una sala: va a la sala del mismo nombre (sin prefijo VIVE LAB/FABLAB, sin tildes
 ni mayúsculas), o a las columnas `sala`/`edificio` si la hoja las trae. Hojas
