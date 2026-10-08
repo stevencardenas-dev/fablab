@@ -1031,6 +1031,26 @@ export function filasDeHoja(hoja) {
     });
 }
 
+// Hojas del libro de inventario de VIVE LAB/FabLab cuyo nombre no coincide con
+// el de la sala (clave de claveDeSala → nombre de sala). Las hojas que no están
+// acá (ESTUDIO TV, INGRESOS, PAPELERIA 2026, PASILLO…) se reportan y no entran.
+const SALA_DE_HOJA = {
+  [claveDeSala('SALA (302) COWORKING E IDEACION')]: 'Coworking',
+  [claveDeSala('COWORKING 2026')]: 'Coworking',
+  [claveDeSala('SALA (303)IMPRESION 3D')]: 'Impresion 3D',
+  [claveDeSala('IMPRESION 3D 2026')]: 'Impresion 3D',
+  [claveDeSala('SALA (309) RV Y DRONES')]: 'RV y Drones',
+  [claveDeSala('RV-DRONES 2026')]: 'RV y Drones',
+  [claveDeSala('SALA (310) IOT')]: 'IoT',
+  [claveDeSala('IOT 2026')]: 'IoT',
+  [claveDeSala('SALA CNC (311)')]: 'CNC',
+  [claveDeSala('CNC 2026')]: 'CNC',
+  [claveDeSala('AREA DE RECEPCION Y PASILLO')]: 'Recepcion',
+  [claveDeSala('RECEPCION 2026')]: 'Recepcion',
+  [claveDeSala('ALMACEN')]: 'Almacen',
+  [claveDeSala('ALMACEN 2026')]: 'Almacen',
+};
+
 // Archivo subido: CSV (texto) o libro de Excel/LibreOffice (xlsx, xls, ods).
 // En un libro, cada hoja es una sala: se busca la sala con el mismo nombre que
 // la hoja. Las hojas sin sala que coincida se reportan y no se importan.
@@ -1053,7 +1073,7 @@ export async function importarArchivo(bytes, cfg = conexionDesdeEnv()) {
     // Si la hoja trae sus propias columnas sala y edificio (un CSV abierto en
     // Excel), mandan esas; si no, la sala es la que tiene el nombre de la hoja.
     const conColumnas = filas.length > 0 && 'sala' in filas[0] && 'edificio' in filas[0];
-    const sala = salas.find((s) => claveDeSala(s.nombre) === claveDeSala(nombreHoja));
+    const sala = salas.find((s) => claveDeSala(s.nombre) === claveDeSala(SALA_DE_HOJA[claveDeSala(nombreHoja)] ?? nombreHoja));
     const motivo = !filas.length ? 'hoja vacía'
       : !('codigo' in filas[0]) ? 'hoja sin columna CODIGO'
       : !conColumnas && !sala ? 'ninguna sala se llama así'
