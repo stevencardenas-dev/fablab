@@ -1,8 +1,23 @@
 # HANDOFF — Inventario FabLab / Seminario Integrador II
 
-Última sesión: 2026-10-02 (hoja de etiquetas paginada desplegada, impresión como gate y disponibilidad endurecida)
+Última sesión: 2026-10-08 (importación de inventario por CSV desplegada: API `POST /api/import/elementos` + botón web)
 
 ## State
+
+**Importación CSV desplegada (2026-10-08).** Commit monorepo `209a80f`, api
+`0dd145c`, web `25bbcaa` (SW `fablab-v13`). `POST /api/import/elementos` acepta
+`{csv}` con las columnas del export (`codigo,sala,edificio,detalle,...`). Solo
+crea códigos nuevos; sala desconocida, fila sin código y código ya existente se
+omiten y se reportan. Botón "Importar inventario (CSV)" en el panel de
+exportación, **solo web** (sin picker nativo: requiere `expo-document-picker`).
+Verificado: gate local (tsc, lint, 120 tests, self-check, datamatrix, impresión,
+docs) y contra MySQL real (base scratch, dump `ddl-data.sql`): 2 importados, 4
+omitidos por motivo correcto, `NULL` literal → null, segunda corrida 0 nuevos.
+En producción: la ruta responde 400 con token y CSV sin filas (no escribe).
+**Pendiente:** el `.xlsx` de VIVE LAB (13 hojas, cada hoja = una sala, con
+layouts distintos) no entra por esta ruta; hoy hay que exportar cada hoja a CSV
+con columnas `sala,edificio` agregadas. El seed de xlsx (`npm run seed`) hace
+DROP TABLE, no sirve para agregar datos en producción.
 
 **App y base: desplegadas y verificadas.** El inventario de Excel está migrado a
 MySQL con esquema normalizado: 917 elementos, 11 salas, 2 edificios (FabLab y
