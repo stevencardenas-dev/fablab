@@ -20,6 +20,7 @@ import {
   historialElemento,
   importarInventario,
   resetCache,
+  resumenImportacion,
   SinUbicacion,
   type InventoryItem,
   type Room,
@@ -628,5 +629,52 @@ describe('importarInventario', () => {
   it('un error del servidor se propaga con su estatus', async () => {
     (globalThis as any).fetch = jest.fn(() => Promise.resolve({ ok: false, status: 400 }));
     await expect(importarInventario(new Uint8Array([1]).buffer)).rejects.toThrow('API 400');
+  });
+});
+
+describe('resumenImportacion', () => {
+  it('resume por sala y cuenta los que ya estaban, sin listar cada uno', () => {
+    const lineas = resumenImportacion({
+      importados: 83,
+      hojas: [
+        { hoja: 'VIVE LAB-AULA 303', sala: 'Aula 303', importados: 68 },
+        { hoja: 'VIVE LAB-AULA 304', sala: 'Aula 304', importados: 15 },
+        { hoja: 'VIVE LAB-BODEGA', sala: 'Bodega', importados: 0 },
+      ],
+      omitidos: [
+        { hoja: 'VIVE LAB-BODEGA', fila: 2, codigo: 'VLB-01', motivo: 'código ya existe' },
+        { hoja: 'INICIO', fila: null, codigo: null, motivo: 'hoja sin columna CODIGO' },
+      ],
+    });
+    expect(lineas).toEqual([
+      'Importados: 83.',
+      'Por sala: Aula 303 68, Aula 304 15.',
+      'Ya estaban en el inventario: 1.',
+      'Hojas no importadas: INICIO (hoja sin columna CODIGO).',
+    ]);
+  });
+
+  it('muestra las filas que sí requieren atención, con hoja, fila y código', () => {
+    const lineas = resumenImportacion({
+      importados: 0,
+      hojas: [],
+      omitidos: [
+        { fila: 4, codigo: 'X-9', motivo: 'sala no existe: FabLab / Narnia' },
+        { fila: 5, codigo: null, motivo: 'sin código' },
+      ],
+    });
+    expect(lineas).toEqual([
+      'Importados: 0.',
+      'Filas omitidas (2):',
+      'fila 4 (X-9): sala no existe: FabLab / Narnia',
+      'fila 5: sin código',
+    ]);
+  });
+
+  it('corta las listas largas con cuántas quedaron fuera', () => {
+    const omitidos = Array.from({ length: 9 }, (_, i) => ({ fila: i + 2, codigo: `C-${i}`, motivo: 'sin código' }));
+    const lineas = resumenImportacion({ importados: 0, hojas: [], omitidos });
+    expect(lineas[lineas.length - 1]).toBe('…y 4 más');
+    expect(lineas.filter((l) => l.startsWith('fila ')).length).toBe(5);
   });
 });

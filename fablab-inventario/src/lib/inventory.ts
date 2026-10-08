@@ -466,7 +466,34 @@ export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'j
 export type ResultadoImportacion = {
   importados: number;
   omitidos: { hoja?: string; fila: number | null; codigo: string | null; motivo: string }[];
+  // Solo en libros de Excel: una entrada por hoja.
+  hojas?: { hoja: string; sala: string | null; importados: number }[];
 };
+
+// Resumen legible de una importación: totales por sala, cuántos ya estaban,
+// hojas que no entraron (con motivo) y, aparte, las filas que requieren atención.
+export function resumenImportacion(r: ResultadoImportacion): string[] {
+  const lineas = [`Importados: ${r.importados}.`];
+  const porSala = (r.hojas ?? []).filter((h) => h.importados > 0).map((h) => `${h.sala} ${h.importados}`);
+  if (porSala.length) lineas.push(`Por sala: ${porSala.join(', ')}.`);
+  const yaExistian = r.omitidos.filter((o) => o.fila != null && o.motivo === 'código ya existe').length;
+  if (yaExistian) lineas.push(`Ya estaban en el inventario: ${yaExistian}.`);
+  const hojasSinImportar = r.omitidos.filter((o) => o.fila == null);
+  if (hojasSinImportar.length) {
+    const lista = hojasSinImportar.slice(0, 6).map((o) => `${o.hoja} (${o.motivo})`);
+    const mas = hojasSinImportar.length > 6 ? ` y ${hojasSinImportar.length - 6} más` : '';
+    lineas.push(`Hojas no importadas: ${lista.join('; ')}${mas}.`);
+  }
+  const atencion = r.omitidos.filter((o) => o.fila != null && o.motivo !== 'código ya existe');
+  if (atencion.length) {
+    lineas.push(`Filas omitidas (${atencion.length}):`);
+    for (const o of atencion.slice(0, 5)) {
+      lineas.push(`${o.hoja ? `${o.hoja}, ` : ''}fila ${o.fila}${o.codigo ? ` (${o.codigo})` : ''}: ${o.motivo}`);
+    }
+    if (atencion.length > 5) lineas.push(`…y ${atencion.length - 5} más`);
+  }
+  return lineas;
+}
 
 // Sube el archivo de inventario (CSV, xlsx, xls u ods). En un libro cada hoja es
 // una sala. Solo crea códigos nuevos; el resto se reporta en `omitidos`. Limpia

@@ -3,7 +3,7 @@
 
 // v12: hoja de etiquetas paginada (Carta/A4/Oficio) sin cortes, la impresión
 // entra al gate y los actores y casos de uso quedan documentados.
-const CACHE_NAME = 'fablab-v15';
+const CACHE_NAME = 'fablab-v16';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

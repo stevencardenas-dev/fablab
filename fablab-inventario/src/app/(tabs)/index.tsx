@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
 import { prepararFotoParaSubir, type FotoOptimizada } from '@/lib/foto-optimizar';
-import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarInventario, listarSalas, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
+import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarInventario, listarSalas, resumenImportacion, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -45,9 +45,7 @@ export default function HomeScreen() {
     setMensajeImport('Importando…');
     try {
       const r = await importarInventario(archivo);
-      const lista = r.omitidos.slice(0, 8).map((o) => [o.hoja && `Hoja ${o.hoja}`, o.fila && `fila ${o.fila}`, o.codigo && `(${o.codigo})`, o.motivo].filter(Boolean).join(' '));
-      const mas = r.omitidos.length > 8 ? [`…y ${r.omitidos.length - 8} más`] : [];
-      setMensajeImport([`Importados: ${r.importados}. Omitidos: ${r.omitidos.length}.`, ...lista, ...mas].join('\n'));
+      setMensajeImport(resumenImportacion(r).join('\n'));
     } catch (e) {
       setMensajeImport(`No se pudo importar: ${e instanceof Error ? e.message : String(e)}`);
     }
