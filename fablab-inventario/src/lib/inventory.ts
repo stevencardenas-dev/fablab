@@ -463,6 +463,19 @@ export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'j
   return `${API_BASE}/export/${qué}.${formato}`;
 }
 
+export type ResultadoImportacion = {
+  importados: number;
+  omitidos: { fila: number; codigo: string | null; motivo: string }[];
+};
+
+// Sube un CSV con las columnas del export. Solo crea códigos nuevos; el resto se
+// reporta en `omitidos`. Limpia la caché para que la lista se relea de la API.
+export async function importarElementosCsv(csv: string): Promise<ResultadoImportacion> {
+  const res = await post<ResultadoImportacion>('/import/elementos', { csv });
+  await resetCache();
+  return res;
+}
+
 // --- Sin ubicación (fallback UI) ---
 export const SinUbicacion = 'Sin ubicación';
 

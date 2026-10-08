@@ -180,3 +180,17 @@ console.log('self-check OK');
   assert.deepEqual(planRepararDuplicados([{ id: 1, codigo: 'A-1' }], ['A-1']), []);
   console.log('self-check duplicados OK');
 }
+
+// Import CSV: parser puro (sin base). Cubre lo que produce el export (comillas,
+// "" escapado, BOM) y lo que llega de Excel (CRLF, líneas vacías).
+{
+  const { parsearCsv } = await import('./api.mjs');
+  const csv = '﻿id,sala,edificio,codigo,detalle\r\n1,"Sala, A",FabLab,CNC-1,"Mesa ""grande"""\r\n\r\n2,Almacen,FabLab,ALM-2,\r\n';
+  assert.deepEqual(parsearCsv(csv), [
+    { id: '1', sala: 'Sala, A', edificio: 'FabLab', codigo: 'CNC-1', detalle: 'Mesa "grande"' },
+    { id: '2', sala: 'Almacen', edificio: 'FabLab', codigo: 'ALM-2', detalle: '' },
+  ]);
+  assert.deepEqual(parsearCsv(''), []);
+  assert.deepEqual(parsearCsv('codigo\n'), []);
+  console.log('self-check import csv OK');
+}

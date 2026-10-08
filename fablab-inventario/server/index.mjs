@@ -22,6 +22,7 @@ import {
   borrarFoto,
   exportarElementos,
   exportarTraslados,
+  importarElementos,
   cerrarPools,
   ErrorApi,
   idEntero,
@@ -346,6 +347,13 @@ async function handleReq(req, res) {
       const body = await readBody(req);
       const result = await asignarCodigo(elementoId, body.codigo, conexionDesdeEnv());
       return json(res, 201, result);
+    }
+
+    // POST /api/import/elementos  →  { csv: "<texto>" } con las columnas del export
+    if (req.method === 'POST' && parts.join('/') === 'api/import/elementos') {
+      const body = await readBody(req);
+      if (typeof body.csv !== 'string') return badRequest(res, 'csv es obligatorio (texto CSV)');
+      return json(res, 200, await importarElementos(body.csv, conexionDesdeEnv()));
     }
 
     // GET /api/export/elementos.csv|.json y /api/export/traslados.csv|.json

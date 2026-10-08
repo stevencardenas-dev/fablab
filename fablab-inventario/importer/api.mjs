@@ -860,3 +860,103 @@ export async function exportarTraslados(cfg = conexionDesdeEnv()) {
     return filas;
   });
 }
+
+// CSV con las mismas columnas que exportarElementos (la cabecera manda). Campos
+// entre comillas con "" escapado; BOM y CRLF tolerados. Sin dependencias.
+// ponytail: no maneja saltos de línea dentro de un campo entre comillas
+// (no aparecen en el export); agregar cuando un detalle los traiga.
+export function parsearCsv(texto) {
+  const src = texto.replace(/^﻿/, '');
+  const filas = [[]];
+  let campo = '';
+  let comillas = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (comillas) {
+      if (c !== '"') campo += c;
+      else if (src[i + 1] === '"') { campo += '"'; i++; }
+      else comillas = false;
+    } else if (c === '"') comillas = true;
+    else if (c === ',') { filas.at(-1).push(campo); campo = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && src[i + 1] === '\n') i++;
+      filas.at(-1).push(campo);
+      campo = '';
+      filas.push([]);
+    } else campo += c;
+  }
+  filas.at(-1).push(campo);
+  const [cabecera, ...datos] = filas.filter((f) => !(f.length === 1 && f[0].trim() === ''));
+  if (!cabecera) return [];
+  const claves = cabecera.map((k) => k.trim());
+  return datos.map((f) => Object.fromEntries(claves.map((k, j) => [k, f[j] ?? ''])));
+}
+
+// NULL y vacío son lo mismo: el export escribe vacío para los nulos, pero la
+// hoja original trae la palabra NULL.
+const valorOpcional = (x) => {
+  const t = String(x ?? '').trim();
+  return t === '' || t.toUpperCase() === 'NULL' ? null : t;
+};
+
+// Importa solo códigos nuevos. Fila sin código, sala desconocida o código ya en
+// uso se omiten y se reportan (no se aborta el lote). Cada inserción valida el
+// código en la base, así que no hay ventana de carrera entre el chequeo y el
+// INSERT (el 1062 de un duplicado se cuenta como omitido, no aborta el lote).
+export async function importarElementos(texto, cfg = conexionDesdeEnv()) {
+  const filas = parsearCsv(texto);
+  if (!filas.length) throw new ErrorApi('El archivo no tiene filas de datos', 400);
+  if (!('codigo' in filas[0]) || !('sala' in filas[0]) || !('edificio' in filas[0])) {
+    throw new ErrorApi('Faltan columnas: codigo, sala, edificio', 400);
+  }
+  invalidarCache();
+  return conectar(cfg, async (conn) => {
+    const [salas] = await conn.query(
+      'SELECT s.id, s.nombre AS sala, e.nombre AS edificio FROM salas s JOIN edificios e ON e.id = s.edificio_id',
+    );
+    const idSala = new Map(salas.map((s) => [`${s.edificio}|${s.sala}`, s.id]));
+    const codigos = filas.map((f) => valorOpcional(f.codigo)).filter(Boolean);
+    const enUso = new Set();
+    if (codigos.length) {
+      const [existentes] = await conn.query('SELECT codigo FROM elementos WHERE codigo IN (?)', [codigos]);
+      for (const e of existentes) enUso.add(e.codigo);
+    }
+
+    const omitidos = [];
+    let importados = 0;
+    await conn.beginTransaction();
+    try {
+      for (const [i, f] of filas.entries()) {
+        const fila = i + 2; // +2: la cabecera es la línea 1
+        const codigo = valorOpcional(f.codigo);
+        if (!codigo) { omitidos.push({ fila, codigo: null, motivo: 'sin código' }); continue; }
+        const salaId = idSala.get(`${valorOpcional(f.edificio)}|${valorOpcional(f.sala)}`);
+        if (!salaId) {
+          omitidos.push({ fila, codigo, motivo: `sala no existe: ${f.edificio} / ${f.sala}` });
+          continue;
+        }
+        if (enUso.has(codigo)) { omitidos.push({ fila, codigo, motivo: 'código ya existe' }); continue; }
+        try {
+          await conn.query(
+            `INSERT INTO elementos (sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              salaId, codigo, valorOpcional(f.detalle), valorOpcional(f.serial), valorOpcional(f.inventario),
+              valorOpcional(f.estado), valorOpcional(f.observaciones), valorOpcional(f.cantidad),
+            ],
+          );
+          enUso.add(codigo);
+          importados++;
+        } catch (e) {
+          if (e?.errno !== 1062) throw e;
+          omitidos.push({ fila, codigo, motivo: 'código ya existe' });
+        }
+      }
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    }
+    return { importados, omitidos };
+  });
+}
