@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
 import { prepararFotoParaSubir, type FotoOptimizada } from '@/lib/foto-optimizar';
-import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarElementosCsv, listarSalas, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
+import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarInventario, listarSalas, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
 
 function newElement(): InventoryItem {
   return {
@@ -28,24 +28,24 @@ function newElement(): InventoryItem {
 }
 
 // Solo web: abre el selector de archivos del navegador. En nativo no hay picker.
-function elegirCsv(alElegir: (texto: string) => void) {
+function elegirArchivo(alElegir: (archivo: ArrayBuffer) => void) {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.csv,text/csv';
+  input.accept = '.csv,.xlsx,.xls,.ods';
   input.onchange = async () => {
     const archivo = input.files?.[0];
-    if (archivo) alElegir(await archivo.text());
+    if (archivo) alElegir(await archivo.arrayBuffer());
   };
   input.click();
 }
 
 export default function HomeScreen() {
   const [mensajeImport, setMensajeImport] = useState<string | null>(null);
-  const importarCsv = () => elegirCsv(async (texto) => {
+  const importarArchivoInventario = () => elegirArchivo(async (archivo) => {
     setMensajeImport('Importando…');
     try {
-      const r = await importarElementosCsv(texto);
-      const lista = r.omitidos.slice(0, 8).map((o) => `Fila ${o.fila}${o.codigo ? ` (${o.codigo})` : ''}: ${o.motivo}`);
+      const r = await importarInventario(archivo);
+      const lista = r.omitidos.slice(0, 8).map((o) => [o.hoja && `Hoja ${o.hoja}`, o.fila && `fila ${o.fila}`, o.codigo && `(${o.codigo})`, o.motivo].filter(Boolean).join(' '));
       const mas = r.omitidos.length > 8 ? [`…y ${r.omitidos.length - 8} más`] : [];
       setMensajeImport([`Importados: ${r.importados}. Omitidos: ${r.omitidos.length}.`, ...lista, ...mas].join('\n'));
     } catch (e) {
@@ -375,11 +375,11 @@ export default function HomeScreen() {
             </View>
             {Platform.OS === 'web' && <>
               <ThemedText themeColor="textSecondary" style={styles.description}>
-                Importar: sube un CSV con las columnas del inventario exportado. Solo agrega códigos nuevos; los demás se reportan abajo.
+                Importar: sube el inventario en CSV o Excel (xlsx, xls, ods). En un libro, cada hoja es una sala y su nombre debe coincidir con el de la sala. Solo agrega códigos nuevos; lo demás se reporta abajo.
               </ThemedText>
               <View style={styles.exportRow}>
-                <Pressable accessibilityRole="button" onPress={importarCsv} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
-                  <ThemedText style={styles.exportButtonGhostLabel}>Importar inventario (CSV)</ThemedText>
+                <Pressable accessibilityRole="button" onPress={importarArchivoInventario} style={({ pressed }) => [styles.exportButtonGhost, pressed && styles.pressed]}>
+                  <ThemedText style={styles.exportButtonGhostLabel}>Importar inventario</ThemedText>
                 </Pressable>
               </View>
               {mensajeImport && <ThemedText themeColor="textSecondary" style={styles.description}>{mensajeImport}</ThemedText>}

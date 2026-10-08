@@ -2,6 +2,7 @@
 // (edificios -> salas -> elementos, mas traslados). Ver importer/normalizado.mjs.
 import { createHash } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import XLSX from 'xlsx';
 import { conexionDesdeEnv } from './importar.mjs';
 
 // Error con estatus HTTP. El server lo usa para no responder 500 a errores de
@@ -904,7 +905,11 @@ const valorOpcional = (x) => {
 // código en la base, así que no hay ventana de carrera entre el chequeo y el
 // INSERT (el 1062 de un duplicado se cuenta como omitido, no aborta el lote).
 export async function importarElementos(texto, cfg = conexionDesdeEnv()) {
-  const filas = parsearCsv(texto);
+  return importarFilas(parsearCsv(texto), cfg);
+}
+
+// Filas ya leídas (de un CSV o de una hoja). Cada fila trae sala y edificio.
+export async function importarFilas(filas, cfg = conexionDesdeEnv()) {
   if (!filas.length) throw new ErrorApi('El archivo no tiene filas de datos', 400);
   if (!('codigo' in filas[0]) || !('sala' in filas[0]) || !('edificio' in filas[0])) {
     throw new ErrorApi('Faltan columnas: codigo, sala, edificio', 400);
@@ -959,4 +964,65 @@ export async function importarElementos(texto, cfg = conexionDesdeEnv()) {
     }
     return { importados, omitidos };
   });
+}
+
+// Encabezados que aceptamos (sin tildes, en minúscula) → campo de elementos.
+const CAMPO_DE_ENCABEZADO = {
+  codigo: 'codigo', detalle: 'detalle', nombre: 'detalle', serial: 'serial',
+  inventario: 'inventario', 'n° inventario': 'inventario', 'cod inventario': 'inventario',
+  estado: 'estado', observaciones: 'observaciones', observacion: 'observaciones',
+  cantidad: 'cantidad', sala: 'sala', edificio: 'edificio',
+};
+
+const sinTildes = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+// Nombre de sala comparable: "VIVE LAB-AULA 303" y "Aula 303" dan lo mismo.
+export function claveDeSala(nombre) {
+  return sinTildes(nombre).toUpperCase().replace(/^(VIVE LAB|FABLAB)\s*-?\s*/, '').replace(/\s+/g, ' ').trim();
+}
+
+// Filas de una hoja de Excel con los campos normalizados (encabezados ignorados
+// si no están en CAMPO_DE_ENCABEZADO). Los números se pasan a texto.
+export function filasDeHoja(hoja) {
+  return XLSX.utils.sheet_to_json(hoja, { defval: '' }).map((fila) => {
+    const campos = {};
+    for (const [k, v] of Object.entries(fila)) {
+      const campo = CAMPO_DE_ENCABEZADO[sinTildes(k).trim().toLowerCase()];
+      if (campo) campos[campo] = typeof v === 'number' ? String(v) : v;
+    }
+    return campos;
+  });
+}
+
+// Archivo subido: CSV (texto) o libro de Excel/LibreOffice (xlsx, xls, ods).
+// En un libro, cada hoja es una sala: se busca la sala con el mismo nombre que
+// la hoja. Las hojas sin sala que coincida se reportan y no se importan.
+export async function importarArchivo(bytes, cfg = conexionDesdeEnv()) {
+  const esLibro = (bytes[0] === 0x50 && bytes[1] === 0x4b) || (bytes[0] === 0xd0 && bytes[1] === 0xcf);
+  if (!esLibro) return importarElementos(Buffer.from(bytes).toString('utf8'), cfg);
+
+  const libro = XLSX.read(bytes, { type: 'buffer' });
+  const [salas] = await conectar(cfg, (conn) => conn.query(
+    'SELECT s.nombre, e.nombre AS edificio FROM salas s JOIN edificios e ON e.id = s.edificio_id',
+  ));
+  const total = { importados: 0, omitidos: [], hojas: [] };
+  for (const nombreHoja of libro.SheetNames) {
+    const filas = filasDeHoja(libro.Sheets[nombreHoja]);
+    const sala = salas.find((s) => claveDeSala(s.nombre) === claveDeSala(nombreHoja));
+    const motivo = !filas.length ? 'hoja vacía'
+      : !('codigo' in filas[0]) ? 'hoja sin columna CODIGO'
+      : !sala ? 'ninguna sala se llama así'
+      : null;
+    if (motivo) {
+      total.omitidos.push({ hoja: nombreHoja, fila: null, codigo: null, motivo });
+      total.hojas.push({ hoja: nombreHoja, sala: null, importados: 0 });
+      continue;
+    }
+    const porSala = filas.map((f) => ({ ...f, sala: sala.nombre, edificio: sala.edificio }));
+    const r = await importarFilas(porSala, cfg);
+    total.importados += r.importados;
+    total.omitidos.push(...r.omitidos.map((o) => ({ ...o, hoja: nombreHoja })));
+    total.hojas.push({ hoja: nombreHoja, sala: sala.nombre, importados: r.importados });
+  }
+  return total;
 }

@@ -465,13 +465,19 @@ export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'j
 
 export type ResultadoImportacion = {
   importados: number;
-  omitidos: { fila: number; codigo: string | null; motivo: string }[];
+  omitidos: { hoja?: string; fila: number | null; codigo: string | null; motivo: string }[];
 };
 
-// Sube un CSV con las columnas del export. Solo crea códigos nuevos; el resto se
-// reporta en `omitidos`. Limpia la caché para que la lista se relea de la API.
-export async function importarElementosCsv(csv: string): Promise<ResultadoImportacion> {
-  const res = await post<ResultadoImportacion>('/import/elementos', { csv });
+// Sube el archivo de inventario (CSV, xlsx, xls u ods). En un libro cada hoja es
+// una sala. Solo crea códigos nuevos; el resto se reporta en `omitidos`. Limpia
+// la caché para que la lista se relea de la API.
+export async function importarInventario(archivo: ArrayBuffer): Promise<ResultadoImportacion> {
+  const bytes = new Uint8Array(archivo);
+  let binario = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binario += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  const res = await post<ResultadoImportacion>('/import/elementos', { archivo: btoa(binario) });
   await resetCache();
   return res;
 }

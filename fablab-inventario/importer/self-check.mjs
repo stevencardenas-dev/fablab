@@ -194,3 +194,19 @@ console.log('self-check OK');
   assert.deepEqual(parsearCsv('codigo\n'), []);
   console.log('self-check import csv OK');
 }
+
+// Libro de Excel: nombre de hoja → sala y encabezados → campos (puros, sin base).
+{
+  const XLSX = (await import('xlsx')).default;
+  const { claveDeSala, filasDeHoja } = await import('./api.mjs');
+  assert.equal(claveDeSala('VIVE LAB-AULA 303'), claveDeSala('Aula 303'));
+  assert.equal(claveDeSala('VIVE LAB-BODEGA '), claveDeSala('Bodega'));
+  assert.equal(claveDeSala('Lab Imagen (305)'), 'LAB IMAGEN (305)');
+  assert.notEqual(claveDeSala('VIVE LAB- LAB IMAGEN AULA (305)'), claveDeSala('Lab Imagen (305)'), 'no se adivina por parecido');
+  const hoja = XLSX.utils.aoa_to_sheet([
+    ['CODIGO', 'DETALLE ', 'SERIAL ', 'INVENTARIO ', 'CANTIDAD ', 'NO SE USA'],
+    ['A-1', 'Mesa', '', 70357012, 2, 'x'],
+  ]);
+  assert.deepEqual(filasDeHoja(hoja), [{ codigo: 'A-1', detalle: 'Mesa', serial: '', inventario: '70357012', cantidad: 2 }]);
+  console.log('self-check libro OK');
+}

@@ -22,6 +22,7 @@ import {
   borrarFoto,
   exportarElementos,
   exportarTraslados,
+  importarArchivo,
   importarElementos,
   cerrarPools,
   ErrorApi,
@@ -127,11 +128,15 @@ function badRequest(res, message) {
 // era un DoS trivial (probado: un cuerpo de 2 MB se aceptaba y parseaba).
 const LIMITE_CUERPO_BYTES = 1024 * 1024;
 
-function cuerpoExcedido() {
-  return new ErrorApi(`El cuerpo supera el límite de ${Math.round(LIMITE_CUERPO_BYTES / 1024)} KB`, 413);
+// Importar un Excel supera 1 MB en base64: ese único endpoint tiene su propio
+// tope (4 MB), sigue detrás del token de escritura.
+const LIMITE_IMPORT_BYTES = 4 * 1024 * 1024;
+
+function cuerpoExcedido(limite = LIMITE_CUERPO_BYTES) {
+  return new ErrorApi(`El cuerpo supera el límite de ${Math.round(limite / 1024)} KB`, 413);
 }
 
-function readBody(req) {
+function readBody(req, limite = LIMITE_CUERPO_BYTES) {
   const declarado = Number(req.headers['content-length'] || 0);
 
   return new Promise((resolve, reject) => {
@@ -148,14 +153,14 @@ function readBody(req) {
     // Rechazo por Content-Length: se responde ya, pero se deja que el cuerpo
     // siga drenando (los listeners de abajo lo descartan) para que el cliente
     // alcance a leer el 413 en vez de toparse con un socket cortado.
-    if (declarado > LIMITE_CUERPO_BYTES) fallar(cuerpoExcedido());
+    if (declarado > limite) fallar(cuerpoExcedido(limite));
 
     req.on('data', (c) => {
       if (resuelto) return; // ya se rechazó: se sigue drenando, sin acumular
       total += c.length;
-      if (total > LIMITE_CUERPO_BYTES) {
+      if (total > limite) {
         chunks.length = 0; // libera lo que se haya bufferizado
-        return fallar(cuerpoExcedido());
+        return fallar(cuerpoExcedido(limite));
       }
       chunks.push(c);
     });
@@ -349,11 +354,17 @@ async function handleReq(req, res) {
       return json(res, 201, result);
     }
 
-    // POST /api/import/elementos  →  { csv: "<texto>" } con las columnas del export
+    // POST /api/import/elementos  →  { archivo: base64 } (CSV, xlsx, xls u ods) o
+    // { csv: texto } (CSV pegado). Con libro, cada hoja es una sala.
     if (req.method === 'POST' && parts.join('/') === 'api/import/elementos') {
-      const body = await readBody(req);
-      if (typeof body.csv !== 'string') return badRequest(res, 'csv es obligatorio (texto CSV)');
-      return json(res, 200, await importarElementos(body.csv, conexionDesdeEnv()));
+      const body = await readBody(req, LIMITE_IMPORT_BYTES);
+      if (typeof body.archivo === 'string') {
+        return json(res, 200, await importarArchivo(Buffer.from(body.archivo, 'base64'), conexionDesdeEnv()));
+      }
+      if (typeof body.csv === 'string') {
+        return json(res, 200, await importarElementos(body.csv, conexionDesdeEnv()));
+      }
+      return badRequest(res, 'archivo es obligatorio (base64 del CSV o de la hoja de Excel)');
     }
 
     // GET /api/export/elementos.csv|.json y /api/export/traslados.csv|.json
