@@ -23,7 +23,7 @@ import * as fs from 'node:fs';
 import XLSX from 'xlsx';
 
 // xlsx 0.20 (build ESM) no trae acceso a disco: hay que darle `fs` para readFile.
-XLSX.set_fs(fs);
+XLSX.set_fs?.(fs); // 0.18 (npm) no la tiene y no la necesita
 import { HOJAS } from '../importer/normalizado.mjs';
 
 const args = process.argv.slice(2);

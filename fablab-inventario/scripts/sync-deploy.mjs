@@ -49,6 +49,9 @@ const TARGETS = {
       { from: 'server', to: 'server' },
       { from: 'importer', to: 'importer' },
       { from: 'ddl-data.sql', to: 'data/ddl-data.sql' },
+      // Dependencias de la API: las mismas que la imagen Docker (xlsx 0.20.3 del CDN).
+      { from: 'docker/api/package.json', to: 'package.json' },
+      { from: 'docker/api/package-lock.json', to: 'package-lock.json' },
       { from: 'deploy-workflows', to: '.github/workflows' },
     ],
   },
