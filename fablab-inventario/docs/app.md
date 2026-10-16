@@ -137,7 +137,7 @@ Es el único punto de contacto con la API desde la app.
 - `public/sw.js`: cache-first para el **shell** (`/`, `/index.html`) y para los
   bundles que el navegador pida; **network-first para `/api/`** (si no hay red
   devuelve `503`, y la caché SWR de la app responde con lo último conocido).
-- **Versión de caché**: `CACHE_NAME = 'fablab-v17'`. Al desplegar un bundle
+- **Versión de caché**: `CACHE_NAME = 'fablab-v19'`. Al desplegar un bundle
   nuevo hay que **subir el número**, o los clientes con el SW viejo quedan con la
   UI vieja para siempre (el `activate` borra las cachés de nombres distintos).
 - `src/components/service-worker.ts` registra el SW y ya no se pierde la primera
