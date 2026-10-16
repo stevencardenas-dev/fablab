@@ -99,6 +99,8 @@ export const HOJAS = [
   { nombre: 'VIVE LAB-BODEGA ', edificio: 'ViveLab', sala: 'Bodega' },
   { nombre: 'VIVE LAB-AULA 303', edificio: 'ViveLab', sala: 'Aula 303' },
   { nombre: 'VIVE LAB-AULA 304', edificio: 'ViveLab', sala: 'Aula 304' },
+  { nombre: 'ESTUDIO TV ', edificio: 'ViveLab', sala: 'Estudio TV' },
+  { nombre: 'PAPELERIA 2026', edificio: 'ViveLab', sala: 'Papeleria' },
 ];
 
 // hojas: [{ nombre, edificio, sala }], default HOJAS

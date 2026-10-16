@@ -496,6 +496,30 @@ export async function asegurarEsquemaFotos(cfg = conexionDesdeEnv()) {
   await conectar(cfg, (conn) => conn.query(DDL_FOTOS));
 }
 
+// Salas que llegaron después del esquema inicial (archivo INVENTARIO ESTUDIO TV,
+// 2026-10-09). La API no tiene alta de salas: se aseguran al arrancar, por
+// nombre, así que un reinicio no las duplica. Devuelve cuántas creó.
+export const SALAS_NUEVAS = [
+  { edificio: 'ViveLab', nombre: 'Estudio TV' },
+  { edificio: 'ViveLab', nombre: 'Papeleria' },
+];
+
+export async function asegurarSalas(cfg = conexionDesdeEnv()) {
+  return conectar(cfg, async (conn) => {
+    let creadas = 0;
+    for (const { edificio, nombre } of SALAS_NUEVAS) {
+      const [res] = await conn.query(
+        `INSERT INTO salas (edificio_id, nombre)
+         SELECT e.id, ? FROM edificios e
+         WHERE e.nombre = ? AND NOT EXISTS (SELECT 1 FROM salas s WHERE s.nombre = ?)`,
+        [nombre, edificio, nombre],
+      );
+      creadas += res.affectedRows;
+    }
+    return creadas;
+  });
+}
+
 /**
  * Separa un código en familia y número final: `IOT-79` → `{familia: 'IOT-', n: 79,
  * ancho: 2}`. Un código sin dígitos finales (`FL-MUEX2K8FXZT`) no tiene número

@@ -13,6 +13,7 @@ import {
   actualizarElemento,
   asignarCodigo,
   asegurarEsquemaFotos,
+  asegurarSalas,
   asegurarCodigoUnico,
   repararCodigosDuplicados,
   precargarMiniaturas,
@@ -417,6 +418,8 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 try {
   await asegurarEsquemaFotos(conexionDesdeEnv());
   console.log('[esquema] elemento_fotos lista ✔');
+  const salasCreadas = await asegurarSalas(conexionDesdeEnv());
+  if (salasCreadas) console.log(`[esquema] salas nuevas creadas: ${salasCreadas} ✔`);
   // Duplicados de `codigo` (el Excel original repitió IOT-79): se reparan ANTES
   // de pedir el índice UNIQUE, porque con duplicados la base no lo acepta. Sin
   // duplicados no hace nada; cada recodificación se registra con su reversión.
