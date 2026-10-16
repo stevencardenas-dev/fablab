@@ -23,7 +23,11 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import * as fs from 'node:fs';
 import XLSX from 'xlsx';
+
+// xlsx 0.20 (build ESM) no trae acceso a disco: hay que darle `fs` para readFile.
+XLSX.set_fs(fs);
 import { generarSQL, HOJAS } from '../importer/normalizado.mjs';
 import { hojasDisponibles } from '../importer/schema.mjs';
 

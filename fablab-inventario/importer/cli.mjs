@@ -2,7 +2,11 @@
 // Uso:
 //   node importer/cli.mjs --listar <archivo.xlsx>
 //   node importer/cli.mjs --archivo <archivo.xlsx> [--hojas "A,B"] [--sql-only]
+import * as fs from 'node:fs';
 import XLSX from 'xlsx';
+
+// xlsx 0.20 (build ESM) no trae acceso a disco: hay que darle `fs` para readFile.
+XLSX.set_fs(fs);
 import { hojasDisponibles } from './schema.mjs';
 import { importar, conexionDesdeEnv } from './importar.mjs';
 

@@ -1,6 +1,10 @@
 // Importa hojas de un xlsx a MySQL: vacia la base actual, crea el DDL y carga el DML.
 import mysql from 'mysql2/promise';
+import * as fs from 'node:fs';
 import XLSX from 'xlsx';
+
+// xlsx 0.20 (build ESM) no trae acceso a disco: hay que darle `fs` para readFile.
+XLSX.set_fs(fs);
 import { leerHoja, ddlDeHoja, dmlDeHoja, hojasDisponibles } from './schema.mjs';
 
 export function conexionDesdeEnv(env = process.env) {

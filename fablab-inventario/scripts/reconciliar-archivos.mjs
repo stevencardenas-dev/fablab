@@ -19,7 +19,11 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
+import * as fs from 'node:fs';
 import XLSX from 'xlsx';
+
+// xlsx 0.20 (build ESM) no trae acceso a disco: hay que darle `fs` para readFile.
+XLSX.set_fs(fs);
 import { HOJAS } from '../importer/normalizado.mjs';
 
 const args = process.argv.slice(2);
