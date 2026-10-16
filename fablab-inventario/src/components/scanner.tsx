@@ -1,3 +1,5 @@
+// Lector de Data Matrix con la cámara (expo-camera). Devuelve el texto leído,
+// que la app busca como `codigo` exacto.
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

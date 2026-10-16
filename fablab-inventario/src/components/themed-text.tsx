@@ -1,3 +1,4 @@
+// Texto con los colores y tamaños del tema. Proviene de la plantilla de Expo.
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Fonts, ThemeColor } from '@/constants/theme';

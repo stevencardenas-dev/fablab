@@ -1,3 +1,6 @@
+// Data Matrix: dibuja el símbolo de un código, lo descarga como SVG (web) o lo
+// comparte (nativo), y arma la hoja de etiquetas por lote para imprimir.
+// El símbolo codifica SOLO `codigo` (ver docs/app.md).
 import { encodeToMatrix } from 'datamatrix-svg-ts';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';

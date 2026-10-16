@@ -1,3 +1,4 @@
+// Sección plegable con título. Proviene de la plantilla de Expo.
 import { SymbolView } from 'expo-symbols';
 import { PropsWithChildren, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';

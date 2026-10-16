@@ -1,3 +1,4 @@
+// Esquema de color en web: espera a la hidratación para no parpadear.
 import { useSyncExternalStore } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 

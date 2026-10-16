@@ -1,3 +1,4 @@
+// Vista con el fondo del tema claro/oscuro. Proviene de la plantilla de Expo.
 import { View, type ViewProps } from 'react-native';
 
 import { ThemeColor } from '@/constants/theme';

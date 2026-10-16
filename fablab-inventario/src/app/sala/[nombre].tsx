@@ -1,3 +1,5 @@
+// Pantalla de una sala (/sala/:id): elementos con miniatura, ficha editable,
+// traslado a otra sala, historial, fotos y etiquetas Data Matrix por lote.
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';

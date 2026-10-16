@@ -1,3 +1,5 @@
+// Layout raíz de la app (expo-router): tema claro/oscuro, splash animado,
+// registro del service worker de la PWA y la barra de pestañas.
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';

@@ -1,3 +1,4 @@
+// Barra de pestañas en web: misma navegación que en nativo, con estilos propios.
 import {
   Tabs,
   TabList,

@@ -1,3 +1,4 @@
+// Ícono animado y splash de arranque (web). Proviene de la plantilla de Expo.
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Keyframe, Easing } from 'react-native-reanimated';

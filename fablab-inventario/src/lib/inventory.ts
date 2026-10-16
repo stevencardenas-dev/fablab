@@ -1,3 +1,6 @@
+// Cliente HTTP de la app hacia la API: lecturas con caché SWR y reintentos
+// (el free tier de Render despierta lento), escrituras con token, fotos,
+// exportación e importación. La URL de la API sale de EXPO_PUBLIC_API_URL.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { DatosFoto } from './foto';

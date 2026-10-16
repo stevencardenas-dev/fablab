@@ -1,3 +1,4 @@
+// Ícono animado y splash de arranque (nativo). Proviene de la plantilla de Expo.
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';

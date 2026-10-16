@@ -81,6 +81,21 @@ fablab/                              # monorepo (specs/HANDOFF.md = bitácora de
     └── backups/                     # snapshots y manifiestos de reversión
 ```
 
+## Documentación por carpeta
+
+Cada carpeta de código tiene su propio README, y cada archivo fuente abre con un
+comentario que dice qué hace:
+
+| Carpeta | README |
+|---|---|
+| `src/` (app) | [`src/README.md`](../src/README.md) |
+| `server/` (API HTTP) | [`server/README.md`](../server/README.md) |
+| `importer/` (datos e importación) | [`importer/README.md`](../importer/README.md) |
+| `scripts/` (herramientas) | [`scripts/README.md`](../scripts/README.md) |
+| `public/` (PWA) | [`public/README.md`](../public/README.md) |
+| `docker/` (despliegue en contenedores) | [`docker/README.md`](../docker/README.md) |
+| `deploy-workflows/` (vigilancia del deploy) | [`deploy-workflows/README.md`](../deploy-workflows/README.md) |
+
 ## Convenciones de esta documentación
 
 - Todo en **español**, igual que el código y los mensajes de la app.

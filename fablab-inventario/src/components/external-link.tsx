@@ -1,3 +1,4 @@
+// Enlace que abre en el navegador del sistema. Proviene de la plantilla de Expo.
 import { Href, Link } from 'expo-router';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import { type ComponentProps } from 'react';

@@ -1,3 +1,5 @@
+// Pantalla Inicio: agregar elemento (con foto y Data Matrix), escanear un
+// código, buscar, exportar (CSV/JSON) e importar inventario (solo web).
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';

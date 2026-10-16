@@ -1,3 +1,7 @@
+// Servidor HTTP de la API del inventario (Node, sin framework).
+// Rutas, CORS, gzip, ETag/304, token de escritura, límite de escrituras y
+// esquema asegurado al arrancar. La lógica de datos vive en importer/api.mjs.
+// Contrato completo: docs/api.md.
 import { createServer } from 'node:http';
 import { parse as parseUrl } from 'node:url';
 import { gzipSync } from 'node:zlib';

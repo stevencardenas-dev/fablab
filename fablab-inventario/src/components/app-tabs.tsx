@@ -1,3 +1,4 @@
+// Barra de pestañas en nativo (iOS/Android).
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useTheme } from '@/hooks/use-theme';
