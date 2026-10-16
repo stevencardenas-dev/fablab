@@ -165,8 +165,9 @@ Detalle y trampas de medición en [`rendimiento.md`](rendimiento.md).
   JPEG). Se resuelve dejando que `mimeDeBase64()` decida.
 - **`400` "La miniatura no puede pesar más que la foto"**: miniatura mal generada
   o reutilizada de otra foto.
-- **Bundle público**: el token de escritura viaja horneado en el bundle web; es
-  un freno, no seguridad (ver [`problemas-conocidos.md`](problemas-conocidos.md)).
+- **Las fotos exigen sesión**: el `<img>` no puede mandar header, así que el enlace
+  lleva `?sesion=` y el server responde con `Cache-Control: private`. Sin sesión,
+  `401`.
 - **La caché del navegador puede enmascarar mejoras**: con la misma imagen en los
   917 elementos, todas las URLs de la prueba compartían hash (una sola entrada de
   caché). El beneficio del prefetch por elemento se verá con fotos reales, que

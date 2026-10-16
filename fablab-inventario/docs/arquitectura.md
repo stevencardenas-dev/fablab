@@ -14,7 +14,7 @@ subir y la base guarda solo la versión reducida.
 │  App Expo (react-native-web) │   Pantallas: Inicio · Inventario · Sala
 │  src/app, src/lib            │   Caché SWR (memoria + AsyncStorage)
 └───────────┬──────────────────┘
-            │ HTTP/JSON  (GET público; POST/PUT/DELETE con Bearer)
+            │ HTTP/JSON  (todo con Bearer de sesión, salvo /health y /api/login)
             │ WebP/JPEG en base64 (POST foto)
 ┌───────────▼──────────────────┐
 │  API REST — Node (sin deps    │   server/index.mjs: 14 rutas, CORS, gzip,

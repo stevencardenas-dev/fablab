@@ -48,9 +48,9 @@ no existe se declara como hueco en vez de darse por hecho.
 - **Dar de baja:** eliminar un elemento por código. Su historial de traslados se
   borra con él, pero la bitácora conserva la fila completa del elemento borrado.
 
-Es el actor que cubre el ciclo completo y **el único que escribe**. Ahí está la
-explicación de fondo de por qué el sistema hoy puede vivir sin login: una sola
-persona, con un teléfono en la mano, hace todo el flujo.
+Es el actor que cubre el ciclo completo. Con el inicio de sesión del 2026-10-16
+**todos entran con la misma cuenta del laboratorio**: el sistema no distingue entre
+el responsable de inventario y cualquiera que tenga la clave.
 
 > Dos capacidades de este actor están implementadas y **sin uso comprobado**:
 > la foto (en producción hay **0 fotos**, verificado el 2026-10-15) y el escaneo
@@ -109,9 +109,11 @@ sus acciones determinan lo que los demás pueden hacer, así que se documenta:
 
 ## 4. Usuario del laboratorio (docente, estudiante, monitor)
 
-Quien usa el FabLab, no quien lo administra. Su relación con el sistema es de
-**solo lectura**, que es lo correcto: nadie que venga a usar una impresora 3D
-debería poder borrar una fila del inventario.
+Quien usa el FabLab, no quien lo administra. Su relación debería ser de **solo
+lectura** (nadie que venga a usar una impresora 3D debería poder borrar una fila
+del inventario), pero hoy no hay roles: la cuenta del laboratorio es una sola y
+**quien tenga la clave también puede escribir**. Darle la clave a un estudiante es
+darle permiso de editar y borrar.
 
 **Funciones principales:**
 
@@ -121,8 +123,9 @@ debería poder borrar una fila del inventario.
 - **Llegar sin instalar nada:** la app web se instala como PWA y también funciona
   en el navegador.
 
-Esta lectura es **pública hoy**: no hay forma de restringirla, ni falta que hace
-para el alcance declarado.
+**Para consultar hay que iniciar sesión** (desde el 2026-10-16 la app no muestra nada
+sin sesión y el server rechaza las lecturas sin credencial). Separar *consultar* de
+*modificar* exigiría una segunda cuenta de solo lectura, que hoy no existe.
 
 ---
 
@@ -192,7 +195,7 @@ Ninguna de estas brechas es un olvido del documento: son el estado del sistema a
 
 | Brecha | Qué implica | Dónde vive |
 |---|---|---|
-| Sin login ni roles | Se sabe **qué** cambió y **cuándo** (`auditoria`), no **quién**; tampoco se puede limitar quién borra | Ver el problema conocido del `EXPO_PUBLIC_API_TOKEN` en [`problemas-conocidos.md`](problemas-conocidos.md): el token es un freno al vandalismo casual, no seguridad |
+| Una sola cuenta, sin roles | Hay inicio de sesión, pero la cuenta es compartida: se sabe **qué** cambió y **cuándo** (`auditoria`), no **qué persona**; tampoco se puede limitar quién borra ni dar un acceso de solo lectura | [`problemas-conocidos.md`](problemas-conocidos.md) y [`auditoria.md`](auditoria.md) |
 | `traslados` sin columna de autor | El historial tiene fecha, origen y destino; **no autor** | `CREATE TABLE traslados` en [`base-de-datos.md`](base-de-datos.md) |
 | Sin CRUD de salas ni edificios | Las salas nacen de la importación o del arranque del server (así entraron Estudio TV y Papeleria); no hay pantalla para crearlas | Solo `GET /api/salas` en [`api.md`](api.md) |
 | Sin préstamos ni devoluciones | El préstamo es texto libre, no un flujo con responsable y vencimiento | `traslados.nota` |

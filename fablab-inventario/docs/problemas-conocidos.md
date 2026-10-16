@@ -20,8 +20,7 @@ qué queda abierto:
 | `npm run qa` reventaba con `TypeError` en una base sin fotos | el contrato de fotos se prueba sobre la foto temporal del QA | `npm run qa` |
 | Sin CI: los tests dependían de que alguien se acordara | `.github/workflows/ci.yml` + `npm run gate` | GitHub Actions |
 
-Lo que **no** cambia con esto: el token de escritura sigue viajando en el bundle
-web (ver más abajo).
+(El token de escritura que viajaba en el bundle web se resolvió el 2026-10-16 con el inicio de sesión: ver más abajo.)
 
 ## `IOT-79`: resuelto el 2026-09-25
 
@@ -84,7 +83,7 @@ y el router resuelve la ruta en el cliente).
 
 Tras ~15 min sin tráfico el servicio se apaga; el primer hit cuesta
 **0,43-0,47 s incluso en `/health`** (es despertar de CPU, no MySQL). El server
-se hace ping cada 10 min a `/api/salas` (mantiene vivos también a Aiven) y la app
+se hace ping cada 10 min a `/api/salas`, con su propio token (mantiene vivos también a Aiven; el externo de GitHub usa `/health`, que es público) y la app
 reintenta los GET con backoff. Ver [`operacion.md`](operacion.md).
 
 ### Medir con `curl` sin `--compressed`
@@ -128,19 +127,20 @@ El service worker es cache-first sobre el shell y los bundles. Si despliegas un
 bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v17` hoy),
 los clientes con el SW viejo quedan con la UI vieja para siempre.
 
-### El token de escritura viaja en el bundle web
+### Resuelto: el token de escritura viajaba en el bundle web
 
-`EXPO_PUBLIC_API_TOKEN` se inlinea en el JS público de la PWA: cualquiera puede
-leerlo y escribir. Es un **freno al vandalismo casual, no seguridad real**.
-Rotarlo exige volver a exportar y desplegar la web (el token nuevo debe estar
-también en las env vars de Render).
+Hasta el 2026-10-16 `EXPO_PUBLIC_API_TOKEN` se inlineaba en el JS público de la PWA
+y cualquiera podía leerlo y escribir. Ahora la app inicia sesión con la cuenta del
+laboratorio, el bundle no lleva ningún token y el server rechaza **también las
+lecturas** sin credencial. Quedan dos cosas:
 
-Rotado el **2026-10-16** (el anterior quedó público en el repo `fablab-web`). Orden
-que funciona: web con el token nuevo → `API_TOKEN` en Render → **`render deploys
-create`**. Cambiar la env var y hacer `render restart` **no** la aplica: el restart
-reusa la configuración del último deploy y las escrituras de la web fallan con 401
-hasta el deploy. La solución de fondo es el inicio de sesión (ver
-[`auditoria.md`](auditoria.md)).
+- El repo `fablab-web` es público y conserva en su historial bundles viejos con
+  tokens anteriores. Ninguno sirve ya (el `API_TOKEN` se rotó), pero conviene saberlo.
+- Cambiar una env var en Render exige un **deploy** (`render deploys create`): un
+  `render restart` reusa la configuración del último deploy y no la aplica.
+
+La cuenta es **una sola y compartida**: quien tenga la clave puede leer y escribir.
+No distingue personas (ver [`auditoria.md`](auditoria.md)).
 
 ### Metro cachea los `EXPO_PUBLIC_*`
 
@@ -156,9 +156,9 @@ forzado en `sync:deploy`; si exportas a mano, usa `--clear`.
 - **La restauración de respaldos no es un comando**: `backup:remoto` guarda un
   JSON lógico (`/api/export/*`), no un `mysqldump`. Restaurar requiere reconstruir
   los INSERT o tener credenciales de la base.
-- **La API es pública de lectura y sin límite de tasa**: cualquiera con la URL
-  puede leer el inventario y gastar cuota del plan free. Es una decisión
-  consciente (la app es interna), no un descuido.
+- **Sin límite de tasa en las lecturas**: con credencial válida se puede leer sin
+  tope (las escrituras sí están limitadas a 120 por minuto por IP). Sin credencial,
+  todo devuelve `401` salvo `/health`.
 - **`cantidad` es texto libre** (`12`, `-`, `INCONTABLE`): cualquier reporte
   numérico tiene que filtrar valores no numéricos primero.
 - **`estado` es NULL en ~494 elementos** (hojas sin esa columna): la UI muestra

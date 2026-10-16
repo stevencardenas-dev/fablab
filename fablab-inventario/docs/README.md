@@ -32,7 +32,7 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
   coordinación, equipo desarrollador, usuario del laboratorio) y el sistema como
   actor no humano, con las brechas de roles y la trazabilidad actor → pantalla →
   ruta.
-- **[casos-de-uso.md](casos-de-uso.md)** — 23 casos de uso con flujo principal y
+- **[casos-de-uso.md](casos-de-uso.md)** — 24 casos de uso con flujo principal y
   flujos alternativos (los códigos de estado reales de la API), agrupados por
   objetivo, más los cuatro declarados y no implementados.
 - **[arquitectura.md](arquitectura.md)** — componentes del monorepo, flujo de

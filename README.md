@@ -214,8 +214,9 @@ cada prueba en [`fablab-inventario/docs/qa.md`](fablab-inventario/docs/qa.md).
 | `MYSQL_SSL` | — | `1` activa TLS hacia la base (Aiven) |
 | `PORT` | `3001` | Puerto del API server |
 | `EXPO_PUBLIC_API_URL` | `http://localhost:3001/api` | URL de la API para la app |
-| `API_TOKEN` | *(vacío = escrituras abiertas)* | Si se define en el server, POST/PUT/DELETE exigen `Authorization: Bearer <API_TOKEN>`. Lectura siempre pública. |
-| `EXPO_PUBLIC_API_TOKEN` | — | Token que la app web manda en las escrituras (se compila en el bundle) |
+| `API_TOKEN` | *(vacío y sin cuenta = server abierto, solo desarrollo)* | Token de herramientas (scripts): con él se accede a todas las rutas. La app web **no** lo lleva |
+| `CUENTA_USUARIO`, `CUENTA_CLAVE_HASH`, `SESION_SECRETO` | — | Cuenta compartida del laboratorio que usa la app: usuario, hash de su clave y secreto que firma las sesiones (12 h). Con ellas, **todas** las rutas exigen sesión salvo `/health` y `/api/login` |
+| `EXPO_PUBLIC_API_TOKEN` | — | Solo desarrollo local. **No definir al exportar para producción**: quedaría legible en el bundle público |
 | `CORS_ORIGIN` | `*` | Sitio que puede llamar a la API; vacío = solo el mismo dominio |
 | `LIMITE_ESCRITURAS_MIN` | `120` | Escrituras por IP y minuto antes de responder `429` |
 
@@ -253,7 +254,7 @@ npm run sync:deploy -- --push api,web  # commit + push en los repos de deploy
 Notas:
 
 - **web**: el script exporta el bundle él mismo (`expo export --clear`, con
-  `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_API_TOKEN` del entorno) y regenera `404.html`
+  `EXPO_PUBLIC_API_URL` del entorno; no debe llevar token) y regenera `404.html`
   como copia de `index.html` (fallback SPA de deep links).
 - **api** copia `server/`, `importer/`, `fablab-inventario/ddl-data.sql` y las
   dependencias de `docker/api/` (`package.json` + lock, `xlsx` 0.20.3), las mismas

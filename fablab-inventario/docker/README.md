@@ -74,10 +74,13 @@ La restauración está documentada al inicio de `docker/respaldo.sh`.
 
 ## Seguridad: lo que hay que saber
 
-- **El token de escritura viaja dentro de la app web.** Quien abra la página puede leerlo
-  y modificar el inventario. Mitigación hasta que exista inicio de sesión: publicar la
-  app solo en la red del campus (o VPN).
-- **Inicio de sesión:** la app pide la cuenta del laboratorio para escribir. Su usuario, el hash de su clave y `SESION_SECRETO` van en `docker/.env` (ver `.env.example`). La web ya no lleva ningún token: el de herramientas (`API_TOKEN`) solo vive en el servidor.
+- **Sin sesión no se ve nada:** la app abre en una pantalla de entrada y la API rechaza
+  (`401`) cualquier petición sin credencial, lecturas incluidas, salvo `/health` y el
+  login. La web ya no lleva ningún token.
+- **La cuenta es una sola y compartida:** quien tenga la clave puede leer y modificar. No
+  distingue personas ni hay un acceso de solo lectura. Publicar la app solo en la red del
+  campus (o VPN) sigue siendo recomendable.
+- **Inicio de sesión:** la app pide la cuenta del laboratorio para entrar. Su usuario, el hash de su clave y `SESION_SECRETO` van en `docker/.env` (ver `.env.example`). La web ya no lleva ningún token: el de herramientas (`API_TOKEN`) solo vive en el servidor.
 - **Cambiar la clave de la cuenta:** generar otro hash (ver `.env.example`), cambiar `CUENTA_CLAVE_HASH` y reiniciar la API (`up -d api`). Las sesiones abiertas siguen válidas hasta vencer (12 h); para cerrarlas todas, cambiar también `SESION_SECRETO`.
 - La API limita las escrituras por IP (120 por minuto, `LIMITE_ESCRITURAS_MIN`) y registra cada cambio en la tabla `auditoria` (ver `docs/auditoria.md`). Lecturas sin límite: si se publica en internet, limitarlas en el proxy.
 - Dependencias: la API no tiene vulnerabilidades conocidas (`npm audit`); la app web

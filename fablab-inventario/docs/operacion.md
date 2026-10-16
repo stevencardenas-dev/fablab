@@ -14,7 +14,8 @@ deploy**, que se generan desde el monorepo con `sync:deploy`.
 
 | Qué | Dónde vive | Notas |
 |---|---|---|
-| Token de escritura de la API | `~/.config/fablab/api-token` (chmod 600) y env `API_TOKEN` en Render | `Authorization: Bearer <token>` en POST/PUT/DELETE |
+| Token de herramientas de la API | `~/.config/fablab/api-token` (chmod 600) y env `API_TOKEN` en Render | `Authorization: Bearer <token>` en **todas** las rutas (scripts: respaldo, QA, reconciliación). La web ya no lo lleva |
+| Cuenta del laboratorio (la app) | env `CUENTA_USUARIO`, `CUENTA_CLAVE_HASH` y `SESION_SECRETO` en Render | La clave se guarda como hash; cambiarla = nuevo hash y deploy (ver `docker/README.md`) |
 | Token de la API de Aiven | `~/.config/fablab/aiven-token` | `Authorization: aivenv1 …` contra `api.aiven.io/v1` (proyecto `fablab`, servicio `mysql-2eb5feb2`) |
 | Servicios de Render | CLI local (`render logs -r <id> -f`) | `fablab-api` = `srv-dajnh2p5efls739kjo3g`, `fablab-web` = `srv-dajo898ae00c73aoqtq0` |
 
@@ -33,8 +34,7 @@ actualizar el archivo.
 npm run sync:deploy
 
 # Subir (commit + push en los repos espejo)
-EXPO_PUBLIC_API_TOKEN=$(cat ~/.config/fablab/api-token) \
-  npm run sync:deploy -- --push api,web
+npm run sync:deploy -- --push api,web
 ```
 
 `--push api` / `--push web` permiten subir solo uno. Render tarda **1-3 min** en
@@ -52,7 +52,8 @@ propagar; se verifica con sondas (abajo).
 1. **El build web se hace siempre ahí y con `EXPO_PUBLIC_API_URL` horneada.**
    Sin esa variable el PWA se llama a sí mismo y no carga datos. El script
    **verifica** que el string `onrender` quedó en algún bundle: si no, aborta.
-   `EXPO_PUBLIC_API_TOKEN` (si está en el entorno) se hornea en la misma pasada.
+   **No** definir `EXPO_PUBLIC_API_TOKEN` al exportar: se hornearía en el bundle
+   público. La web inicia sesión y no lleva token.
 2. **Si el repo de deploy tiene commits manuales posteriores al último sync, el
    sync de web ABORTA** (`--force-web` los pisa, úsalos solo si ya los portaste
    al monorepo). Esos commits viven solo ahí y se perderían.
@@ -188,9 +189,9 @@ entrega debería incluir:
    `mysql-2eb5feb2`) y GitHub (el monorepo y los dos repos de deploy).
 2. **Secretos a rotar:** `API_TOKEN` (env de Render y
    `~/.config/fablab/api-token`), `AIVEN_TOKEN` (secreto del repo de deploy) y el
-   acceso a la cuenta de Aiven. El token viejo queda horneado en el bundle
-   público, así que después de rotarlo hay que **volver a exportar y desplegar
-   la web** (`sync:deploy --push web`) con el nuevo.
+   acceso a la cuenta de Aiven. Como la web ya no lleva ningún token, rotar
+   `API_TOKEN` no exige volver a exportarla: solo cambiar la env var y hacer un
+   deploy (`render deploys create`; un `restart` no la aplica).
 3. **Alertas:** configurar el secreto `ALERTA_WEBHOOK` (Discord, Slack o Google
    Chat) en el repo `fablab-api` para que `keep-alive` y `db-watchdog` avisen
    cuando la API no responde. Sin él, un fallo solo queda como rojo en Actions.

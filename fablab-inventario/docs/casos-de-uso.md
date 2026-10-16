@@ -325,6 +325,30 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
 
 ## EP-04 · Consulta del usuario del laboratorio
 
+### CU-24 (Cualquier usuario del laboratorio): Iniciar sesión con la cuenta del laboratorio
+
+- **Actor(es):** Usuario del laboratorio, Responsable de inventario, Coordinación
+- **Estado:** implementado · `POST /api/login`; `src/components/pantalla-entrada.tsx`
+- **Flujo principal (Entrada):** Dada la app sin sesión, cuando se abre, entonces solo
+  se ve la pantalla de entrada; cuando se escribe la clave de la cuenta del laboratorio
+  (el usuario viene escrito), entonces el server entrega una sesión de 12 h, la app la
+  guarda y muestra el inventario. El server rechaza con `401` cualquier lectura o
+  escritura sin credencial.
+- **Flujos alternativos:**
+  - *Alt 1 (Clave incorrecta):* Dado un usuario o una clave que no coinciden, cuando
+    se envían, entonces responde `401` "Usuario o contraseña incorrectos" y la
+    pantalla lo muestra sin borrar el usuario.
+  - *Alt 2 (Sesión vencida o revocada):* Dada una sesión que venció (12 h) o cuyo
+    secreto cambió, cuando la app hace cualquier petición, entonces recibe `401`,
+    cierra la sesión sola y vuelve a la entrada.
+  - *Alt 3 (Salir):* Dada una sesión activa, cuando se pulsa *Salir*, entonces se
+    borra la sesión **y** el inventario guardado en el dispositivo: la persona
+    siguiente en ese teléfono no ve nada.
+  - *Alt 4 (Muchos intentos):* Dados más de 120 intentos por minuto desde una IP,
+    entonces responde `429`; el límite también frena el adivinar la clave.
+  - *Alt 5 (Cuenta compartida):* Dado que la cuenta es una sola, entonces la
+    bitácora registra el nombre de la cuenta como actor, no la persona.
+
 ### CU-15 (Usuario del laboratorio): Consultar el inventario por sala
 
 - **Actor(es):** Usuario del laboratorio (docente, estudiante, monitor)
@@ -467,6 +491,7 @@ es más peligroso sin escribir que escrito.
 | CU-13 Dar de baja un elemento | Responsable de inventario | OE-3 | implementado |
 | CU-14 Gestionar la foto | Responsable de inventario | OE-3 | implementado |
 | CU-23 Revisar qué cambió | Coordinación, Equipo desarrollador | OE-3 | implementado en parte |
+| CU-24 Iniciar sesión | Todos los usuarios | — | implementado |
 | CU-15 Consultar por sala | Usuario del laboratorio | — | implementado |
 | CU-16 Buscar en el inventario | Usuario, Responsable | — | implementado |
 | CU-17 Consultar la ficha | Usuario del laboratorio | — | implementado |

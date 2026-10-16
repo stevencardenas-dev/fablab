@@ -74,10 +74,14 @@ Es el único punto de contacto con la API desde la app.
 - **Sin fallback local en escrituras**: si el server rechaza, la app muestra el
   error. Un elemento que solo existiera en `AsyncStorage` sería una ilusión de
   guardado (nada lo lee).
-- **Token**: `EXPO_PUBLIC_API_TOKEN` se lee dentro de la función (Expo inlinea
-  los `EXPO_PUBLIC_*`) y se manda como `Authorization: Bearer`. Vacío = server en
-  modo abierto y no se manda header. **Es un secreto en un bundle público**: frena
-  vandalismo casual, no es seguridad real.
+- **Sesión**: sin sesión la app solo muestra la pantalla de entrada
+  (`src/components/pantalla-entrada.tsx`); `src/lib/sesion.ts` guarda el token de
+  sesión (12 h) y `authHeaders()` lo manda como `Authorization: Bearer` en **todas**
+  las peticiones. Un `401` cierra la sesión y vuelve a la entrada; *Salir* (arriba
+  en Inicio) también vacía la caché del inventario guardada en el dispositivo.
+  Las fotos y las descargas llevan `?sesion=` en el enlace.
+- `EXPO_PUBLIC_API_TOKEN` ya **no** se usa en producción (quedaba legible en el
+  bundle público); solo sirve para desarrollo local con el server en modo abierto.
 - `urlFoto(elemento, tam)` devuelve `null` si el elemento no tiene foto — así la
   UI no pinta un `<Image>` roto.
 
@@ -155,7 +159,7 @@ Es el único punto de contacto con la API desde la app.
 | Variable | Para qué |
 |---|---|
 | `EXPO_PUBLIC_API_URL` | URL de la API (horneada en el build). **Obligatoria** en el export web |
-| `EXPO_PUBLIC_API_TOKEN` | Token de escritura (horneado; ver la advertencia de seguridad) |
+| `EXPO_PUBLIC_API_TOKEN` | Solo desarrollo local. **No definir en el build de producción**: quedaría en el bundle público |
 
 `eas.json` define los perfiles de build: `development` (dev client),
 `preview` (APK interno con la URL de producción), `production`

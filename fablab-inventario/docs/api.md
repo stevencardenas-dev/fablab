@@ -18,13 +18,13 @@ Servidor HTTP en Node puro (`server/index.mjs`) sobre la capa de datos de
 | CORS | Origen según `CORS_ORIGIN`: `*` por defecto (Render), un dominio para restringir, o vacío para solo-mismo-dominio (stack Docker, donde nginx sirve la web y reenvía `/api`). Métodos `GET, POST, PUT, DELETE, OPTIONS`, headers `Content-Type, Authorization`. Preflight `OPTIONS` → `204` |
 | Límite de escrituras | `POST/PUT/DELETE` por IP y minuto (`LIMITE_ESCRITURAS_MIN`, 120 por defecto; la IP sale de `X-Forwarded-For`). Al pasarse → `429` con `Retry-After: 60`. Se cuenta antes del token, así que también frena a quien pruebe tokens |
 | Auditoría | Toda escritura que cambia algo deja una fila en `auditoria`, en la misma transacción. Ver [`auditoria.md`](auditoria.md) |
-| Lectura | Siempre pública (`GET` y `HEAD`) |
-| Escritura | `POST/PUT/DELETE` exigen `Authorization: Bearer <credencial>`: la **sesión** de la cuenta del laboratorio (`POST /api/login`) o el `API_TOKEN` de herramientas. Sin credencial → `401` con `WWW-Authenticate: Bearer` |
+| Acceso | **Todo exige credencial** (lecturas y escrituras) salvo `GET /health` y `POST /api/login`. La credencial es la **sesión** de la cuenta del laboratorio (`POST /api/login`, dura 12 h) o el `API_TOKEN` de herramientas, en `Authorization: Bearer <credencial>`. Sin credencial → `401` con `WWW-Authenticate: Bearer` |
+| Enlaces sin header | Las fotos (`GET …/foto`) y las exportaciones (`GET /api/export/…`) se abren con `<img>` o un enlace, que no pueden mandar header: ahí también vale `?sesion=<credencial>`, y solo ahí |
 | Errores | `{"error": "<mensaje en español>"}`. `400` campo inválido/faltante, `404` inexistente, `409` conflicto, `413` demasiado grande, `503` bloqueo ocupado, `500` fallo real del server (se registra en el log) |
 | Cuerpo | Máximo **1 MB** por petición. Más grande (por `Content-Length` o por chunked) → `413`, y se rechaza **sin** bufferizarlo entero en memoria |
 | JSON | Un cuerpo que no parsea → `400` "JSON inválido" (antes llegaba como `500`) |
 | Ids de ruta | Enteros positivos (`1`…`2147483647`). `1.5`, `abc`, `0` o un id fuera de rango → `400`, no un `404`/`200 []` engañoso |
-| Caché HTTP | Las imágenes usan `ETag` + `Cache-Control: public, max-age=31536000, immutable`; el JSON no lleva caché HTTP (la maneja la app y el TTL del server) |
+| Caché HTTP | Las imágenes usan `ETag` + `Cache-Control: private, max-age=31536000, immutable` (`private`: son datos con acceso restringido, no deben guardarse en cachés compartidas); el JSON no lleva caché HTTP (la maneja la app y el TTL del server) |
 
 Ejemplo de escritura:
 
@@ -65,7 +65,7 @@ curl -s -X POST https://fablab-api-sr1q.onrender.com/api/traslados \
 No consulta la base: sirve como healthcheck de Render y como **piso de red** al
 medir rendimiento (ver [`rendimiento.md`](rendimiento.md)). Que no toque la BD
 es a propósito: un hipo de Aiven no debe reiniciar el servicio web. Para saber si
-la base responde está `/api/salas` (y el ping keep-alive del propio server).
+la base responde está `/api/salas` (que ahora exige credencial; el ping keep-alive del propio server la lleva).
 
 ### 2. `GET /api/salas`
 

@@ -89,7 +89,7 @@ node importer/cli.mjs --archivo "CNC 2026.xlsx" --sql-only > /tmp/legacy.sql
 
 ```bash
 npm run asignar:codigos                  # dry-run contra la BD local
-npm run asignar:codigos -- --api         # dry-run contra producción (GET público)
+npm run asignar:codigos -- --api         # dry-run contra producción (necesita API_TOKEN o ~/.config/fablab/api-token)
 npm run asignar:codigos -- --api --escribir   # escribe en producción vía API (token)
 npm run asignar:codigos -- --db --escribir    # escribe directo en la BD local
 npm run asignar:codigos -- --sql         # imprime los UPDATE para correrlos a mano
