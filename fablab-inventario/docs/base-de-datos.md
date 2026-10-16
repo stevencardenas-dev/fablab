@@ -220,7 +220,7 @@ MYSQL_PORT=3306 node server/index.mjs
   `docker/respaldos/fablab-*.sql.gz` (30 días). La restauración se probó el
   2026-10-15: el respaldo cargado en una base vacía dio los mismos 2 edificios,
   13 salas y 1 450 elementos, con el mismo `CHECKSUM TABLE` de `elementos`
-  (ver [`despliegue-universidad.md`](despliegue-universidad.md)).
+  (ver [`docker/README.md`](../docker/README.md)).
 - **Manifiestos de reversión**: las pruebas en vivo dejan su plan exacto en
   `backups/` (p. ej. `fotos-demo-*.json`), para poder deshacer solo lo que se
   tocó (ver [`fotos.md`](fotos.md)).

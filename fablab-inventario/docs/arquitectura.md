@@ -108,7 +108,7 @@ Detalle en [`importacion.md`](importacion.md).
 | | react-native-web (PWA) | `~0.21.0` |
 | API | Node.js (solo módulos nativos + `mysql2`) | 20+ |
 | BD | MySQL 8 (Aiven en producción hoy; MySQL 8.4 en el stack Docker para la universidad) | — |
-| Despliegue | Docker Compose: MySQL + API + nginx (ver [`despliegue-universidad.md`](despliegue-universidad.md)) | — |
+| Despliegue | Docker Compose: MySQL + API + nginx (ver [`docker/README.md`](../docker/README.md)) | — |
 | Importer | `xlsx` (CDN de SheetJS; npm se quedó en 0.18.5 con avisos sin corregir) | `0.20.3` |
 | Pruebas | Jest + jest-expo, ESLint (expo) , TypeScript | 29.7 / 9 / 6.0 |
 

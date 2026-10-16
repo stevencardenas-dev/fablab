@@ -41,9 +41,6 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
   CORS, límite de escrituras, gzip, ETag, códigos de estado, ejemplos `curl` y errores.
 - **[auditoria.md](auditoria.md)** — bitácora de cambios: qué se registra, cómo
   consultarla y qué falta (el *quién* llega con el inicio de sesión).
-- **[despliegue-universidad.md](despliegue-universidad.md)** — llevar el sistema al
-  servidor de la universidad con Docker: requisitos, instalación, respaldos,
-  restauración probada y seguridad.
 - **[base-de-datos.md](base-de-datos.md)** — modelo normalizado
   (`edificios → salas → elementos` + `traslados` + `elemento_fotos`), DDL,
   índices, migraciones idempotentes, conexión local/Aiven y respaldos.
