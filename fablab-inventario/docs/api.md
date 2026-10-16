@@ -97,7 +97,7 @@ El inventario completo en un solo arreglo, ordenado por `sala_id` e `id`:
 
 - `foto_hash`: `null` si el elemento no tiene foto; si la tiene, es la versión
   con la que la app arma `…/foto?tam=miniatura&v=<hash>`.
-- **No** arrastra binarios. Con 917 elementos son ~173 KB de JSON → ~20 KB con
+- **No** arrastra binarios. Medido con 917 elementos (2026-09-24), son ~173 KB de JSON → ~20 KB con
   gzip. Si arrastrara las fotos serían decenas de MB por carga.
 - `estado` es `null` en los ~494 elementos que vienen de hojas sin esa columna.
 - Caché TTL 60 s en el server; toda escritura la invalida.

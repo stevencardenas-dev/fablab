@@ -64,9 +64,9 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 ```
 fablab/                              # monorepo (specs/HANDOFF.md = bitácora de sesiones)
 ├── README.md                        # vista general + deploy
-├── README-SERVER.md                 # arranque rápido del servidor
-├── docker-compose.yml               # MySQL 8 local
+├── docker-compose.yml               # MySQL 8 local (desarrollo)
 ├── documento/                       # documento académico (ODT/PDF)
+├── notes/                           # notas de la presentación
 └── fablab-inventario/               # app + API + BD
     ├── src/                         # app Expo (React Native + web)
     │   ├── app/                     #   pantallas (expo-router)
@@ -77,8 +77,9 @@ fablab/                              # monorepo (specs/HANDOFF.md = bitácora de
     ├── importer/                    # xlsx → MySQL y consultas a la BD
     ├── scripts/                     # seed, QA, benchmark, deploy, backups
     ├── public/                      # PWA: manifest, sw.js
+    ├── docker/                      # stack MySQL + API + web para un servidor propio
     ├── docs/                        # ← esta documentación
-    └── backups/                     # snapshots y manifiestos de reversión
+    └── backups/                     # snapshots y manifiestos de reversión (no versionado)
 ```
 
 ## Documentación por carpeta

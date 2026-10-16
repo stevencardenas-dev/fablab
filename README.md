@@ -5,8 +5,10 @@ Sistema de gestión y control de inventario para el FabLab de la Universidad Fra
 **Seminario Integrador II** — UFPS
 
 > **Documentación técnica completa:** [`fablab-inventario/docs/`](fablab-inventario/docs/README.md)
-> (arquitectura, API, base de datos, fotos, importación, operación, rendimiento,
-> pruebas y problemas conocidos).
+> (arquitectura, API, base de datos, auditoría, fotos, importación, operación,
+> rendimiento, pruebas y problemas conocidos). La app tiene su propio README:
+> [`fablab-inventario/README.md`](fablab-inventario/README.md). El documento
+> académico del curso está en [`documento/documento-integrador.md`](documento/documento-integrador.md).
 
 ## Equipo
 
@@ -26,6 +28,10 @@ Sistema de gestión y control de inventario para el FabLab de la Universidad Fra
 - **App** — Expo/React Native (expo-router, 3 pantallas: Inicio, Inventario, Sala)
 - **API** — `server/index.mjs` — HTTP REST, envuelve `importer/api.mjs`
 - **BD** — MySQL 8 en Docker, esquema normalizado (edificios → salas → elementos + traslados)
+
+Ese es el entorno de desarrollo. En producción la web y la API corren en Render y la
+base en Aiven; para un servidor propio hay un stack con Docker Compose en
+[`fablab-inventario/docker/`](fablab-inventario/docker/README.md).
 
 ## Inicio rápido
 
@@ -52,7 +58,7 @@ O a mano (dos pasos):
 
 ```bash
 cd fablab/fablab-inventario
-node importer/gen-normalizado.mjs "/home/alvaro/CNC 2026(1).xlsx" > /tmp/inventario.sql
+node importer/gen-normalizado.mjs "ruta/al/inventario.xlsx" > /tmp/inventario.sql
 docker exec -i fablab-mysql mysql --default-character-set=utf8mb4 -u root -pfablab fablab < /tmp/inventario.sql
 ```
 
@@ -86,6 +92,7 @@ Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go
 
 | Método | Ruta | Descripción |
 |---|---|---|
+| GET | `/health` | Estado del server (fuera de `/api`) |
 | GET | `/api/salas` | Salas con edificio y conteo de elementos |
 | GET | `/api/elementos` | Todo el inventario en una respuesta |
 | GET | `/api/salas/:id/elementos` | Elementos de una sala |
@@ -99,26 +106,30 @@ Presiona `a` (Android), `i` (iOS) o `w` (web). En móvil: escanear QR de Expo Go
 | POST | `/api/elementos/:id/foto` | Subir/reemplazar foto ya reducida |
 | DELETE | `/api/elementos/:id/foto` | Quitar la foto |
 | GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar inventario o traslados |
+| POST | `/api/import/elementos` | Importar un CSV o un libro de Excel (solo agrega códigos nuevos) |
 
 Contrato completo (auth, CORS, gzip, códigos de estado y ejemplos) en
 [`fablab-inventario/docs/api.md`](fablab-inventario/docs/api.md).
 
 Los errores de cliente responden con su código real: `400` campo inválido o
-faltante, `404` id/código inexistente, `409` conflicto (p. ej. trasladar a la
-sala en la que ya está). `500` queda para fallos del servidor o de la base.
+faltante, `401` escritura sin token, `404` id/código inexistente, `409` conflicto
+(p. ej. trasladar a la sala en la que ya está), `429` demasiadas escrituras.
+`500` queda para fallos del servidor o de la base. Cada escritura queda registrada
+en la tabla `auditoria` ([`docs/auditoria.md`](fablab-inventario/docs/auditoria.md)).
 
 ## Estructura del proyecto
 
 ```
 fablab/
 ├── README.md                    ← Este archivo
-├── README-SERVER.md             ← Detalle del servidor
-├── docker-compose.yml           ← MySQL (Docker)
-├── documento/
-│   ├── documento-integrador.md  ← Documento académico (3 capítulos)
-│   └── documento-integrador.odt
+├── docker-compose.yml           ← MySQL de desarrollo (Docker)
+├── documento/                   ← Documento académico del curso
+├── notes/                       ← Notas de la presentación
+├── specs/HANDOFF.md             ← Estado de trabajo entre sesiones de desarrollo
 └── fablab-inventario/           ← App + API + BD (todo en un repo)
     ├── docs/                     ← Documentación técnica completa
+    ├── docker/                   ← Stack MySQL + API + web para un servidor propio
+    ├── scripts/                  ← Herramientas: verificación, datos, deploy
     ├── src/
     │   ├── app/                  ← Pantallas (expo-router)
     │   │   ├── (tabs)/           ← Inicio (scan, add, search) + Inventario
@@ -138,8 +149,6 @@ fablab/
     │   ├── self-check.mjs       ← Validaciones sin MySQL
     │   └── README.md
     ├── public/                   ← PWA (manifest, sw.js, _redirects)
-    ├── server/index.mjs
-    ├── docker-compose.yml
     ├── app.json                  ← Config Expo + PWA
     ├── eas.json                  ← Build config
     └── package.json
@@ -159,7 +168,7 @@ fablab/
 
 ## Base de datos
 
-Esquema normalizado (4 tablas):
+Esquema normalizado (6 tablas):
 
 | Tabla | Columnas clave | Relaciones |
 |---|---|---|
@@ -167,17 +176,21 @@ Esquema normalizado (4 tablas):
 | `salas` | id, edificio_id, nombre | FK → edificios |
 | `elementos` | id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad | FK → salas |
 | `traslados` | id, elemento_id, sala_anterior_id, sala_nueva_id, fecha, nota | FK → elementos + salas |
+| `elemento_fotos` | elemento_id, mime, hash, foto, miniatura | 1:1 con elementos |
+| `auditoria` | fecha, accion, entidad_id, codigo, antes, despues | Bitácora de cambios |
 
-Datos cargados: **917 elementos**, **11 salas**, **2 edificios** (FabLab + ViveLab).
-A `elementos` se suman `elemento_fotos` (foto + miniatura por elemento, 1:1) y
-los índices que el servidor asegura al arrancar (`ix_codigo`, no único).
+Datos en producción (2026-10-15): **1 450 elementos**, **13 salas**, **2 edificios**
+(FabLab + ViveLab), 1:1 con el último libro de los stakeholders. `codigo` es único
+(`uq_codigo`): es lo que codifica el Data Matrix de cada etiqueta.
 
 ## Pruebas
 
 ```bash
 cd fablab/fablab-inventario
-npm run gate                    # tipos + lint + 120 tests + self-check + datamatrix + impresión + docs
-npm test                        # 120/120 tests (Jest)
+npm run gate                    # tipos + lint + 126 tests + self-check + datamatrix + impresión + docs
+npm test                        # 126/126 tests (Jest)
+npm run verify:import           # Importación CSV/Excel contra MySQL real (33 casos)
+npm run verify:auditoria        # Cada escritura deja su fila en auditoria (7 casos)
 node importer/self-check.mjs    # Validaciones DDL/DML sin MySQL
 npm run qa                      # 61-72 checks contra la API (según los datos)
 npm run bench                   # Latencia de todas las operaciones
@@ -193,14 +206,18 @@ cada prueba en [`fablab-inventario/docs/qa.md`](fablab-inventario/docs/qa.md).
 | Variable | Default | Descripción |
 |---|---|---|
 | `MYSQL_HOST` | `localhost` | Host MySQL |
-| `MYSQL_PORT` | `3306` | Puerto |
+| `MYSQL_PORT` | `13306` | Puerto (el `docker-compose.yml` de la raíz publica 3306: ver `docs/base-de-datos.md`) |
 | `MYSQL_USER` | `root` | Usuario |
 | `MYSQL_PASSWORD` | `fablab` | Contraseña |
 | `MYSQL_DATABASE` | `fablab` | Base de datos |
 | `MYSQL_SOCKET` | — | Socket (alternativa) |
+| `MYSQL_SSL` | — | `1` activa TLS hacia la base (Aiven) |
 | `PORT` | `3001` | Puerto del API server |
 | `EXPO_PUBLIC_API_URL` | `http://localhost:3001/api` | URL de la API para la app |
 | `API_TOKEN` | *(vacío = escrituras abiertas)* | Si se define en el server, POST/PUT/DELETE exigen `Authorization: Bearer <API_TOKEN>`. Lectura siempre pública. |
+| `EXPO_PUBLIC_API_TOKEN` | — | Token que la app web manda en las escrituras (se compila en el bundle) |
+| `CORS_ORIGIN` | `*` | Sitio que puede llamar a la API; vacío = solo el mismo dominio |
+| `LIMITE_ESCRITURAS_MIN` | `120` | Escrituras por IP y minuto antes de responder `429` |
 
 ## Desarrollo
 
@@ -211,14 +228,6 @@ npx expo start
 ```
 
 Presiona `a` (Android), `i` (iOS) o `w` (web). Para web con PWA: `npx expo start --web`.
-
-## Push actual
-
-```
-git@github.com:stevencardenas-dev/fablab.git
-  main → documento + DDL
-  feature/inventario-scan → app conectada a MySQL + API + PWA
-```
 
 ## Deploy (Render + hosting estático)
 
@@ -243,10 +252,14 @@ npm run sync:deploy -- --push api,web  # commit + push en los repos de deploy
 
 Notas:
 
-- **web** exige antes `npx expo export --platform web` (genera `dist/`, gitignored);
-  el script regenera `404.html` como copia de `index.html` (fallback SPA de deep links).
-- **api** copia `server/`, `importer/` y `fablab-inventario/ddl-data.sql` tal cual;
-  el repo deploy tiene su propio `package.json` mínimo (solo mysql2 + xlsx).
+- **web**: el script exporta el bundle él mismo (`expo export --clear`, con
+  `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_API_TOKEN` del entorno) y regenera `404.html`
+  como copia de `index.html` (fallback SPA de deep links).
+- **api** copia `server/`, `importer/`, `fablab-inventario/ddl-data.sql` y las
+  dependencias de `docker/api/` (`package.json` + lock, `xlsx` 0.20.3), las mismas
+  que usa la imagen Docker.
+- Cambiar una variable de entorno en Render exige un deploy nuevo
+  (`render deploys create`): un restart no la aplica.
 - `--push` nunca toca este monorepo, solo los repos de deploy.
 
 ### Acceso a Aiven (operaciones)

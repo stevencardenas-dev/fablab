@@ -38,14 +38,14 @@ cd server && PORT=3001 node index.mjs
 cd .. && docker compose up -d
 ```
 
-Ver [`README-SERVER.md`](../README-SERVER.md) para el arranque y [`docs/api.md`](docs/api.md)
+Ver [`server/README.md`](server/README.md) para el arranque y [`docs/api.md`](docs/api.md)
 para el contrato completo de las rutas.
 
 ## Base de datos
 
 MySQL 8 con esquema normalizado: `edificios → salas → elementos` + `traslados`
-+ `elemento_fotos` (fotos de los elementos, 1:1).
-Datos: 917 elementos, 11 salas, 2 edificios (FabLab + ViveLab).
++ `elemento_fotos` (fotos de los elementos, 1:1) + `auditoria` (bitácora de cambios).
+Datos en producción (2026-10-15): 1 450 elementos, 13 salas, 2 edificios (FabLab + ViveLab).
 Detalle del esquema, índices y migraciones en [`docs/base-de-datos.md`](docs/base-de-datos.md).
 
 Generador SQL desde Excel: `importer/gen-normalizado.mjs "archivo.xlsx"`

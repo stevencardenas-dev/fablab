@@ -243,7 +243,7 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
 - **Flujo principal (Corrección):** Dado un elemento con un dato mal cargado,
   cuando el responsable edita los campos tocados, entonces se actualizan solo
   esos campos (`detalle`, `serial`, `inventario`, `estado`, `observaciones`,
-  `cantidad`) y la caché local se actualiza sin re-descargar los 917 elementos.
+  `cantidad`) y la caché local se actualiza sin re-descargar el inventario.
 - **Flujos alternativos:**
   - *Alt 1 (Se intenta cambiar el código o la sala):* Dado que `codigo` y
     `sala_id` **no** son editables, cuando se intenta, entonces no se tocan: la

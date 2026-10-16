@@ -70,7 +70,7 @@ Es el único punto de contacto con la API desde la app.
   devuelve lo último conocido. `prewarmCache()` calienta todo al abrir la app.
 - **Write-through en cada escritura**: alta, edición, traslado (ajusta también
   los conteos de las dos salas), código y foto actualizan la caché local sin
-  re-descargar los 917 elementos.
+  re-descargar todo el inventario.
 - **Sin fallback local en escrituras**: si el server rechaza, la app muestra el
   error. Un elemento que solo existiera en `AsyncStorage` sería una ilusión de
   guardado (nada lo lee).

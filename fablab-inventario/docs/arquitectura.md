@@ -56,7 +56,7 @@ Sala/Inicio pide datos
                                    refresca por detrás (stale-while-revalidate)
 ```
 
-Una sola petición trae los 917 elementos **sin binarios** (solo `foto_hash`),
+Una sola petición trae todo el inventario (1 450 elementos al 2026-10-15) **sin binarios** (solo `foto_hash`),
 comprimida con gzip (>1 KB) a ~20 KB. Antes eran 1 + N peticiones, una por sala.
 
 ### 2. Escribir (alta, edición, traslado, código, foto)
@@ -153,7 +153,7 @@ Cada decisión con su motivo (y el costo que se aceptó):
 ## Dónde vive la verdad
 
 - **Fuente de verdad**: este monorepo (`git@github.com:stevencardenas-dev/fablab.git`,
-  rama `feature/inventario-scan`).
+  rama `main`).
 - **Artefactos de despliegue**: dos repos espejo que se regeneran con
   `npm run sync:deploy` → `Masterkillerr/fablab-api` (privado, lo consume Render)
   y `Masterkillerr/fablab-web` (público, hosting estático). Editar algo ahí
