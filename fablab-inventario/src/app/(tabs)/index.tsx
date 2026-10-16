@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useState, useEffect } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -59,6 +59,8 @@ export default function HomeScreen() {
   const themeMode = useThemeMode();
   const toggleTheme = useToggleTheme();
   const { usuario } = useSesion();
+  // En pantallas angostas (celular) las fichas van en filas; en anchas, en tres columnas.
+  const compacto = useWindowDimensions().width < 520;
   const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | 'export' | null>(null);
   const [element, setElement] = useState<InventoryItem>(newElement);
   // Sala de destino: la BD la guarda como FK (sala_id), NO dentro del campo
@@ -216,7 +218,88 @@ export default function HomeScreen() {
         <ThemedText type="title" style={styles.title}>FabLab UFPS</ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.subtitle}>Universidad Francisco de Paula Santander</ThemedText>
         <View style={styles.actionList}>
-          <ActionButton icon="qrcode.viewfinder" label="Escanear elemento" isOpen={openAction === 'scan'} onPress={() => openPanel('scan')} />
+          {salas.length > 0 && (
+            <View style={styles.resumen}>
+              <ThemedView type="backgroundElement" style={styles.resumenTarjeta}>
+                <ThemedText style={styles.resumenNumero}>{salas.reduce((n, sala) => n + sala.elementos, 0).toLocaleString('es')}</ThemedText>
+                <ThemedText themeColor="textSecondary" type="small">elementos</ThemedText>
+              </ThemedView>
+              <ThemedView type="backgroundElement" style={styles.resumenTarjeta}>
+                <ThemedText style={styles.resumenNumero}>{salas.length}</ThemedText>
+                <ThemedText themeColor="textSecondary" type="small">salas</ThemedText>
+              </ThemedView>
+            </View>
+          )}
+
+          <ActionPanel>
+          <View style={styles.panelTitulo}>
+            <View style={styles.panelIcono}><SearchIcon /></View>
+            <ThemedText type="subtitle" style={styles.panelTituloTexto}>Buscar elemento</ThemedText>
+          </View>
+            <FormInput label="CÓDIGO, NOMBRE O SERIAL" placeholder="Ej. CNC-137, taladro, aire" value={searchName} onChangeText={setSearchName} theme={theme} />
+            <PanelButton label="Buscar" onPress={handleSearch} />
+            {searchResults !== null && searchResults.length > 0 && (
+              <ThemedText style={styles.searchCount}>
+                {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
+              </ThemedText>
+            )}
+            {searchResults !== null && searchResults.length > 0 && (
+              <DataMatrixSheetButton
+                codigos={searchResults.map((item) => item.codigo)}
+                omitidos={searchResults.filter((item) => !item.codigo).length}
+                label={`Imprimir etiquetas de los resultados (${searchResults.filter((item) => item.codigo).length})`}
+                archivo={`busqueda-${searchName}`}
+                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja paginada, en A4 o Carta."
+              />
+            )}
+            {searchResults?.map((item, idx) => {
+              const room = salas.find((s) => s.id === item.sala_id);
+              const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
+              return (
+                <View key={item.id ?? item.codigo ?? `sr-${idx}`} style={styles.searchCard}>
+                  <View style={styles.searchCardHeader}>
+                    <ThemedText type="smallBold" style={styles.searchCardCode}>{item.codigo || '-'}</ThemedText>
+                    {room && (
+                      <View style={styles.roomBadge}>
+                        <ThemedText style={styles.roomBadgeText}>{room.nombre}</ThemedText>
+                      </View>
+                    )}
+                  </View>
+                  <ThemedText style={styles.searchCardDetalle} numberOfLines={1}>{item.detalle || item.codigo || '-'}</ThemedText>
+                  <View style={styles.searchCardMeta}>
+                    <View style={[styles.estadoBadge, { backgroundColor: estadoBueno ? '#22c55e22' : '#ef444422' }]}>
+                      <ThemedText style={[styles.estadoText, { color: estadoBueno ? '#22c55e' : '#ef4444' }]}>
+                        {item.estado || 'Sin estado'}
+                      </ThemedText>
+                    </View>
+                    {item.serial && (
+                      <ThemedText themeColor="textSecondary" type="small">SN: {item.serial}</ThemedText>
+                    )}
+                    {item.cantidad && (
+                      <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
+                    )}
+                  </View>
+                  {item.codigo && (
+                    <DataMatrixDownloadButton codigo={item.codigo} compacta label="Data Matrix" />
+                  )}
+                </View>
+              );
+            })}
+            {searchResults?.length === 0 && (
+              <View style={styles.searchEmpty}>
+                <ThemedText style={styles.searchEmptyIcon}>🔍</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para &ldquo;{searchName}&rdquo;</ThemedText>
+                <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
+              </View>
+            )}
+          </ActionPanel>
+
+          <View style={[styles.fichas, compacto && styles.fichasColumna]}>
+            <ActionTile compacto={compacto} icon="qrcode.viewfinder" label="Escanear" hint="Lee la etiqueta" isOpen={openAction === 'scan'} onPress={() => openPanel('scan')} />
+            <ActionTile compacto={compacto} icon="plus" label="Agregar" hint="Nuevo elemento" isOpen={openAction === 'add'} onPress={() => openPanel('add')} />
+            <ActionTile compacto={compacto} icon="export" label="Exportar" hint="CSV, JSON o Excel" isOpen={openAction === 'export'} onPress={() => openPanel('export')} />
+          </View>
+
           {openAction === 'scan' && <ActionPanel>
             <ThemedText themeColor="textSecondary" style={styles.description}>Escanea el código del elemento para consultar sus datos en el inventario.</ThemedText>
             <Scanner onScanned={handleScanned} />
@@ -233,7 +316,6 @@ export default function HomeScreen() {
             )}
           </ActionPanel>}
 
-          <ActionButton icon="plus" label="Agregar elemento" isOpen={openAction === 'add'} onPress={() => openPanel('add')} />
           {openAction === 'add' && <ActionPanel>
             <ThemedText themeColor="textSecondary" style={styles.description}>Inserta un elemento nuevo en el inventario. El código y su Data Matrix se generan automáticamente.</ThemedText>
 
@@ -308,68 +390,6 @@ export default function HomeScreen() {
             )}
           </ActionPanel>}
 
-          <ActionButton icon="magnifyingglass" label="Buscar elemento" isOpen={openAction === 'search'} onPress={() => openPanel('search')} />
-          {openAction === 'search' && <ActionPanel>
-            <ThemedText themeColor="textSecondary" style={styles.description}>Busca por código, nombre, serial, estado…</ThemedText>
-            <FormInput label="BUSCAR" value={searchName} onChangeText={setSearchName} theme={theme} />
-            <PanelButton label="Buscar" onPress={handleSearch} />
-            {searchResults !== null && searchResults.length > 0 && (
-              <ThemedText style={styles.searchCount}>
-                {searchResults.length} resultad{searchResults.length === 1 ? 'o' : 'os'}
-              </ThemedText>
-            )}
-            {searchResults !== null && searchResults.length > 0 && (
-              <DataMatrixSheetButton
-                codigos={searchResults.map((item) => item.codigo)}
-                omitidos={searchResults.filter((item) => !item.codigo).length}
-                label={`Imprimir etiquetas de los resultados (${searchResults.filter((item) => item.codigo).length})`}
-                archivo={`busqueda-${searchName}`}
-                ayuda="Repone las etiquetas perdidas de estos resultados en una sola hoja paginada, en A4 o Carta."
-              />
-            )}
-            {searchResults?.map((item, idx) => {
-              const room = salas.find((s) => s.id === item.sala_id);
-              const estadoBueno = (item.estado || '').toLowerCase().includes('bueno');
-              return (
-                <View key={item.id ?? item.codigo ?? `sr-${idx}`} style={styles.searchCard}>
-                  <View style={styles.searchCardHeader}>
-                    <ThemedText type="smallBold" style={styles.searchCardCode}>{item.codigo || '-'}</ThemedText>
-                    {room && (
-                      <View style={styles.roomBadge}>
-                        <ThemedText style={styles.roomBadgeText}>{room.nombre}</ThemedText>
-                      </View>
-                    )}
-                  </View>
-                  <ThemedText style={styles.searchCardDetalle} numberOfLines={1}>{item.detalle || item.codigo || '-'}</ThemedText>
-                  <View style={styles.searchCardMeta}>
-                    <View style={[styles.estadoBadge, { backgroundColor: estadoBueno ? '#22c55e22' : '#ef444422' }]}>
-                      <ThemedText style={[styles.estadoText, { color: estadoBueno ? '#22c55e' : '#ef4444' }]}>
-                        {item.estado || 'Sin estado'}
-                      </ThemedText>
-                    </View>
-                    {item.serial && (
-                      <ThemedText themeColor="textSecondary" type="small">SN: {item.serial}</ThemedText>
-                    )}
-                    {item.cantidad && (
-                      <ThemedText themeColor="textSecondary" type="small">× {item.cantidad}</ThemedText>
-                    )}
-                  </View>
-                  {item.codigo && (
-                    <DataMatrixDownloadButton codigo={item.codigo} compacta label="Data Matrix" />
-                  )}
-                </View>
-              );
-            })}
-            {searchResults?.length === 0 && (
-              <View style={styles.searchEmpty}>
-                <ThemedText style={styles.searchEmptyIcon}>🔍</ThemedText>
-                <ThemedText themeColor="textSecondary" style={styles.searchEmptyText}>Sin resultados para &ldquo;{searchName}&rdquo;</ThemedText>
-                <ThemedText themeColor="textSecondary" type="small" style={styles.searchEmptyHint}>Prueba con palabras clave, códigos o seriales</ThemedText>
-              </View>
-            )}
-          </ActionPanel>}
-
-          <ActionButton icon="export" label="Exportar inventario" isOpen={openAction === 'export'} onPress={() => openPanel('export')} />
           {openAction === 'export' && <ActionPanel>
             <ThemedText themeColor="textSecondary" style={styles.description}>
               Descarga el inventario completo o el historial de traslados. El CSV abre directo en Excel (con acentos correctos); el JSON es para otros programas.
@@ -433,8 +453,21 @@ function MoonIcon({ color }: { color: string }) {
   );
 }
 
-function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass' | 'export'; label: string; isOpen: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : icon === 'export' ? <ExportIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
+function ActionTile({ compacto, icon, label, hint, isOpen, onPress }: { compacto: boolean; icon: 'qrcode.viewfinder' | 'plus' | 'export'; label: string; hint: string; isOpen: boolean; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: isOpen }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.ficha, compacto && styles.fichaHorizontal, { backgroundColor: theme.backgroundElement, borderColor: isOpen ? theme.accent : 'transparent' }, pressed && styles.pressed]}>
+      <View style={styles.fichaIcono}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : <ExportIcon />}</View>
+      <View style={compacto ? styles.fichaTexto : undefined}>
+        <ThemedText style={styles.fichaTitulo} numberOfLines={1}>{label}</ThemedText>
+        <ThemedText themeColor="textSecondary" type="small" style={styles.fichaPista} numberOfLines={2}>{hint}</ThemedText>
+      </View>
+    </Pressable>
+  );
 }
 
 function PersonIcon({ color }: { color: string }) {
@@ -490,8 +523,8 @@ function PanelButton({ label, onPress, disabled }: { label: string; onPress?: ()
   return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.panelButton, disabled && styles.panelButtonDisabled, pressed && !disabled && styles.pressed]}><ThemedText style={styles.panelButtonLabel}>{label}</ThemedText></Pressable>;
 }
 
-function FormInput({ label, value, onChangeText, theme }: { label: string; value: string; onChangeText: (value: string) => void; theme: ReturnType<typeof useTheme> }) {
-  return <View style={styles.inputGroup}><ThemedText type="smallBold" style={styles.inputLabel}>{label}</ThemedText><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} placeholder={label} placeholderTextColor={theme.textSecondary} style={[styles.input, { color: theme.text, borderColor: theme.textSecondary }]} /></View>;
+function FormInput({ label, value, onChangeText, theme, placeholder }: { label: string; value: string; onChangeText: (value: string) => void; theme: ReturnType<typeof useTheme>; placeholder?: string }) {
+  return <View style={styles.inputGroup}><ThemedText type="smallBold" style={styles.inputLabel}>{label}</ThemedText><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={theme.textSecondary} style={[styles.input, { color: theme.text, borderColor: theme.textSecondary }]} /></View>;
 }
 
 const styles = StyleSheet.create({
@@ -514,11 +547,21 @@ const styles = StyleSheet.create({
   title: { marginTop: Spacing.two, color: '#C8102E', alignSelf: 'flex-start' },
   subtitle: { alignSelf: 'flex-start', marginTop: Spacing.one },
   actionList: { width: '100%', gap: Spacing.three, marginTop: Spacing.six },
-  actionButton: { minHeight: 58, borderRadius: 12, backgroundColor: '#C8102E', flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.four, gap: Spacing.three },
-  actionLabel: { flex: 1, color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
-  actionIcon: { width: 24, alignItems: 'center', justifyContent: 'center' },
-  chevron: { color: '#FFFFFF', fontSize: 22, fontWeight: '700', marginLeft: 'auto' },
-  actionPanel: { borderRadius: 12, padding: Spacing.three, gap: Spacing.three, marginTop: -Spacing.two },
+  resumen: { flexDirection: 'row', gap: Spacing.three },
+  resumenTarjeta: { flex: 1, borderRadius: 12, paddingVertical: Spacing.three, paddingHorizontal: Spacing.four },
+  resumenNumero: { fontSize: 28, lineHeight: 34, fontWeight: '700', color: '#C8102E' },
+  panelTitulo: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  panelIcono: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center' },
+  panelTituloTexto: { fontSize: 22, lineHeight: 28 },
+  fichas: { flexDirection: 'row', gap: Spacing.three },
+  fichasColumna: { flexDirection: 'column' },
+  fichaHorizontal: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  fichaTexto: { flex: 1 },
+  ficha: { flex: 1, minWidth: 0, borderRadius: 12, borderWidth: 2, padding: Spacing.three, gap: Spacing.one },
+  fichaIcono: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#C8102E', alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.one },
+  fichaTitulo: { fontSize: 17, fontWeight: '700' },
+  fichaPista: { lineHeight: 17 },
+  actionPanel: { borderRadius: 12, padding: Spacing.three, gap: Spacing.three },
   description: { lineHeight: 21 },
   errorText: { color: '#C8102E', lineHeight: 21 },
   inputGroup: { gap: Spacing.one },

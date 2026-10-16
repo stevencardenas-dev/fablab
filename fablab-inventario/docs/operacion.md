@@ -88,7 +88,7 @@ curl -s https://fablab-web.onrender.com/index.html | grep -o 'entry-[a-z0-9]*\.j
 curl -s https://fablab-web.onrender.com/_expo/static/js/web/<entry>.js | grep -c onrender
 ```
 
-- Si cambió el bundle, **sube `CACHE_NAME` en `public/sw.js`** (`fablab-v19` hoy):
+- Si cambió el bundle, **sube `CACHE_NAME` en `public/sw.js`** (`fablab-v20` hoy):
   el SW es cache-first sobre el shell y los bundles, y sin cambiar el nombre los
   clientes con el SW viejo seguirían con la UI vieja.
 - Render propaga en 1-3 min; los `502/503` durante el arranque son normales (la
