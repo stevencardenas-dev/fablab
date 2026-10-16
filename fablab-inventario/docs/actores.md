@@ -6,7 +6,7 @@ respondido **contra el sistema que existe hoy**: cada capacidad de aquí apunta 
 una ruta de [`api.md`](api.md) o a una pantalla de [`app.md`](app.md), y lo que
 no existe se declara como hueco en vez de darse por hecho.
 
-- **Fecha de este levantamiento:** 2026-09-27.
+- **Fecha de este levantamiento:** 2026-10-15 (el anterior era del 2026-09-27).
 - **Fuentes:** §1.1 y §1.6 del documento integrador (proceso actual y alcances),
   `notes/05` y `notes/07` (cobertura declarada), y las dos fuentes de verdad del
   código: `server/index.mjs` + `importer/api.mjs` y `src/app/`.
@@ -14,6 +14,9 @@ no existe se declara como hueco en vez de darse por hecho.
   contraseñas ni roles**. Los actores de abajo son roles *organizacionales*, no
   cuentas. Hoy todos escriben con **un solo token compartido**. Lo que eso
   implica está desarrollado en la última sección, no escondido.
+- **Desde el 2026-10-15 cada escritura queda en la bitácora** (`auditoria`): qué
+  cambió, antes y después, y cuándo. Sin autor, por la misma razón: no hay cuentas
+  ([`auditoria.md`](auditoria.md)).
 - **Cada operación de estos actores** está contada como caso de uso, con su flujo
   principal y sus alternativos, en [`casos-de-uso.md`](casos-de-uso.md).
 
@@ -42,16 +45,17 @@ no existe se declara como hueco en vez de darse por hecho.
   mandarla a imprimir.
 - **Buscar:** búsqueda multi-palabra sobre todos los campos, normalizando
   acentos, para encontrar un elemento sin recorrer la sala.
-- **Dar de baja:** eliminar un elemento (y con él su historial) por código.
+- **Dar de baja:** eliminar un elemento por código. Su historial de traslados se
+  borra con él, pero la bitácora conserva la fila completa del elemento borrado.
 
 Es el actor que cubre el ciclo completo y **el único que escribe**. Ahí está la
 explicación de fondo de por qué el sistema hoy puede vivir sin login: una sola
 persona, con un teléfono en la mano, hace todo el flujo.
 
-> Dos capacidades de este actor están implementadas y **nadie las está usando**:
-> la foto (en producción hay **0 fotos**, dato verificado el 2026-09-24) y el
-> escaneo, del que no hay captura funcionando (sigue pendiente en la bitácora del
-> monorepo, `specs/HANDOFF.md`).
+> Dos capacidades de este actor están implementadas y **sin uso comprobado**:
+> la foto (en producción hay **0 fotos**, verificado el 2026-10-15) y el escaneo
+> con la cámara de un teléfono, que nunca se probó en un dispositivo real (la
+> generación del símbolo sí está verificada).
 
 ---
 
@@ -68,8 +72,12 @@ universidad. En el sistema:
 - **Exportar para trabajar fuera del sistema:** inventario o historial de
   traslados en CSV (con BOM, se abre directo en Excel) o JSON. No hay filtros
   parciales: el volcado es completo.
-- **Recargar el inventario desde el Excel** cuando llegue una hoja nueva, con el
-  arnés de importación (`seed`, `fix:mojibake` y `self-check`).
+- **Cargar una hoja nueva** con el botón *Importar inventario* de la app web
+  (`POST /api/import/elementos`, solo agrega códigos nuevos), o dejar la base
+  **1:1 con el libro** con `scripts/reconciliar-archivos.mjs` (dry-run por defecto),
+  que es como se reconcilió producción el 2026-10-09.
+- **Revisar qué cambió** en el inventario: la tabla `auditoria`, hoy por SQL
+  (no hay pantalla).
 - **Reetiquetar una sala completa** después de reorganizarla.
 - **Verificar los conteos** contra el origen antes de dar el inventario por
   bueno.
@@ -83,11 +91,15 @@ sus acciones determinan lo que los demás pueden hacer, así que se documenta:
 
 **Funciones principales:**
 
-- **Desplegar** la API y la PWA, y **rotar el token de escritura** (que exige
-  volver a exportar y desplegar la web, porque el token viaja dentro del bundle).
+- **Desplegar** la API y la PWA en Render, o el stack completo con Docker en un
+  servidor propio ([`docker/README.md`](../docker/README.md)), y **rotar el token de
+  escritura** (exige volver a exportar y desplegar la web, porque el token viaja
+  dentro del bundle; se rotó el 2026-10-16).
 - **Administrar el esquema:** crear/ajustar tablas e índices al arrancar el
   server (`asegurarCodigoUnico()` y compañía), siempre de forma idempotente.
-- **Respaldar** y verificar la base (manifiestos de reversión y `backup:remoto`).
+- **Respaldar** y verificar la base (`backup:remoto` en Render; `docker/respaldo.sh`
+  con restauración probada en Docker).
+- **Reconciliar** la base con el libro vigente de los stakeholders.
 - **Importar** la migración inicial desde los libros de Excel, con `self-check` y
   la QA como red.
 - **Mantener el servicio despierto** y verificar el despliegue con sondas post
@@ -117,7 +129,7 @@ para el alcance declarado.
 ## 5. Sistema (actor no humano)
 
 Igual que en los casos de uso formales, hay acciones que no las dispara una
-persona sino una regla o un evento. En este sistema son cinco, y las cinco
+persona sino una regla o un evento. En este sistema son seis, y las seis
 existen en código:
 
 - **Asignar el código único y rechazar el duplicado** (el `UNIQUE uq_codigo` que
@@ -132,8 +144,10 @@ existen en código:
   ahorro de la imagen y la revalidación de caché los hace el sistema en cada
   operación, sin que el usuario los pida.
 - **Defender el borde HTTP:** id no entero → `400`, cuerpo mayor a 1 MB → `413`,
-  JSON roto → `400`, sin bufferizar. Es el sistema diciendo que no, no una
-  persona.
+  JSON roto → `400`, sin bufferizar; más de 120 escrituras por minuto desde una IP
+  → `429`; CORS según `CORS_ORIGIN`. Es el sistema diciendo que no, no una persona.
+- **Registrar cada escritura en la bitácora**, en la misma transacción que el
+  cambio: si el cambio se revierte, el registro también.
 
 ---
 
@@ -165,22 +179,22 @@ una cámara.
   una decisión humana que hoy se apoya, como mucho, en una consulta o una
   exportación a mano (`notes/05` lo declara como alcance: alertas, no compras).
 - **Mantenimiento / baja por daño:** un equipo que se daña sale del inventario con
-  un borrado físico (`DELETE /api/elementos/:codigo`), que se lleva el historial
-  con él. No hay estado "de baja" ni traza de por qué desapareció: es el hueco
-  más grande de este grupo de actores.
+  un borrado físico (`DELETE /api/elementos/:codigo`). La bitácora conserva qué era
+  y cuándo se borró, pero no hay estado "de baja" ni **motivo**: es el hueco más
+  grande de este grupo de actores.
 
 ---
 
 ## Lo que falta para que estos roles sean de verdad
 
 Ninguna de estas brechas es un olvido del documento: son el estado del sistema al
-2026-09-27.
+2026-10-15.
 
 | Brecha | Qué implica | Dónde vive |
 |---|---|---|
-| Sin login ni roles | No se puede saber **quién** escribió qué, ni limitar quién borra | Ver el problema conocido del `EXPO_PUBLIC_API_TOKEN` en [`problemas-conocidos.md`](problemas-conocidos.md): el token es un freno al vandalismo casual, no seguridad |
+| Sin login ni roles | Se sabe **qué** cambió y **cuándo** (`auditoria`), no **quién**; tampoco se puede limitar quién borra | Ver el problema conocido del `EXPO_PUBLIC_API_TOKEN` en [`problemas-conocidos.md`](problemas-conocidos.md): el token es un freno al vandalismo casual, no seguridad |
 | `traslados` sin columna de autor | El historial tiene fecha, origen y destino; **no autor** | `CREATE TABLE traslados` en [`base-de-datos.md`](base-de-datos.md) |
-| Sin CRUD de salas ni edificios | Las salas nacen de la importación; no hay pantalla para crearlas | Solo `GET /api/salas` en [`api.md`](api.md) |
+| Sin CRUD de salas ni edificios | Las salas nacen de la importación o del arranque del server (así entraron Estudio TV y Papeleria); no hay pantalla para crearlas | Solo `GET /api/salas` en [`api.md`](api.md) |
 | Sin préstamos ni devoluciones | El préstamo es texto libre, no un flujo con responsable y vencimiento | `traslados.nota` |
 | Sin entradas/salidas/consumo | Declarado como control de stock (`notes/07`); hoy el único movimiento posible es el traslado entre salas | No hay rutas de entradas ni salidas en la tabla de [`api.md`](api.md) |
 | Sin alertas de reabastecimiento | Declarado en `notes/05` y en §1.7: no implementado | — |
@@ -200,10 +214,10 @@ de nombre o desaparece, este documento queda desactualizado en esa fila.
 | Actor | Pantalla | Ruta de la API |
 |---|---|---|
 | Responsable de inventario | Inicio · Sala | `POST /api/elementos`, `PUT /api/elementos/:id`, `POST /api/elementos/:id/codigo`, `POST /api/elementos/:id/foto`, `DELETE /api/elementos/:id/foto`, `DELETE /api/elementos/:codigo`, `POST /api/traslados`, `GET /api/elementos/:id/historial`, `GET /api/elementos/:id/foto` |
-| Coordinación | Inicio (Exportar) · Sala | `GET /api/elementos`, `GET /api/salas`, `GET /api/salas/:id/elementos`, `GET /api/export/{elementos,traslados}.{csv,json}` |
+| Coordinación | Inicio (Exportar, Importar) · Sala | `GET /api/elementos`, `GET /api/salas`, `GET /api/salas/:id/elementos`, `GET /api/export/{elementos,traslados}.{csv,json}`, `POST /api/import/elementos` |
 | Equipo desarrollador | — (línea de comandos y Render) | `GET /health` |
 | Usuario del laboratorio | Inventario · Sala | `GET /api/salas`, `GET /api/elementos`, `GET /api/salas/:id/elementos` |
-| Sistema | — | Reglas transversales: `uq_codigo`, `traslados.fecha`, generación del Data Matrix, `ETag`, validaciones `400/409/413` |
+| Sistema | — | Reglas transversales: `uq_codigo`, `traslados.fecha`, generación del Data Matrix, `ETag`, validaciones `400/409/413/429`, tabla `auditoria` |
 
 ## Verificación
 
@@ -211,7 +225,7 @@ de nombre o desaparece, este documento queda desactualizado en esa fila.
   resuelven y que la tabla de rutas de [`api.md`](api.md) sigue coincidiendo con
   lo que `server/index.mjs` expone: si una ruta se cae, el gate lo dice antes de
   que este documento mienta.
-- Los conteos citados (917 elementos, 11 salas, 2 edificios, 0 fotos) son de
-  producción y están fechados: se vuelven a medir con `GET /api/salas` —que trae
+- Los conteos de producción (1 450 elementos, 13 salas, 2 edificios, 0 fotos al
+  2026-10-15) están fechados: se vuelven a medir con `GET /api/salas` —que trae
   el conteo por sala— y `GET /api/elementos`. `npm run qa` ejercita esa API
   contra los datos que haya, sin fijar cifras.

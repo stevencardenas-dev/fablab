@@ -52,16 +52,24 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
 ### CU-02 (Equipo desarrollador): Recargar el inventario desde una hoja nueva
 
 - **Actor(es):** Equipo desarrollador
-- **Estado:** implementado · `npm run seed`, `fix:mojibake`, `self-check`
-- **Flujo principal (Recarga):** Dada una hoja nueva o corregida, cuando se
-  ejecuta la importación y `self-check`, entonces la base refleja la hoja y los
-  chequeos puros (validaciones, normalización de códigos, SQL generado) pasan sin
-  necesidad de base.
+- **Estado:** implementado · `POST /api/import/elementos` (botón *Importar
+  inventario*, web), `scripts/reconciliar-archivos.mjs`, `npm run seed`, `self-check`
+- **Flujo principal (Recarga):** Dado un libro nuevo o corregido, cuando se corre la
+  reconciliación en dry-run y luego con `--aplicar`, entonces la base queda 1:1 con
+  el libro (borra lo que ya no está, agrega lo nuevo, iguala valores y traslada lo
+  que cambió de sala) y una segunda pasada no encuentra nada que cambiar. Así se
+  reconcilió producción el 2026-10-09.
 - **Flujos alternativos:**
   - *Alt 1 (La recarga toca códigos ya impresos):* Dado que un elemento ya tiene
     su etiqueta pegada, cuando la hoja nueva trae otro código para él, entonces el
     cambio se detecta antes de imprimir nada: reetiquetar es una decisión, no un
-    efecto colateral de la importación.
+    efecto colateral de la importación. La reconciliación **nunca** cambia un código:
+    lo reporta como "código distinto".
+  - *Alt 2 (Solo agregar desde la app):* Dada una hoja con elementos nuevos, cuando
+    se importa desde la app web, entonces entran solo los códigos que no existen; los
+    repetidos y las salas desconocidas se reportan por fila.
+  - *Alt 3 (Hojas viejas):* Dado un libro con hojas de 2024 además de las de 2026,
+    entonces solo cuentan las hojas 2026: son el inventario vigente.
 
 ### CU-03 (Equipo desarrollador): Respaldar la base y verificar el despliegue
 
@@ -233,8 +241,8 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
     cuando se consulta, entonces responde `404` (antes respondía `200 []`, así que
     un id equivocado parecía un elemento sin movimientos).
   - *Alt 3 (Historial borrado con su elemento):* Dado un elemento dado de baja
-    (CU-13), cuando se consulta su historial, entonces ya no existe: el borrado se
-    llevó la traza. Es la limitación abierta más grande de este caso.
+    (CU-13), cuando se consulta su historial, entonces ya no existe por esta ruta;
+    lo que sí queda es su registro en la bitácora (CU-23).
 
 ### CU-12 (Responsable de inventario): Corregir los datos de un elemento
 
@@ -254,6 +262,9 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
     cambiadas).
   - *Alt 3 (Dos personas editando):* Dado que cada cliente manda solo sus campos
     tocados, cuando dos personas editan campos distintos, entonces no se pisan.
+  - *Alt 4 (Registro):* Dada una corrección que cambia algo, entonces queda en la
+    bitácora con el valor anterior y el nuevo de cada campo cambiado; una que no
+    cambia nada no deja registro.
 
 ### CU-13 (Responsable de inventario): Dar de baja un elemento
 
@@ -262,7 +273,7 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
 - **Flujo principal (Baja):** Dado un elemento que ya no debe estar en el
   inventario, cuando se elimina por su **código**, entonces el sistema borra
   primero sus traslados y luego el elemento, en una transacción; la foto cae por
-  `ON DELETE CASCADE`.
+  `ON DELETE CASCADE` y la fila completa del elemento queda en la bitácora.
 - **Flujos alternativos:**
   - *Alt 1 (Código duplicado):* Dado un código que aparece en más de una fila,
     cuando se intenta borrar, entonces responde `409` y **no borra nada** (antes
@@ -270,9 +281,23 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
   - *Alt 2 (Repetir el borrado):* Dado un elemento ya borrado, cuando se repite,
     entonces responde `404`: el `DELETE` es idempotente.
   - *Alt 3 (Se dañó, no desapareció):* Dado un equipo dañado, cuando se da de
-    baja, entonces sale del inventario **sin dejar constancia de por qué**: no hay
-    estado "de baja" ni baja lógica. Es una brecha declarada en
-    [`actores.md`](actores.md), no un comportamiento deseado.
+    baja, entonces sale del inventario: la bitácora guarda **qué era y cuándo**, pero
+    no **por qué** ni **quién**; no hay estado "de baja" ni baja lógica. Es una
+    brecha declarada en [`actores.md`](actores.md), no un comportamiento deseado.
+
+### CU-23 (Coordinación / Equipo desarrollador): Revisar qué cambió en el inventario
+
+- **Actor(es):** Coordinación del laboratorio, Equipo desarrollador
+- **Estado:** **implementado en parte** · tabla `auditoria` ([`auditoria.md`](auditoria.md));
+  se consulta por SQL, no hay pantalla ni ruta
+- **Flujo principal (Revisión):** Dado un elemento o un día, cuando se consulta la
+  bitácora, entonces se ve cada alta, edición, baja, traslado, asignación de código,
+  cambio de foto e importación, en orden, con los valores de antes y después.
+- **Flujos alternativos:**
+  - *Alt 1 (¿Quién fue?):* Dado que la escritura usa un token compartido, entonces
+    la columna `actor` está vacía: el quién llega con el inicio de sesión.
+  - *Alt 2 (Cambio fallido):* Dado un cambio rechazado (`404`, `409`) o revertido,
+    entonces no deja fila: la bitácora no cuenta lo que no pasó.
 
 ### CU-14 (Responsable de inventario): Gestionar la foto del elemento
 
@@ -372,7 +397,7 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
 
 ## EP-05 · Declarados y no implementados
 
-Estos casos **no existen en el sistema** al 2026-09-27. Se documentan porque están
+Estos casos **no existen en el sistema** al 2026-10-15. Se documentan porque están
 declarados como alcance del proyecto, y porque un caso de uso que nadie implementó
 es más peligroso sin escribir que escrito.
 
@@ -383,7 +408,8 @@ es más peligroso sin escribir que escrito.
 - **Flujo esperado (Gestión de espacios):** Dado un laboratorio que abre o
   reorganiza un espacio, cuando la coordinación crea la sala con su edificio,
   entonces el inventario la ofrece como destino de traslados.
-- **Hoy:** las salas nacen de la importación; la API solo expone `GET /api/salas`
+- **Hoy:** las salas nacen de la importación o del arranque del server (así entraron
+  Estudio TV y Papeleria el 2026-10-09); la API solo expone `GET /api/salas`
   y `GET /api/salas/:id/elementos`. No hay pantalla ni ruta para crear, renombrar
   o retirar una sala.
 
@@ -440,6 +466,7 @@ es más peligroso sin escribir que escrito.
 | CU-12 Corregir datos del elemento | Responsable de inventario | OE-3 | implementado |
 | CU-13 Dar de baja un elemento | Responsable de inventario | OE-3 | implementado |
 | CU-14 Gestionar la foto | Responsable de inventario | OE-3 | implementado |
+| CU-23 Revisar qué cambió | Coordinación, Equipo desarrollador | OE-3 | implementado en parte |
 | CU-15 Consultar por sala | Usuario del laboratorio | — | implementado |
 | CU-16 Buscar en el inventario | Usuario, Responsable | — | implementado |
 | CU-17 Consultar la ficha | Usuario del laboratorio | — | implementado |
@@ -455,8 +482,9 @@ es más peligroso sin escribir que escrito.
   las rutas citadas siguen existiendo en `server/index.mjs`: si una ruta se cae,
   el gate lo dice antes de que el caso de uso mienta.
 - Los flujos alternativos citan **códigos de estado reales** (`400`, `404`,
-  `409`, `413`): `npm run qa` los ejercita contra la API (`61-72` checks) y
-  `npm run gate` corre antes de cada push.
+  `409`, `413`, `429`): `npm run qa` los ejercita contra la API (`61-72` checks),
+  `npm run verify:auditoria` comprueba la bitácora (CU-23) y `npm run gate` corre
+  antes de cada push.
 - Lo que este documento **no** puede verificar: que el papel impreso se lea con
   una cámara. La legibilidad del SVG está probada (`verify:datamatrix`,
   `verify:impresion`); la prueba en papel sigue pendiente, igual que la captura

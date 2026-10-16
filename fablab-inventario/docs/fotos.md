@@ -1,6 +1,6 @@
 # Fotos de los elementos
 
-Al 2026-09-24: **0 fotos guardadas** (medición de ese día). La prueba en vivo que puso la
+**0 fotos guardadas** (verificado el 2026-10-15). La prueba en vivo que puso la
 misma foto en los 917 elementos se revirtió; la herramienta queda en el repo
 para repetirla. Todo lo de abajo está verificado con esa prueba y con fotos de
 cámara reales.
