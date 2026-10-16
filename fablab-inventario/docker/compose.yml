@@ -1,0 +1,60 @@
+# Stack completo: MySQL + API + web. Desde fablab-inventario/:
+#   cp docker/.env.example docker/.env   (y poner contraseñas reales)
+#   docker compose -f docker/compose.yml --env-file docker/.env up -d --build
+name: fablab-stack
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?define MYSQL_ROOT_PASSWORD en docker/.env}
+      MYSQL_DATABASE: fablab
+      # Usuario de la app: solo tiene permisos sobre la base fablab (no es root)
+      MYSQL_USER: fablab
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:?define MYSQL_APP_PASSWORD en docker/.env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    # Solo se usa en el primer arranque (volumen vacío)
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d:ro
+    # Sin "ports": MySQL no se publica fuera de la red de Docker
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: fablab
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
+      MYSQL_DATABASE: fablab
+      API_TOKEN: ${API_TOKEN:?define API_TOKEN en docker/.env}
+    # Sin "ports": la API solo se alcanza a través de web (/api)
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web/Dockerfile
+      args:
+        API_TOKEN: ${API_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+volumes:
+  mysql_data:

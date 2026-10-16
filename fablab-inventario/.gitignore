@@ -45,3 +45,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Secretos del stack en contenedores (no se versionan)
+docker/.env
+docker/respaldos/

@@ -1,0 +1,11 @@
+# Contexto de build: todo menos lo pesado, lo generado y los secretos
+node_modules
+dist
+.expo
+.git
+backups
+docker/.env
+docker/init
+*.log
+coverage
+docker/respaldos
