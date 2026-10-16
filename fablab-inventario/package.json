@@ -35,7 +35,7 @@
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/jest": "29.5.14",
@@ -85,5 +85,8 @@
   "private": true,
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "shell-quote": "^1.11.0"
   }
 }
