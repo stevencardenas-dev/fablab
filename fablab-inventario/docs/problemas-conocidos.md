@@ -124,7 +124,7 @@ Discord/Slack/correo. Ver *Traspaso al FabLab* en [`operacion.md`](operacion.md)
 ### Subir el número de caché del SW al desplegar
 
 El service worker es cache-first sobre el shell y los bundles. Si despliegas un
-bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v17` hoy),
+bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v19` hoy),
 los clientes con el SW viejo quedan con la UI vieja para siempre.
 
 ### Resuelto: el token de escritura viajaba en el bundle web
