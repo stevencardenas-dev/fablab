@@ -15,10 +15,11 @@ edificios ──1:N──► salas ──1:N──► elementos ──1:1──�
 | Tabla | Filas hoy | Para qué |
 |---|---|---|
 | `edificios` | 2 (`FabLab`, `ViveLab`) | Agrupar salas por edificio |
-| `salas` | 11 | Cada hoja del Excel es una sala |
-| `elementos` | **917** | El inventario (una fila por elemento/fila de la hoja) |
+| `salas` | 13 | Cada hoja 2026 del Excel es una sala (Estudio TV y Papeleria desde 2026-10-09) |
+| `elementos` | **1 450** | El inventario (una fila por elemento/fila de la hoja) |
 | `traslados` | variable | Historial de movimientos entre salas |
 | `elemento_fotos` | 0 (ver [`fotos.md`](fotos.md)) | Foto 800 px + miniatura 200 px por elemento |
+| `auditoria` | crece con cada escritura | Bitácora de cambios (ver [`auditoria.md`](auditoria.md)) |
 
 ## DDL
 
@@ -215,6 +216,11 @@ MYSQL_PORT=3306 node server/index.mjs
 - **Restaurar** no es un comando único: ese JSON es un volcado lógico, no un
   `mysqldump`. Para reinsertar hay que respetar el esquema (o regenerar el dump
   completo con `mysqldump` si se tienen credenciales de la base).
+- **En el despliegue con Docker sí hay `mysqldump`:** `sh docker/respaldo.sh` deja
+  `docker/respaldos/fablab-*.sql.gz` (30 días). La restauración se probó el
+  2026-10-15: el respaldo cargado en una base vacía dio los mismos 2 edificios,
+  13 salas y 1 450 elementos, con el mismo `CHECKSUM TABLE` de `elementos`
+  (ver [`despliegue-universidad.md`](despliegue-universidad.md)).
 - **Manifiestos de reversión**: las pruebas en vivo dejan su plan exacto en
   `backups/` (p. ej. `fotos-demo-*.json`), para poder deshacer solo lo que se
   tocó (ver [`fotos.md`](fotos.md)).
@@ -226,9 +232,15 @@ El detalle está en [`importacion.md`](importacion.md). En corto:
 `gen-normalizado.mjs` (o `npm run seed`) genera el SQL desde el xlsx, que no
 vive en git porque se regenera en un comando.
 
-## Qué se guarda hoy (2026-09-24)
+## Qué se guarda hoy (2026-10-15)
 
-- 917 elementos, 11 salas, 2 edificios, **0 fotos** (la prueba de foto masiva se
-  revirtió), 35 códigos asignados en producción y sin duplicados nuevos.
-- Los conteos del README (`916 elementos`) quedaron atrás: la base se cerró con
-  917 al asignar los 35 códigos y borrar residuos de QA.
+- **1 450 elementos, 13 salas, 2 edificios**, todos con código y sin duplicados.
+- La base es **1:1 con el último libro** de los stakeholders (hojas 2026, VIVE LAB,
+  Estudio TV y Papelería). La reconciliación (2026-10-09) borró 35 elementos que
+  ya no estaban en el libro, agregó 485, completó 187 nombres vacíos y movió 1;
+  se hace y se verifica con `scripts/reconciliar-archivos.mjs` (dry-run por defecto).
+- Quedan **14 códigos distintos** entre la base y el libro (CNC-166…171, IOT-88,
+  ALM-1…9): no se cambian hasta revisar las etiquetas impresas.
+- 52 elementos sin nombre, porque el libro también los trae vacíos.
+- Las hojas viejas (`SALA (…)`, `AREA DE RECEPCION…`, `ALMACEN`, `INGRESOS`, de
+  2024) no se cargan: el inventario vigente son las hojas 2026.

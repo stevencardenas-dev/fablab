@@ -107,8 +107,9 @@ Detalle en [`importacion.md`](importacion.md).
 | | datamatrix-svg-ts (+ `datamatrix-decode` en dev) | `^1.0.2` |
 | | react-native-web (PWA) | `~0.21.0` |
 | API | Node.js (solo módulos nativos + `mysql2`) | 20+ |
-| BD | MySQL 8 (Aiven en producción, Docker en local) | — |
-| Importer | `xlsx` | `^0.18.5` |
+| BD | MySQL 8 (Aiven en producción hoy; MySQL 8.4 en el stack Docker para la universidad) | — |
+| Despliegue | Docker Compose: MySQL + API + nginx (ver [`despliegue-universidad.md`](despliegue-universidad.md)) | — |
+| Importer | `xlsx` (CDN de SheetJS; npm se quedó en 0.18.5 con avisos sin corregir) | `0.20.3` |
 | Pruebas | Jest + jest-expo, ESLint (expo) , TypeScript | 29.7 / 9 / 6.0 |
 
 No hay framework de servidor (Express, Fastify…): `node:http` + un router de

@@ -3,9 +3,10 @@
 Documentación técnica del sistema completo: app móvil/PWA, API REST, base de
 datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 
-> Estado del documento: **2026-09-24**. Datos de producción verificados ese día:
-> **917 elementos · 11 salas · 2 edificios · 0 fotos** (la foto de prueba en vivo
-> se revirtió; ver [`fotos.md`](fotos.md)). API desplegada:
+> Estado del documento: **2026-10-15**. Datos de producción verificados ese día:
+> **1 450 elementos · 13 salas · 2 edificios**, idénticos 1:1 al último libro de los
+> stakeholders (*INVENTARIO ESTUDIO TV VIVE LAB*, hojas 2026). Ver
+> [`base-de-datos.md`](base-de-datos.md#qué-se-guarda-hoy-2026-10-15). API desplegada:
 > `https://fablab-api-sr1q.onrender.com` · web: `https://fablab-web.onrender.com`.
 
 ## Por dónde empezar
@@ -37,7 +38,12 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
 - **[arquitectura.md](arquitectura.md)** — componentes del monorepo, flujo de
   datos, stack y versiones, decisiones de diseño con su motivo.
 - **[api.md](api.md)** — contrato completo de las 14 rutas HTTP: autenticación,
-  CORS, gzip, ETag, códigos de estado, ejemplos `curl` y errores.
+  CORS, límite de escrituras, gzip, ETag, códigos de estado, ejemplos `curl` y errores.
+- **[auditoria.md](auditoria.md)** — bitácora de cambios: qué se registra, cómo
+  consultarla y qué falta (el *quién* llega con el inicio de sesión).
+- **[despliegue-universidad.md](despliegue-universidad.md)** — llevar el sistema al
+  servidor de la universidad con Docker: requisitos, instalación, respaldos,
+  restauración probada y seguridad.
 - **[base-de-datos.md](base-de-datos.md)** — modelo normalizado
   (`edificios → salas → elementos` + `traslados` + `elemento_fotos`), DDL,
   índices, migraciones idempotentes, conexión local/Aiven y respaldos.

@@ -1,5 +1,7 @@
 # Despliegue con Docker — Inventario FabLab UFPS
 
+Contexto y decisiones: [`docs/despliegue-universidad.md`](../docs/despliegue-universidad.md).
+
 Tres contenedores: **MySQL 8.4** (datos), **API** (Node 20) y **web** (nginx: sirve
 la app y reenvía `/api` a la API). Solo se publica **un puerto** (web). MySQL y la
 API no son alcanzables desde fuera de la red de Docker.
@@ -79,6 +81,6 @@ La restauración está documentada al inicio de `docker/respaldo.sh`.
   app solo en la red del campus (o VPN).
 - **Cambiar `API_TOKEN`** exige reconstruir la web (`up -d --build`), porque el token se
   compila dentro del bundle.
-- Sin límite de peticiones en la app: si se publica en internet, ponerlo en el proxy.
+- La API limita las escrituras por IP (120 por minuto, `LIMITE_ESCRITURAS_MIN`) y registra cada cambio en la tabla `auditoria` (ver `docs/auditoria.md`). Lecturas sin límite: si se publica en internet, limitarlas en el proxy.
 - Dependencias: la API no tiene vulnerabilidades conocidas (`npm audit`); la app web
   conserva 46 avisos en la cadena de Expo, pendientes de una actualización de Expo.

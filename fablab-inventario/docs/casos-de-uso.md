@@ -365,7 +365,7 @@ objetivos, la cuarta es la consulta del usuario final y la quinta lo que falta.
     confirma, entonces el sistema muestra el error y **no** finge guardado: no hay
     cola local de escrituras.
   - *Alt 3 (Bundle nuevo desplegado):* Dado un despliegue con UI nueva, cuando los
-    clientes vuelven, entonces hay que haber subido `CACHE_NAME` (`fablab-v12`) o
+    clientes vuelven, entonces hay que haber subido `CACHE_NAME` (`fablab-v17`) o
     el service worker sigue sirviendo la UI vieja para siempre.
 
 ---

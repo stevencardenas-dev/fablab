@@ -125,7 +125,7 @@ Discord/Slack/correo. Ver *Traspaso al FabLab* en [`operacion.md`](operacion.md)
 ### Subir el número de caché del SW al desplegar
 
 El service worker es cache-first sobre el shell y los bundles. Si despliegas un
-bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v12` hoy),
+bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v17` hoy),
 los clientes con el SW viejo quedan con la UI vieja para siempre.
 
 ### El token de escritura viaja en el bundle web
@@ -134,6 +134,13 @@ los clientes con el SW viejo quedan con la UI vieja para siempre.
 leerlo y escribir. Es un **freno al vandalismo casual, no seguridad real**.
 Rotarlo exige volver a exportar y desplegar la web (el token nuevo debe estar
 también en las env vars de Render).
+
+Rotado el **2026-10-16** (el anterior quedó público en el repo `fablab-web`). Orden
+que funciona: web con el token nuevo → `API_TOKEN` en Render → **`render deploys
+create`**. Cambiar la env var y hacer `render restart` **no** la aplica: el restart
+reusa la configuración del último deploy y las escrituras de la web fallan con 401
+hasta el deploy. La solución de fondo es el inicio de sesión (ver
+[`auditoria.md`](auditoria.md)).
 
 ### Metro cachea los `EXPO_PUBLIC_*`
 

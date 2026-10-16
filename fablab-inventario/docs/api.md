@@ -15,7 +15,9 @@ Servidor HTTP en Node puro (`server/index.mjs`) sobre la capa de datos de
 |---|---|
 | Formato | JSON UTF-8 (`application/json; charset=utf-8`) |
 | Compresión | Respuestas > 1 KB con `Accept-Encoding: gzip` → `Content-Encoding: gzip` + `Vary: Accept-Encoding` |
-| CORS | `Access-Control-Allow-Origin: *`, métodos `GET, POST, PUT, DELETE, OPTIONS`, headers `Content-Type, Authorization`. Preflight `OPTIONS` → `204` |
+| CORS | Origen según `CORS_ORIGIN`: `*` por defecto (Render), un dominio para restringir, o vacío para solo-mismo-dominio (stack Docker, donde nginx sirve la web y reenvía `/api`). Métodos `GET, POST, PUT, DELETE, OPTIONS`, headers `Content-Type, Authorization`. Preflight `OPTIONS` → `204` |
+| Límite de escrituras | `POST/PUT/DELETE` por IP y minuto (`LIMITE_ESCRITURAS_MIN`, 120 por defecto; la IP sale de `X-Forwarded-For`). Al pasarse → `429` con `Retry-After: 60`. Se cuenta antes del token, así que también frena a quien pruebe tokens |
+| Auditoría | Toda escritura que cambia algo deja una fila en `auditoria`, en la misma transacción. Ver [`auditoria.md`](auditoria.md) |
 | Lectura | Siempre pública (`GET` y `HEAD`) |
 | Escritura | Si el server corre con `API_TOKEN`, `POST/PUT/DELETE` exigen `Authorization: Bearer <token>`; si falta → `401` con `WWW-Authenticate: Bearer` |
 | Errores | `{"error": "<mensaje en español>"}`. `400` campo inválido/faltante, `404` inexistente, `409` conflicto, `413` demasiado grande, `503` bloqueo ocupado, `500` fallo real del server (se registra en el log) |
