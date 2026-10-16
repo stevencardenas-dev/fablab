@@ -97,6 +97,9 @@ export default function InventoryScreen() {
               </View>
             )}
           </View>
+          <ThemedText themeColor="textSecondary" type="small" style={styles.privacy}>
+            Aviso de privacidad: este sistema registra elementos del inventario, no datos personales. Si encuentras datos de una persona en una foto o en una observación, contacta al FabLab para corregirlos o eliminarlos.
+          </ThemedText>
         </SafeAreaView>
       </ScrollView>
     </ThemedView>
@@ -121,4 +124,5 @@ const styles = StyleSheet.create({
   errorBox: { marginTop: Spacing.four, gap: Spacing.three, alignItems: 'flex-start' },
   errorText: { color: '#C8102E', lineHeight: 21 },
   retryButton: { minHeight: 36, borderRadius: 8, backgroundColor: '#C8102E', paddingHorizontal: Spacing.three, alignItems: 'center', justifyContent: 'center' },
+  privacy: { marginTop: Spacing.six, lineHeight: 20 },
 });
