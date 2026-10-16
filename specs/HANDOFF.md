@@ -4,6 +4,21 @@
 
 ## State
 
+**Estado 2026-10-09 (reconciliación con los .xlsx de stakeholders).** Producción = archivo *INVENTARIO ESTUDIO TV VIVE LAB (2)* en las **13 salas**: **1 450 elementos**, 1:1 con el archivo (antes 1 000). Respaldo previo: `fablab-inventario/backups/elementos-2026-10-09-03-25.json`. Herramienta: `fablab-inventario/scripts/reconciliar-archivos.mjs` (dry-run por defecto; `--aplicar`). Segunda pasada: 0 cambios.
+
+**Paquete Docker para la universidad (2026-10-15):** `entregas/fablab-docker-20261015.tar.gz` (sin secretos, ignorado por git). Un solo puerto: nginx sirve la web y reenvía `/api`; la web se compila dentro de la imagen con el `API_TOKEN` de `docker/.env`; la base arranca con `docker/init/01-inventario.sql` (1 450 elementos, 13 salas; sin historial de traslados); `docker/respaldo.sh` hace respaldos diarios. Guía en `docker/README.md`. Probado desde volumen vacío: 13 salas, 1 450 elementos, 401/404 por /api, deep link 200, API no publicada.
+
+Pendiente:
+1. ~~Salas Estudio TV y Papeleria~~ **Hecho:** deploy de la API (`fablab-api` 93a4615, `sync:deploy --push api`), salas creadas y 54 elementos agregados. El commit del deploy dice `+dirty`: el monorepo tiene cambios sin commitear, así que ese deploy no se reproduce desde un hash hasta commitearlos.
+2. **Códigos, decidir con las etiquetas físicas:** CNC-166/167/168/171 ↔ CNC-137/138/139/142 del archivo; IOT-88 ↔ IOT-79 (el archivo repite IOT-79); ALM-1..9 ↔ ALM-01..09. La API no edita `codigo`.
+3. Almacén y Papelería: ubicación y nivel van a `observaciones` ("Ubicación A, nivel 1"); la base no tiene campo propio.
+4. **Seguridad de dependencias.** Hecho: `xlsx` 0.20.3 desde el CDN de SheetJS (API: 0 vulnerabilidades; `verify:import` 33/33, tests 126/126, imagen Docker probada); `shell-quote` (crítico) fijado con `overrides` a 1.12.0. Pendiente: 29 altos y 17 moderados, todos en la cadena de Expo/Metro/Jest. Su arreglo es `npm audit fix --force`, es decir, una actualización mayor de Expo (rotura) y va en su propia tarea.
+5. **Auditoría (decidido 2026-10-09: registrar qué cambió y cuándo, no quién).** La columna `actor` queda vacía hasta elegir cómo se identifica cada persona (cuenta institucional o token por persona). Construcción en tarea aparte: "Build the audit log for inventory writes". Mientras la escritura use un token compartido público en el bundle, cualquiera puede escribir: ver punto 6.
+6. **Rotación del token de escritura: HECHA (2026-10-16).** Web `fablab-web` 9ec33ef (SW `fablab-v17`, bundle con el token nuevo) y deploy de la API `dep-db8nvimi0phs738ct2jg`. Ojo: cambiar una env var en Render y hacer `render restart` NO la aplica; hace falta `render deploys create`. Verificado: token nuevo → 404 (aceptado), viejo → 401. `~/.config/fablab/api-token` ya es el nuevo. El repo `fablab-web` sigue público, así que el token nuevo también queda visible en el bundle: la solución real es el login.
+7. **Seguridad de dependencias, resto.** Tarea aparte: "Upgrade Expo to clear the remaining advisories" (46 avisos en la cadena de Expo/Metro/Jest).
+
+Sin commitear: `scripts/reconciliar-archivos.mjs`, `importer/api.mjs`, `importer/normalizado.mjs`, `server/index.mjs`, `docker/`, `.gitignore`, `src/app/(tabs)/explore.tsx` (aviso de privacidad), `package.json` y `package-lock.json` (xlsx 0.20.3, override de shell-quote).
+
 **Importación de inventario: CSV y Excel, verificada (2026-10-08).** Commits
 monorepo `209a80f` (CSV), `c80a96c` (Excel), `17f84ea` (endurecimiento); api
 `099d981`, web `6220b1d` (SW `fablab-v16`, resumen legible del resultado en `resumenImportacion`). `POST /api/import/elementos` acepta
