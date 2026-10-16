@@ -210,3 +210,26 @@ console.log('self-check OK');
   assert.deepEqual(filasDeHoja(hoja), [{ codigo: 'A-1', detalle: 'Mesa', serial: '', inventario: '70357012', cantidad: 2 }]);
   console.log('self-check libro OK');
 }
+
+// --- Inicio de sesión de la cuenta del laboratorio (server/sesion.mjs) ---
+{
+  const { crearHashClave, verificarClave, firmarSesion, leerSesion } = await import('../server/sesion.mjs');
+  const hash = crearHashClave('clave-de-prueba');
+  assert.ok(hash.startsWith('scrypt:'), 'el hash no tiene el formato esperado');
+  assert.ok(!hash.includes('clave-de-prueba'), 'la clave aparece en claro en el hash');
+  assert.equal(verificarClave('clave-de-prueba', hash), true);
+  assert.equal(verificarClave('otra', hash), false);
+  assert.equal(verificarClave('x', 'basura'), false, 'un hash mal formado no debe aceptar nada');
+
+  const secreto = 'secreto-de-prueba';
+  const ahora = Date.now();
+  const sesion = firmarSesion('lab', secreto, { ahora, horas: 12 });
+  assert.equal(leerSesion(sesion, secreto, { ahora }), 'lab');
+  assert.equal(leerSesion(sesion, secreto, { ahora: ahora + 13 * 3_600_000 }), null, 'la sesión venció y se aceptó');
+  assert.equal(leerSesion(sesion, 'otro-secreto', { ahora }), null, 'firma de otro secreto aceptada');
+  const [datos] = sesion.split('.');
+  const manipulada = `${datos}x.${sesion.split('.')[1]}`;
+  assert.equal(leerSesion(manipulada, secreto, { ahora }), null, 'token alterado aceptado');
+  assert.equal(leerSesion('', secreto, { ahora }), null);
+  console.log('self-check sesion OK');
+}

@@ -1,6 +1,7 @@
 // Lectura de la base para el frontend, sobre el esquema normalizado
 // (edificios -> salas -> elementos, mas traslados). Ver importer/normalizado.mjs.
 import { createHash } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import mysql from 'mysql2/promise';
 import XLSX from 'xlsx';
 import { conexionDesdeEnv } from './importar.mjs';
@@ -542,10 +543,15 @@ export async function asegurarAuditoria(cfg = conexionDesdeEnv()) {
   await conectar(cfg, (conn) => conn.query(DDL_AUDITORIA));
 }
 
+// Quién hace la escritura en curso: el server lo fija por petición (ver server/index.mjs).
+// Fuera de una petición (scripts, pruebas) queda vacío.
+export const contextoPeticion = new AsyncLocalStorage();
+
 async function auditar(conn, { accion, entidad = 'elemento', entidadId = null, codigo = null, antes = null, despues = null }) {
+  const actor = contextoPeticion.getStore()?.actor ?? null;
   await conn.query(
-    'INSERT INTO auditoria (accion, entidad, entidad_id, codigo, antes, despues) VALUES (?, ?, ?, ?, ?, ?)',
-    [accion, entidad, entidadId, codigo, antes == null ? null : JSON.stringify(antes), despues == null ? null : JSON.stringify(despues)],
+    'INSERT INTO auditoria (accion, entidad, entidad_id, codigo, antes, despues, actor) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [accion, entidad, entidadId, codigo, antes == null ? null : JSON.stringify(antes), despues == null ? null : JSON.stringify(despues), actor],
   );
 }
 

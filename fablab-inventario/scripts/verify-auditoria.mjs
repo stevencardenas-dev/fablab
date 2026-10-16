@@ -26,7 +26,7 @@ const pedir = (metodo, ruta, cuerpo) => fetch(`${BASE}${ruta}`, {
   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
   body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
 });
-const filas = async (id) => (await db.query('SELECT accion, antes, despues FROM auditoria WHERE entidad_id = ? ORDER BY id', [id]))[0];
+const filas = async (id) => (await db.query('SELECT accion, antes, despues, actor FROM auditoria WHERE entidad_id = ? ORDER BY id', [id]))[0];
 
 try {
   for (let i = 0; i < 60; i++) {
@@ -64,6 +64,7 @@ try {
   await pedir('DELETE', `/elementos/${CODIGO}`);
   r = await filas(id);
   ok(r.length === 4 && r[3].accion === 'baja' && r[3].antes.codigo === CODIGO, 'baja guarda la fila completa (y sobrevive al borrado)');
+  ok(r.every((x) => x.actor === 'script'), 'escrituras con el token de herramientas quedan con actor script');
 } finally {
   await db.end();
   server.kill();

@@ -10,6 +10,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ThemeModeContext, ToggleThemeContext, type AppThemeMode } from '@/hooks/use-theme';
 import { registerServiceWorker } from '@/components/service-worker';
 import { prewarmCache } from '@/lib/inventory';
+import { cargarSesion } from '@/lib/sesion';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,6 +22,7 @@ export default function RootLayout() {
   // entra a Inventario los datos ya están (carga instantánea).
   useEffect(() => {
     prewarmCache();
+    cargarSesion(); // sesión guardada del laboratorio, si no venció
   }, []);
 
   const systemColorScheme = useColorScheme();

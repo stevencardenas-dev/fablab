@@ -4,6 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { DatosFoto } from './foto';
+import { tokenDeSesion } from './sesion';
 // multiRemove existe en el mock de jest-expo; si no, cae a removeItem secuencial.
 if (!AsyncStorage.multiRemove) {
   (AsyncStorage as any).multiRemove = (keys: string[]) =>
@@ -46,7 +47,7 @@ export type Room = {
 const WEB_BASE = typeof window !== 'undefined' && window.location
   ? window.location.origin.replace(/:(\d+)$/, ':3001/api')
   : '';
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || WEB_BASE || 'http://localhost:3001/api';
+export const API_BASE = process.env.EXPO_PUBLIC_API_URL || WEB_BASE || 'http://localhost:3001/api';
 
 // --- Helpers de API ---
 
@@ -76,11 +77,13 @@ async function get<T>(path: string): Promise<T> {
   return res.json();
 }
 
-// Token de escritura, horneado en el bundle (EXPO_PUBLIC_*; Expo lo inlined-a
-// en cualquier expresión, por eso se lee dentro de la función y no en una
-// constante de módulo). Vacío = server en modo abierto y no se manda header.
-// Si el server exige token y el bundle no lo trae, la escritura falla 401 explícita.
+// Credencial de escritura: la sesión de la cuenta del laboratorio (sesion.ts). Sin
+// sesión no se manda header y el server responde 401. EXPO_PUBLIC_API_TOKEN solo
+// sirve para desarrollo local; la build de producción no debe llevarlo (queda en el
+// bundle público).
 function authHeaders(): Record<string, string> {
+  const sesion = tokenDeSesion();
+  if (sesion) return { Authorization: `Bearer ${sesion}` };
   const token = process.env.EXPO_PUBLIC_API_TOKEN || '';
   return token ? { Authorization: `Bearer ${token}` } : {};
 }

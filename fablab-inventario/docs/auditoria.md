@@ -32,7 +32,7 @@ guarda el elemento entero, así que lo borrado sigue siendo consultable.
 | `codigo` | VARCHAR(64) | código del elemento en ese momento (sobrevive a la baja) |
 | `antes`, `despues` | JSON | valores |
 | `origen` | VARCHAR | `api` |
-| `actor` | VARCHAR | **vacío por ahora** (ver Límites) |
+| `actor` | VARCHAR | nombre de la cuenta del laboratorio (`lab` en el ejemplo) si la escritura vino de la app con sesión; `script` si vino del token de herramientas |
 
 La tabla se crea sola al arrancar el server (`asegurarAuditoria` en
 `importer/api.mjs`), con índices por fecha y por elemento.
@@ -59,10 +59,10 @@ SELECT fecha, codigo, antes FROM auditoria WHERE accion = 'baja' ORDER BY id DES
 
 ## Límites
 
-- **No registra quién.** La escritura usa un token compartido, así que el server no
-  sabe qué persona hizo el cambio. La columna `actor` ya existe y queda vacía hasta
-  que haya inicio de sesión (cuenta institucional o token por persona). Decisión del
-  2026-10-09: registrar qué y cuándo ahora, el quién después.
+- **No registra la persona.** La cuenta del laboratorio es **una sola y compartida**
+  (decisión con los usuarios, 2026-10-16): la bitácora dice *desde la cuenta del
+  laboratorio*, no qué persona. Distinguir personas exigiría una cuenta por persona
+  (o login institucional), que hoy no existe.
 - **No hay pantalla ni ruta para leerla**: se consulta con SQL. Agregar una ruta es
   una decisión aparte (quién puede ver la bitácora).
 - Los cambios hechos directo en la base, fuera de la API, no quedan registrados.

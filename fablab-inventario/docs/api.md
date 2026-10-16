@@ -19,7 +19,7 @@ Servidor HTTP en Node puro (`server/index.mjs`) sobre la capa de datos de
 | Límite de escrituras | `POST/PUT/DELETE` por IP y minuto (`LIMITE_ESCRITURAS_MIN`, 120 por defecto; la IP sale de `X-Forwarded-For`). Al pasarse → `429` con `Retry-After: 60`. Se cuenta antes del token, así que también frena a quien pruebe tokens |
 | Auditoría | Toda escritura que cambia algo deja una fila en `auditoria`, en la misma transacción. Ver [`auditoria.md`](auditoria.md) |
 | Lectura | Siempre pública (`GET` y `HEAD`) |
-| Escritura | Si el server corre con `API_TOKEN`, `POST/PUT/DELETE` exigen `Authorization: Bearer <token>`; si falta → `401` con `WWW-Authenticate: Bearer` |
+| Escritura | `POST/PUT/DELETE` exigen `Authorization: Bearer <credencial>`: la **sesión** de la cuenta del laboratorio (`POST /api/login`) o el `API_TOKEN` de herramientas. Sin credencial → `401` con `WWW-Authenticate: Bearer` |
 | Errores | `{"error": "<mensaje en español>"}`. `400` campo inválido/faltante, `404` inexistente, `409` conflicto, `413` demasiado grande, `503` bloqueo ocupado, `500` fallo real del server (se registra en el log) |
 | Cuerpo | Máximo **1 MB** por petición. Más grande (por `Content-Length` o por chunked) → `413`, y se rechaza **sin** bufferizarlo entero en memoria |
 | JSON | Un cuerpo que no parsea → `400` "JSON inválido" (antes llegaba como `500`) |

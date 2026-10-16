@@ -15,7 +15,8 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme, useThemeMode, useToggleTheme } from '@/hooks/use-theme';
 import { prepararFotoParaSubir, type FotoOptimizada } from '@/lib/foto-optimizar';
-import { addItem, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarInventario, listarSalas, resumenImportacion, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
+import { addItem, API_BASE, buscarElementos, exportarUrl, findByCodigo, generateCodigo, importarInventario, listarSalas, resumenImportacion, subirFoto, type InventoryItem, type Room } from '@/lib/inventory';
+import { cerrarSesion, expiraSesion, iniciarSesion, usuarioDeSesion } from '@/lib/sesion';
 
 function newElement(): InventoryItem {
   return {
@@ -56,7 +57,12 @@ export default function HomeScreen() {
   const theme = useTheme();
   const themeMode = useThemeMode();
   const toggleTheme = useToggleTheme();
-  const [openAction, setOpenAction] = useState<'scan' | 'add' | 'search' | 'export' | null>(null);
+  const [openAction, setOpenAction] = useState<'cuenta' | 'scan' | 'add' | 'search' | 'export' | null>(null);
+  // Sesión de la cuenta del laboratorio: el formulario y el estado que muestra el panel
+  const [cuentaUsuario, setCuentaUsuario] = useState('');
+  const [cuentaClave, setCuentaClave] = useState('');
+  const [cuentaError, setCuentaError] = useState<string | null>(null);
+  const [cuentaCambio, setCuentaCambio] = useState(0); // fuerza re-render al entrar o salir
   const [element, setElement] = useState<InventoryItem>(newElement);
   // Sala de destino: la BD la guarda como FK (sala_id), NO dentro del campo
   // `inventario` (ese es el "N° INVENTARIO" de la hoja). Sin sala_id el server
@@ -82,7 +88,23 @@ export default function HomeScreen() {
     });
   }, []);
 
-  function openPanel(panel: 'scan' | 'add' | 'search' | 'export') {
+  async function entrarCuenta() {
+    setCuentaError(null);
+    try {
+      await iniciarSesion(API_BASE, cuentaUsuario.trim(), cuentaClave);
+      setCuentaClave('');
+      setCuentaCambio((n) => n + 1);
+    } catch (e) {
+      setCuentaError(e instanceof Error ? e.message : 'No se pudo iniciar sesión');
+    }
+  }
+
+  async function salirCuenta() {
+    await cerrarSesion();
+    setCuentaCambio((n) => n + 1);
+  }
+
+  function openPanel(panel: 'cuenta' | 'scan' | 'add' | 'search' | 'export') {
     const next = openAction === panel ? null : panel;
     setOpenAction(next);
     setScannedItem(undefined);
@@ -199,6 +221,24 @@ export default function HomeScreen() {
         <ThemedText type="title" style={styles.title}>FabLab UFPS</ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.subtitle}>Universidad Francisco de Paula Santander</ThemedText>
         <View style={styles.actionList}>
+          <ActionButton icon="cuenta" label={usuarioDeSesion() ? 'Cuenta del laboratorio' : 'Iniciar sesión'} isOpen={openAction === 'cuenta'} onPress={() => openPanel('cuenta')} />
+          {openAction === 'cuenta' && <ActionPanel key={cuentaCambio}>
+            {usuarioDeSesion() ? <>
+              <ThemedText themeColor="textSecondary" style={styles.description}>Sesión iniciada como {usuarioDeSesion()}. Vence a las {new Date(expiraSesion() ?? 0).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}.</ThemedText>
+              <Pressable accessibilityRole="button" onPress={salirCuenta} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonLabel}>Cerrar sesión</ThemedText>
+              </Pressable>
+            </> : <>
+              <ThemedText themeColor="textSecondary" style={styles.description}>Para agregar, editar, trasladar o dar de baja elementos hay que iniciar sesión con la cuenta del laboratorio. Consultar no requiere cuenta.</ThemedText>
+              <TextInput accessibilityLabel="Usuario" placeholder="Usuario" value={cuentaUsuario} onChangeText={setCuentaUsuario} autoCapitalize="none" style={[styles.cuentaInput, { color: theme.text, borderColor: theme.textSecondary }]} />
+              <TextInput accessibilityLabel="Clave" placeholder="Clave" value={cuentaClave} onChangeText={setCuentaClave} secureTextEntry style={[styles.cuentaInput, { color: theme.text, borderColor: theme.textSecondary }]} />
+              {cuentaError && <ThemedText style={styles.cuentaError}>{cuentaError}</ThemedText>}
+              <Pressable accessibilityRole="button" onPress={entrarCuenta} style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+                <ThemedText style={styles.exportButtonLabel}>Entrar</ThemedText>
+              </Pressable>
+            </>}
+          </ActionPanel>}
+
           <ActionButton icon="qrcode.viewfinder" label="Escanear elemento" isOpen={openAction === 'scan'} onPress={() => openPanel('scan')} />
           {openAction === 'scan' && <ActionPanel>
             <ThemedText themeColor="textSecondary" style={styles.description}>Escanea el código del elemento para consultar sus datos en el inventario.</ThemedText>
@@ -416,8 +456,17 @@ function MoonIcon({ color }: { color: string }) {
   );
 }
 
-function ActionButton({ icon, label, isOpen, onPress }: { icon: 'qrcode.viewfinder' | 'plus' | 'magnifyingglass' | 'export'; label: string; isOpen: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : icon === 'export' ? <ExportIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
+function ActionButton({ icon, label, isOpen, onPress }: { icon: 'cuenta' | 'qrcode.viewfinder' | 'plus' | 'magnifyingglass' | 'export'; label: string; isOpen: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ expanded: isOpen }} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}><View style={styles.actionIcon}>{icon === 'plus' ? <PlusIcon /> : icon === 'cuenta' ? <PersonIcon /> : icon === 'qrcode.viewfinder' ? <ScanIcon /> : icon === 'export' ? <ExportIcon /> : <SearchIcon />}</View><ThemedText style={styles.actionLabel} numberOfLines={1}>{label}</ThemedText><ThemedText style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</ThemedText></Pressable>;
+}
+
+function PersonIcon() {
+  return (
+    <Svg width="22" height="22" viewBox="0 0 24 24" fill="none" accessibilityLabel="Cuenta">
+      <Circle cx="12" cy="8" r="4" stroke="#FFFFFF" strokeWidth="2" />
+      <Path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
 }
 
 function ScanIcon() {
@@ -498,6 +547,8 @@ const styles = StyleSheet.create({
   inputGroup: { gap: Spacing.one },
   inputLabel: { color: '#C8102E' },
   input: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: Spacing.two, fontSize: 16 },
+  cuentaInput: { minHeight: 46, borderWidth: 1, borderRadius: 8, paddingHorizontal: Spacing.two, fontSize: 16, marginTop: Spacing.two },
+  cuentaError: { color: '#C8102E', marginTop: Spacing.two },
   roomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   photoPreview: { width: '100%', aspectRatio: 4 / 3, borderRadius: 8, marginBottom: Spacing.one },
   photoMeta: { lineHeight: 18 },

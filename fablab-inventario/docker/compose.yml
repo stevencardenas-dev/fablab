@@ -42,6 +42,10 @@ services:
       MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
       MYSQL_DATABASE: fablab
       API_TOKEN: ${API_TOKEN:?define API_TOKEN en docker/.env}
+      # Cuenta del laboratorio (inicio de sesión en la app)
+      CUENTA_USUARIO: ${CUENTA_USUARIO:?define CUENTA_USUARIO en docker/.env}
+      CUENTA_CLAVE_HASH: ${CUENTA_CLAVE_HASH:?define CUENTA_CLAVE_HASH en docker/.env}
+      SESION_SECRETO: ${SESION_SECRETO:?define SESION_SECRETO en docker/.env}
       # Mismo dominio (nginx reenvía /api): sin CORS para otros sitios
       CORS_ORIGIN: ""
     # Sin "ports": la API solo se alcanza a través de web (/api)
@@ -50,8 +54,6 @@ services:
     build:
       context: ..
       dockerfile: docker/web/Dockerfile
-      args:
-        API_TOKEN: ${API_TOKEN}
     restart: unless-stopped
     depends_on:
       - api

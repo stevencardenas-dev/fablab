@@ -35,6 +35,8 @@ import {
   idEntero,
 } from '../importer/api.mjs';
 import { conexionDesdeEnv } from '../importer/importar.mjs';
+import { contextoPeticion } from '../importer/api.mjs';
+import { leerSesion, firmarSesion, verificarClave } from './sesion.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -213,11 +215,31 @@ function readBody(req, limite = LIMITE_CUERPO_BYTES) {
 // el header 'Authorization: Bearer <token>' y devuelven 401/403 si falta.
 const API_TOKEN = process.env.API_TOKEN || '';
 
-function escribeAutorizado(req) {
-  if (!API_TOKEN) return true;
+// Cuenta del laboratorio (una sola, compartida). Sin estas variables no hay login
+// y el comportamiento es el de antes: solo el token de script.
+const CUENTA_USUARIO = process.env.CUENTA_USUARIO || '';
+const CUENTA_CLAVE_HASH = process.env.CUENTA_CLAVE_HASH || '';
+const SESION_SECRETO = process.env.SESION_SECRETO || '';
+const LOGIN_ACTIVO = Boolean(CUENTA_USUARIO && CUENTA_CLAVE_HASH && SESION_SECRETO);
+
+/**
+ * Quién escribe: 'script' (token API_TOKEN, para herramientas), el nombre de la
+ * cuenta del laboratorio (sesión válida) o null (no autorizado). Sin token ni login
+ * configurados, todo es 'script' (comportamiento anterior).
+ */
+function quienEscribe(req) {
+  if (!API_TOKEN && !LOGIN_ACTIVO) return 'script';
   const auth = req.headers['authorization'] || '';
   const m = /^Bearer\s+(.+)$/.exec(auth);
-  return Boolean(m) && m[1].trim() === API_TOKEN;
+  if (!m) return null;
+  const bearer = m[1].trim();
+  if (API_TOKEN && bearer === API_TOKEN) return 'script';
+  if (LOGIN_ACTIVO) { const usuario = leerSesion(bearer, SESION_SECRETO); if (usuario) return usuario; }
+  return null;
+}
+
+function escribeAutorizado(req) {
+  return quienEscribe(req) !== null;
 }
 
 function noAutorizado(res) {
@@ -226,7 +248,7 @@ function noAutorizado(res) {
     'WWW-Authenticate': 'Bearer',
     ...ORIGEN,
   });
-  res.end(JSON.stringify({ error: 'Escritura requiere Authorization: Bearer <API_TOKEN>' }));
+  res.end(JSON.stringify({ error: 'Escritura requiere sesión (POST /api/login) o Authorization: Bearer <API_TOKEN>' }));
 }
 
 // --- Routes ---
@@ -247,14 +269,27 @@ async function handleReq(req, res) {
   const parts = pathname.split('/').filter(Boolean);
 
   try {
-    // POST/PUT/DELETE requieren token si API_TOKEN está configurado. HEAD es
-    // lectura (mismo pedido sin cuerpo): no puede exigir token.
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
-      if (excedeLimite(req)) {
-        res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60', ...ORIGEN });
-        return res.end(JSON.stringify({ error: 'Demasiadas escrituras: espera un minuto' }));
-      }
-      if (!escribeAutorizado(req)) return noAutorizado(res);
+    // POST/PUT/DELETE requieren token o sesión. HEAD es lectura. El login va
+    // antes del control de acceso (no tiene sesión todavía), pero sí bajo el límite.
+    const escritura = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS';
+    if (escritura && excedeLimite(req)) {
+      res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60', ...ORIGEN });
+      return res.end(JSON.stringify({ error: 'Demasiadas escrituras: espera un minuto' }));
+    }
+    if (req.method === 'POST' && parts.join('/') === 'api/login') {
+      if (!LOGIN_ACTIVO) return json(res, 404, { error: 'Inicio de sesión no configurado en este server' });
+      const body = await readBody(req);
+      const ok = String(body.usuario ?? '') === CUENTA_USUARIO && verificarClave(body.clave ?? '', CUENTA_CLAVE_HASH);
+      if (!ok) return json(res, 401, { error: 'Usuario o contraseña incorrectos' });
+      const horas = 12;
+      return json(res, 200, { token: firmarSesion(CUENTA_USUARIO, SESION_SECRETO, { horas }), expira_horas: horas, usuario: CUENTA_USUARIO });
+    }
+    if (escritura) {
+      const quien = quienEscribe(req);
+      if (quien === null) return noAutorizado(res);
+      // Lo usa auditar() para la columna actor: el nombre de la cuenta o 'script'
+      const almacen = contextoPeticion.getStore();
+      if (almacen) almacen.actor = quien;
     }
 
     // GET /health  →  healthcheck para deploys (Render, etc.)
@@ -472,7 +507,7 @@ try {
   console.error('[arranque] esquema/cache parcial:', e.message);
 }
 
-const server = createServer(handleReq);
+const server = createServer((req, res) => contextoPeticion.run({ actor: null }, () => handleReq(req, res)));
 server.listen(PORT, HOST, () => {
   console.log(`FabLab API escuchando en http://${HOST}:${PORT}`);
   console.log(`  GET    /health`);
