@@ -33,7 +33,7 @@ try {
     try { if ((await fetch(`http://127.0.0.1:${PORT}/health`)).ok) break; } catch {}
     await new Promise((r) => setTimeout(r, 500));
   }
-  const salas = await (await fetch(`${BASE}/salas`)).json();
+  const salas = await (await fetch(`${BASE}/salas`, { headers: { Authorization: `Bearer ${TOKEN}` } })).json();
   const [a, b] = salas;
 
   const alta = await (await pedir('POST', '/elementos', { sala_id: a.id, codigo: CODIGO, detalle: 'prueba auditoría', cantidad: '1' })).json();

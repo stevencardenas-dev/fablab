@@ -11,6 +11,8 @@ import { ThemeModeContext, ToggleThemeContext, type AppThemeMode } from '@/hooks
 import { registerServiceWorker } from '@/components/service-worker';
 import { prewarmCache } from '@/lib/inventory';
 import { cargarSesion } from '@/lib/sesion';
+import { PantallaEntrada } from '@/components/pantalla-entrada';
+import { useSesion } from '@/hooks/use-sesion';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,10 +22,14 @@ registerServiceWorker();
 export default function RootLayout() {
   // Calienta la cache del inventario apenas abre la app: cuando el usuario
   // entra a Inventario los datos ya están (carga instantánea).
+  const { cargada, usuario } = useSesion();
   useEffect(() => {
-    prewarmCache();
     cargarSesion(); // sesión guardada del laboratorio, si no venció
   }, []);
+  // La caché se calienta solo con sesión: sin ella el server rechaza las lecturas.
+  useEffect(() => {
+    if (usuario) prewarmCache();
+  }, [usuario]);
 
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<AppThemeMode>(
@@ -49,10 +55,16 @@ export default function RootLayout() {
           <AnimatedSplashOverlay />
           {/* Iconos de la barra de estado legibles en ambos temas */}
           <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="sala/[nombre]" />
-          </Stack>
+          {/* Sin sesión no se muestra nada de la app: solo la pantalla de entrada.
+              Mientras se lee la sesión guardada no se pinta nada (evita un parpadeo). */}
+          {!cargada ? null : usuario ? (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="sala/[nombre]" />
+            </Stack>
+          ) : (
+            <PantallaEntrada />
+          )}
         </ThemeProvider>
       </ToggleThemeContext.Provider>
     </ThemeModeContext.Provider>

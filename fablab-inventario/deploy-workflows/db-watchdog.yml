@@ -24,8 +24,8 @@ jobs:
       - name: Comprobar API pública
         id: api
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/api/salas || echo 000)
-          echo "GET /api/salas → HTTP $code"
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/health || echo 000)
+          echo "GET /health → HTTP $code"
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
       - name: Estado del servicio en Aiven

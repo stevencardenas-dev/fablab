@@ -71,6 +71,9 @@ function tokenEscritura() {
   }
 }
 
+// El server exige credencial también para leer (las fotos incluidas).
+const cabeceraLectura = () => { const { token } = tokenEscritura(); return token ? { Authorization: `Bearer ${token}` } : {}; };
+
 const ms = (n) => `${Math.round(n)} ms`;
 const peso = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
 
@@ -89,7 +92,7 @@ async function pedir(url, opciones = {}, esperas = [1500, 4000]) {
 }
 
 async function elementos() {
-  const res = await pedir(`${API_URL}/elementos`);
+  const res = await pedir(`${API_URL}/elementos`, { headers: cabeceraLectura() });
   if (!res.ok) throw new Error(`GET /elementos → ${res.status}`);
   return res.json();
 }
@@ -322,26 +325,26 @@ async function medirLatencia() {
   };
   // La primera petición paga el arranque del servicio (cold start): se descarta
   // para no confundir "el free tier estaba dormido" con "las fotos pesan".
-  await fetch(url(muestra[0], 'miniatura')).then((r) => r.arrayBuffer());
+  await fetch(url(muestra[0], 'miniatura'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer());
 
   console.log(`api: ${API_URL}\nsobre ${muestra.length} elementos con foto\n`);
   const tMini = [];
-  for (const e of muestra) tMini.push(await cronometrar(() => fetch(url(e, 'miniatura')).then((r) => r.arrayBuffer())));
+  for (const e of muestra) tMini.push(await cronometrar(() => fetch(url(e, 'miniatura'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer())));
   console.log(`miniatura (200 px, en serie):     ${stats(tMini)}`);
 
   const tFoto = [];
-  for (const e of muestra.slice(0, 6)) tFoto.push(await cronometrar(() => fetch(url(e, 'foto')).then((r) => r.arrayBuffer())));
+  for (const e of muestra.slice(0, 6)) tFoto.push(await cronometrar(() => fetch(url(e, 'foto'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer())));
   console.log(`foto (800 px, en serie):          ${stats(tFoto)}`);
 
-  const tSala = await cronometrar(() => Promise.all(muestra.map((e) => fetch(url(e, 'miniatura')).then((r) => r.arrayBuffer()))));
+  const tSala = await cronometrar(() => Promise.all(muestra.map((e) => fetch(url(e, 'miniatura'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer()))));
   console.log(`sala completa (${muestra.length} miniaturas a la vez): ${ms(tSala)} en total`);
 
   const tRevalidar = await cronometrar(async () => {
-    const r = await fetch(url(muestra[0], 'foto'));
+    const r = await fetch(url(muestra[0], 'foto'), { headers: cabeceraLectura() });
     const etag = r.headers.get('etag');
     await r.arrayBuffer();
     if (!etag) return;
-    await fetch(url(muestra[0], 'foto'), { headers: { 'If-None-Match': etag } }).then((x) => x.arrayBuffer());
+    await fetch(url(muestra[0], 'foto'), { headers: { ...cabeceraLectura(), 'If-None-Match': etag } }).then((x) => x.arrayBuffer());
   });
   console.log(`foto + revalidación por ETag:     ${ms(tRevalidar)}`);
   console.log('\nSi esto sale lento, el cuello no son las fotos: la primera carga incluye el cold start de Render.');

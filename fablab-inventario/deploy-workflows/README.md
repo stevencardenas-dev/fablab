@@ -5,7 +5,7 @@ Workflows de GitHub Actions que corren en el **repo de deploy de la API**
 despiertos el servicio de Render y la base de Aiven, y los que avisan cuando algo
 se cae.
 
-- `keep-alive.yml` — ping a `/api/salas` cada 10 min (respaldo externo del ping
+- `keep-alive.yml` — ping a `/health` cada 10 min (respaldo externo del ping
   que el server se hace a sí mismo cada 10 min).
 - `db-watchdog.yml` — cada hora comprueba la API y, si Aiven apagó la base, la
   enciende por su API (`AIVEN_TOKEN`); los dos avisan por `ALERTA_WEBHOOK`.

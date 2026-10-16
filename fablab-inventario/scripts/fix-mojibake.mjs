@@ -181,7 +181,7 @@ async function repararAPI(escribir) {
   const headers = { 'Content-Type': 'application/json' };
   if (process.env.API_TOKEN) headers.Authorization = `Bearer ${process.env.API_TOKEN}`;
 
-  const res = await fetch(`${base}/elementos`);
+  const res = await fetch(`${base}/elementos`, { headers });
   if (!res.ok) throw new Error(`GET ${base}/elementos → ${res.status}`);
   const elems = await res.json();
   const CAMPOS = ['detalle', 'estado', 'observaciones', 'serial', 'inventario'];

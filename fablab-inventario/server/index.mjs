@@ -128,7 +128,7 @@ function binario(res, datos, mime, hash, req) {
     'Content-Type': mime,
     'Content-Length': datos.length,
     ETag: etag,
-    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Cache-Control': 'private, max-age=31536000, immutable',
     ...ORIGEN,
     'Access-Control-Expose-Headers': 'ETag',
   };
@@ -222,24 +222,25 @@ const CUENTA_CLAVE_HASH = process.env.CUENTA_CLAVE_HASH || '';
 const SESION_SECRETO = process.env.SESION_SECRETO || '';
 const LOGIN_ACTIVO = Boolean(CUENTA_USUARIO && CUENTA_CLAVE_HASH && SESION_SECRETO);
 
+/** Credencial de la petición: header Bearer o, solo donde se permite, `?sesion=`. */
+function credencial(req, query, permiteQuery) {
+  const m = /^Bearer\s+(.+)$/.exec(req.headers['authorization'] || '');
+  if (m) return m[1].trim();
+  return permiteQuery && typeof query?.sesion === 'string' ? query.sesion : null;
+}
+
 /**
- * Quién escribe: 'script' (token API_TOKEN, para herramientas), el nombre de la
- * cuenta del laboratorio (sesión válida) o null (no autorizado). Sin token ni login
- * configurados, todo es 'script' (comportamiento anterior).
+ * Quién hace la petición: 'script' (token API_TOKEN, para herramientas), el nombre
+ * de la cuenta del laboratorio (sesión válida) o null (sin credencial válida).
+ * Sin token ni login configurados todo es 'script' (modo abierto, para desarrollo).
  */
-function quienEscribe(req) {
+function quienEs(req, query, permiteQuery = false) {
   if (!API_TOKEN && !LOGIN_ACTIVO) return 'script';
-  const auth = req.headers['authorization'] || '';
-  const m = /^Bearer\s+(.+)$/.exec(auth);
-  if (!m) return null;
-  const bearer = m[1].trim();
+  const bearer = credencial(req, query, permiteQuery);
+  if (!bearer) return null;
   if (API_TOKEN && bearer === API_TOKEN) return 'script';
   if (LOGIN_ACTIVO) { const usuario = leerSesion(bearer, SESION_SECRETO); if (usuario) return usuario; }
   return null;
-}
-
-function escribeAutorizado(req) {
-  return quienEscribe(req) !== null;
 }
 
 function noAutorizado(res) {
@@ -248,7 +249,7 @@ function noAutorizado(res) {
     'WWW-Authenticate': 'Bearer',
     ...ORIGEN,
   });
-  res.end(JSON.stringify({ error: 'Escritura requiere sesión (POST /api/login) o Authorization: Bearer <API_TOKEN>' }));
+  res.end(JSON.stringify({ error: 'Requiere iniciar sesión (POST /api/login) o Authorization: Bearer <API_TOKEN>' }));
 }
 
 // --- Routes ---
@@ -284,8 +285,13 @@ async function handleReq(req, res) {
       const horas = 12;
       return json(res, 200, { token: firmarSesion(CUENTA_USUARIO, SESION_SECRETO, { horas }), expira_horas: horas, usuario: CUENTA_USUARIO });
     }
-    if (escritura) {
-      const quien = quienEscribe(req);
+    // Todo requiere credencial menos /health (healthchecks) y el login. Las fotos y las
+    // exportaciones se abren con <img> o un enlace, que no pueden mandar header: ahí
+    // se acepta también `?sesion=<token>`, y solo ahí.
+    const publica = req.method === 'GET' && parts.join('/') === 'health';
+    if (!publica) {
+      const aceptaQuery = !escritura && ((parts[1] === 'elementos' && parts[3] === 'foto') || parts[1] === 'export');
+      const quien = quienEs(req, query, aceptaQuery);
       if (quien === null) return noAutorizado(res);
       // Lo usa auditar() para la columna actor: el nombre de la cuenta o 'script'
       const almacen = contextoPeticion.getStore();
@@ -544,7 +550,7 @@ function iniciarKeepAlive() {
     const t0 = Date.now();
     // 1 reintento tras 20s: si el ping mismo despertó el servicio, el primer
     // intento llega 502/503 y el log se llenaría de falsas alarmas de Aiven.
-    const ping = () => fetch(`${url}/api/salas`);
+    const ping = () => fetch(`${url}/api/salas`, API_TOKEN ? { headers: { Authorization: `Bearer ${API_TOKEN}` } } : undefined);
     ping()
       .then((r) => (r.ok ? r : new Promise((ok) => setTimeout(ok, 20_000)).then(ping)))
       .then((r) => {

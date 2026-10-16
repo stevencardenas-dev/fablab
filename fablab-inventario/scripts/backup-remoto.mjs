@@ -16,7 +16,8 @@
 // para restaurar hay que re-insertar con el mismo esquema (o regenerar el dump
 // con mysqldump cuando se tengan credenciales de BD).
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,8 +28,14 @@ const args = process.argv.slice(2);
 // origen pelado, se agrega aquí — los routes del server viven bajo /api).
 let base = (process.env.EXPO_PUBLIC_API_URL || 'https://fablab-api-sr1q.onrender.com/api').replace(/\/$/, '');
 if (!base.endsWith('/api')) base += '/api';
+// Desde que el server exige credencial también para leer, el token es obligatorio:
+// API_TOKEN o, si no, el archivo local ~/.config/fablab/api-token.
 const headers = {};
-if (process.env.API_TOKEN) headers.Authorization = `Bearer ${process.env.API_TOKEN}`;
+let tokenBackup = process.env.API_TOKEN || '';
+if (!tokenBackup) {
+  try { tokenBackup = readFileSync(path.join(homedir(), '.config', 'fablab', 'api-token'), 'utf8').trim(); } catch { /* sin archivo */ }
+}
+if (tokenBackup) headers.Authorization = `Bearer ${tokenBackup}`;
 
 async function descargar(ruta) {
   const res = await fetch(`${base}${ruta}`, { headers });

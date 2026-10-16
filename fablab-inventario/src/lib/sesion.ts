@@ -10,7 +10,22 @@ const CLAVE = 'fablab.sesion.v1';
 type Sesion = { token: string; expira: number; usuario: string };
 
 let actual: Sesion | null = null;
-let listo = false;
+let listo = false; // ya se empezó a cargar
+let cargada = false; // ya terminó: recién entonces se sabe si hay sesión
+
+// Quién quiere enterarse de que la sesión cambió (la pantalla de entrada y la barra).
+const oyentes = new Set<() => void>();
+function avisar(): void {
+  oyentes.forEach((f) => f());
+}
+export function suscribirSesion(f: () => void): () => void {
+  oyentes.add(f);
+  return () => { oyentes.delete(f); };
+}
+/** Valor estable (cadena) que cambia cuando cambia la sesión: para useSyncExternalStore. */
+export function estadoSesion(): string {
+  return `${cargada ? 1 : 0}:${usuarioDeSesion() ?? ''}`;
+}
 
 function vigente(s: Sesion | null): s is Sesion {
   return !!s && s.expira > Date.now();
@@ -27,6 +42,13 @@ export async function cargarSesion(): Promise<void> {
   } catch {
     actual = null; // almacenamiento no disponible (navegador privado): se pedirá la clave
   }
+  cargada = true;
+  avisar();
+}
+
+/** Token para los enlaces que no pueden mandar header (fotos, descargas), o ''. */
+export function tokenParaEnlace(): string {
+  return tokenDeSesion() ?? (process.env.EXPO_PUBLIC_API_TOKEN || '');
 }
 
 /** Token de la sesión vigente, o null. Síncrono: lo usa authHeaders(). */
@@ -62,10 +84,12 @@ export async function iniciarSesion(base: string, usuario: string, clave: string
   };
   actual = sesion;
   try { await AsyncStorage.setItem(CLAVE, JSON.stringify(sesion)); } catch { /* sin persistencia: vale solo esta visita */ }
+  avisar();
 }
 
 /** Cierra la sesión en este dispositivo. */
 export async function cerrarSesion(): Promise<void> {
   actual = null;
   try { await AsyncStorage.removeItem(CLAVE); } catch { /* nada que limpiar */ }
+  avisar();
 }

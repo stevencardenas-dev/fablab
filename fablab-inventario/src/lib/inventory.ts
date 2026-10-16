@@ -4,7 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { DatosFoto } from './foto';
-import { tokenDeSesion } from './sesion';
+import { cerrarSesion, tokenDeSesion, tokenParaEnlace } from './sesion';
 // multiRemove existe en el mock de jest-expo; si no, cae a removeItem secuencial.
 if (!AsyncStorage.multiRemove) {
   (AsyncStorage as any).multiRemove = (keys: string[]) =>
@@ -71,9 +71,22 @@ export async function fetchConReintentos(
   return res;
 }
 
+/**
+ * Error de una respuesta no exitosa. Un 401 significa que la sesión no existe, venció
+ * o fue revocada: se cierra aquí mismo y la app vuelve a la pantalla de entrada.
+ */
+function falla(res: Response, ruta: string): Error {
+  if (res.status === 401) {
+    void cerrarSesion();
+    void resetCache();
+    return new Error('Tu sesión terminó. Inicia sesión de nuevo.');
+  }
+  return new Error(`API ${res.status}: ${ruta}`);
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetchConReintentos(`${API_BASE}${path}`);
-  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  const res = await fetchConReintentos(`${API_BASE}${path}`, { headers: authHeaders() });
+  if (!res.ok) throw falla(res, path);
   return res.json();
 }
 
@@ -94,7 +107,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  if (!res.ok) throw falla(res, path);
   return res.json();
 }
 
@@ -104,7 +117,7 @@ async function put<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  if (!res.ok) throw falla(res, path);
   return res.json();
 }
 
@@ -252,7 +265,7 @@ export async function removeItem(codigo: string): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: DELETE /elementos/${codigo}`);
+  if (!res.ok) throw falla(res, `DELETE /elementos/${codigo}`);
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(cached.filter((item) => item.codigo !== codigo));
 }
@@ -291,7 +304,8 @@ export function urlFoto(
   tam: 'foto' | 'miniatura' = 'miniatura',
 ): string | null {
   if (!elemento || elemento.id == null || !elemento.foto_hash) return null;
-  return `${API_BASE}/elementos/${elemento.id}/foto?tam=${tam}&v=${encodeURIComponent(elemento.foto_hash)}`;
+  const sesion = tokenParaEnlace();
+  return `${API_BASE}/elementos/${elemento.id}/foto?tam=${tam}&v=${encodeURIComponent(elemento.foto_hash)}${sesion ? `&sesion=${encodeURIComponent(sesion)}` : ''}`;
 }
 
 /**
@@ -305,6 +319,7 @@ export async function subirFoto(id: number, datos: DatosFoto): Promise<string> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(datos),
   });
+  if (res.status === 401) throw falla(res, `POST /elementos/${id}/foto`);
   if (!res.ok) {
     const detalle = await res.json().catch(() => null);
     const mensaje = detalle?.error ? `${detalle.error}` : `API ${res.status}: POST /elementos/${id}/foto`;
@@ -323,7 +338,7 @@ export async function eliminarFoto(id: number): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: DELETE /elementos/${id}/foto`);
+  if (!res.ok) throw falla(res, `DELETE /elementos/${id}/foto`);
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(
     cached.map((it) => (it.id === id ? { ...it, foto_hash: undefined } : it)),
@@ -466,7 +481,8 @@ export async function historialElemento(elementoId: number): Promise<TrasladoHis
 // Content-Disposition desde el server (abre directo en Excel con acentos OK);
 // el JSON es para otros programas. La UI la abre con Linking.openURL.
 export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'json' = 'csv'): string {
-  return `${API_BASE}/export/${qué}.${formato}`;
+  const sesion = tokenParaEnlace();
+  return `${API_BASE}/export/${qué}.${formato}${sesion ? `?sesion=${encodeURIComponent(sesion)}` : ''}`;
 }
 
 export type ResultadoImportacion = {

@@ -1,11 +1,11 @@
 name: keep-alive
 
-# Golpea /api/salas cada 10 min para que el free tier de Render no duerma
-# (duerme tras ~15 min sin tráfico) y para mantener activa la BD de Aiven
-# (la consulta genera actividad real en MySQL). El propio servicio también
-# se hace ping a sí mismo (server/index.mjs → iniciarKeepAlive); este
-# workflow es el respaldo EXTERNO: puede despertar el servicio si llegó a
-# dormir. Si falla, revisar si Aiven apagó la BD (Actions mostrará rojo).
+# Golpea /health cada 10 min para que el free tier de Render no duerma
+# (duerme tras ~15 min sin tráfico). /health es lo único público de la API (el
+# resto exige iniciar sesión), así que este ping no toca la BD: de mantener
+# activa la BD de Aiven se encarga el ping interno del server con su token
+# (server/index.mjs → iniciarKeepAlive). Este workflow es el respaldo EXTERNO:
+# puede despertar el servicio si llegó a dormir.
 on:
   schedule:
     - cron: '*/10 * * * *'
@@ -20,8 +20,8 @@ jobs:
     steps:
       - name: Ping de mantenimiento a la API pública
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/api/salas)
-          echo "GET /api/salas → HTTP $code"
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://fablab-api-sr1q.onrender.com/health)
+          echo "GET /health → HTTP $code"
           test "$code" = "200"
 
       - name: Avisar si el ping falló

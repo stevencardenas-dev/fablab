@@ -21,6 +21,8 @@
 //
 // Antes de escribir en producción: npm run backup:remoto.
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { conexionDesdeEnv } from '../importer/importar.mjs';
 
 const API_URL = process.env.API_URL || 'https://fablab-api-sr1q.onrender.com/api';
@@ -98,11 +100,18 @@ function planAsignaciones(sinCodigo, todos, salas) {
   return plan;
 }
 
+// El server exige credencial también para leer: API_TOKEN o ~/.config/fablab/api-token.
+function leerToken() {
+  if (process.env.API_TOKEN) return process.env.API_TOKEN.trim();
+  try { return readFileSync(path.join(process.env.HOME || '', '.config', 'fablab', 'api-token'), 'utf8').trim(); } catch { return ''; }
+}
+
 // --- Lectura del estado actual ---
 
 async function leerPorApi() {
   const traer = async (ruta) => {
-    const res = await fetch(`${API_URL}${ruta}`);
+    const token = leerToken();
+    const res = await fetch(`${API_URL}${ruta}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     if (!res.ok) throw new Error(`GET ${ruta} → ${res.status}`);
     return res.json();
   };
@@ -210,6 +219,6 @@ if (!escribir) {
   process.exit(0);
 }
 
-const aplicados = usarApi ? await escribirPorApi(plan, process.env.API_TOKEN) : await escribirPorBD(plan);
+const aplicados = usarApi ? await escribirPorApi(plan, leerToken()) : await escribirPorBD(plan);
 console.log(`\n${aplicados}/${plan.length} código(s) asignado(s).`);
 process.exit(aplicados === plan.length ? 0 : 1);

@@ -25,6 +25,7 @@ import {
   type InventoryItem,
   type Room,
 } from './inventory';
+import { cerrarSesion, iniciarSesion, tokenDeSesion, usuarioDeSesion } from './sesion';
 
 function makeItem(overrides: Partial<InventoryItem> = {}): InventoryItem {
   return {
@@ -84,7 +85,49 @@ describe('escrituras honestas (sin fallback local silencioso)', () => {
   it('removeItem propaga el error cuando el DELETE falla (p.ej. 401)', async () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) }));
-    await expect(removeItem('X-1')).rejects.toThrow('API 401');
+    await expect(removeItem('X-1')).rejects.toThrow('Tu sesión terminó');
+  });
+
+  it('un 401 cierra la sesión guardada y vacía la caché del inventario', async () => {
+    const origFetch = globalThis.fetch;
+    try {
+      // Entrar: el server entrega un token de sesión.
+      (globalThis as any).fetch = jest.fn(() =>
+        Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ token: 't.k', usuario: 'laboratorio', expira_horas: 12 }) }));
+      await iniciarSesion('http://x/api', 'laboratorio', 'clave');
+      expect(tokenDeSesion()).toBe('t.k');
+      // Una escritura devuelve 401 (sesión vencida o revocada): la app debe salir sola.
+      (globalThis as any).fetch = jest.fn(() =>
+        Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) }));
+      await expect(removeItem('X-1')).rejects.toThrow('Tu sesión terminó');
+      await Promise.resolve();
+      expect(tokenDeSesion()).toBeNull();
+      expect(usuarioDeSesion()).toBeNull();
+    } finally {
+      (globalThis as any).fetch = origFetch;
+      await cerrarSesion();
+    }
+  });
+
+  it('las lecturas y escrituras mandan la sesión como Authorization: Bearer', async () => {
+    const origFetch = globalThis.fetch;
+    const llamadas: any[] = [];
+    try {
+      (globalThis as any).fetch = jest.fn(() =>
+        Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ token: 'abc.def', usuario: 'laboratorio', expira_horas: 12 }) }));
+      await iniciarSesion('http://x/api', 'laboratorio', 'clave');
+      (globalThis as any).fetch = jest.fn((url: string, opts: any) => {
+        llamadas.push({ url, opts });
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) });
+      });
+      await listarSalas(); // lectura
+      expect(llamadas[0].opts.headers.Authorization).toBe('Bearer abc.def');
+      expect(urlFoto({ id: 1, foto_hash: 'h' })).toContain('sesion=abc.def'); // enlace sin header
+      expect(exportarUrl('elementos')).toContain('?sesion=abc.def');
+    } finally {
+      (globalThis as any).fetch = origFetch;
+      await cerrarSesion();
+    }
   });
 });
 
@@ -562,7 +605,7 @@ describe('subirFoto', () => {
   it('propaga el error si falta el token (401)', async () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) }));
-    await expect(subirFoto(1, payload)).rejects.toThrow('API 401');
+    await expect(subirFoto(1, payload)).rejects.toThrow('Tu sesión terminó');
   });
 });
 

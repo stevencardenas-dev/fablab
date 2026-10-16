@@ -272,7 +272,7 @@ await caso('cuerpo de 5 MB → 413 (tope 4 MB del import)', async () => {
   assert.equal(estado, 413);
 });
 await caso('lo que exporta la API se puede volver a importar (ida y vuelta)', async () => {
-  const exporta = await fetch(`${url}/api/export/elementos.csv`);
+  const exporta = await fetch(`${url}/api/export/elementos.csv`, { headers: { Authorization: `Bearer ${TOKEN}` } });
   const texto = await exporta.text();
   const r = await post({ csv: texto });
   assert.equal(r.status, 200);
@@ -282,8 +282,14 @@ await caso('lo que exporta la API se puede volver a importar (ida y vuelta)', as
   assert.ok(cuerpo.omitidos.every((o) => ['código ya existe', 'sin código'].includes(o.motivo)), JSON.stringify(cuerpo.omitidos.slice(0, 3)));
 });
 await caso('lectura de salas y export siguen funcionando', async () => {
-  assert.equal((await fetch(`${url}/api/salas`)).status, 200);
-  assert.equal((await fetch(`${url}/api/export/elementos.csv`)).status, 200);
+  const conToken = { headers: { Authorization: `Bearer ${TOKEN}` } };
+  assert.equal((await fetch(`${url}/api/salas`, conToken)).status, 200);
+  assert.equal((await fetch(`${url}/api/export/elementos.csv`, conToken)).status, 200);
+});
+await caso('las lecturas sin credencial se rechazan (401) y /health sigue abierto', async () => {
+  assert.equal((await fetch(`${url}/api/salas`)).status, 401);
+  assert.equal((await fetch(`${url}/api/export/elementos.csv`)).status, 401);
+  assert.equal((await fetch(`${url}/health`)).status, 200);
 });
 servidor.kill();
 

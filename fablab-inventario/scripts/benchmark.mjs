@@ -36,6 +36,8 @@ const AUTH = (() => {
 const RETRY = new Set([502, 503, 504]);
 async function pedir(path, opts = {}) {
   const url = path.startsWith('http') ? path : `${BASE}${path}`;
+  // Las lecturas también exigen credencial; las escrituras ya traen la suya.
+  if (['GET', 'HEAD'].includes(opts.method || 'GET')) opts = { ...opts, headers: { ...AUTH, ...(opts.headers || {}) } };
   let res = await fetch(url, opts);
   for (const ms of [1000, 2500]) {
     if (!RETRY.has(res.status)) break;

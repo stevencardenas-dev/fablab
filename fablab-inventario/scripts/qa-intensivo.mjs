@@ -75,6 +75,9 @@ const RETRY = new Set([502, 503, 504]);
 async function pedir(path, opts = {}, reintentos = [1000, 2500]) {
   const url = path.startsWith('http') ? path : `${BASE}${path}`;
   const headers = { ...(opts.headers || {}) };
+  // El server exige credencial también para leer: las lecturas la llevan siempre.
+  // Las escrituras la ponen cada caso (algunos prueban justamente la falta de token).
+  if (!headers.Authorization && ['GET', 'HEAD'].includes(opts.method || 'GET')) Object.assign(headers, auth());
   let res = await fetch(url, { ...opts, headers });
   let quedan = [...reintentos];
   while (RETRY.has(res.status) && quedan.length) {

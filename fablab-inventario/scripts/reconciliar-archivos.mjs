@@ -85,8 +85,8 @@ for (const { nombre, sala } of HOJAS) {
 
 // ---- Estado actual de la base ----------------------------------------------
 async function leer(ruta) {
-  const r = await fetch(`${BASE}${ruta}`);
-  if (!r.ok) throw new Error(`GET ${ruta} → ${r.status}`);
+  const r = await fetch(`${BASE}${ruta}`, { headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {} });
+  if (!r.ok) throw new Error(`GET ${ruta} → ${r.status}${r.status === 401 ? ' (falta API_TOKEN o ~/.config/fablab/api-token)' : ''}`);
   return r.json();
 }
 const salas = await leer('/salas');
