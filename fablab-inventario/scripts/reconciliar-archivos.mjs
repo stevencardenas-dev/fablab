@@ -180,7 +180,9 @@ async function escribir(metodo, ruta, cuerpo) {
         body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
       });
       if (r.ok) return r.json().catch(() => ({}));
-      if (r.status >= 500 || r.status === 429) { await pausa(2000 * intento); continue; }
+      // 429: el server limita escrituras por minuto; esperar lo que pide sin gastar intento
+      if (r.status === 429) { await pausa((Number(r.headers.get('retry-after')) || 60) * 1000 + 500); intento--; continue; }
+      if (r.status >= 500) { await pausa(2000 * intento); continue; }
       const t = await r.text();
       throw new Error(`${metodo} ${ruta} → ${r.status} ${t.slice(0, 160)}`);
     } catch (e) {

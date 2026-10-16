@@ -14,6 +14,7 @@ import {
   asignarCodigo,
   asegurarEsquemaFotos,
   asegurarSalas,
+  asegurarAuditoria,
   asegurarCodigoUnico,
   repararCodigosDuplicados,
   precargarMiniaturas,
@@ -48,11 +49,31 @@ const GZIP_MIN_BYTES = 1024;
 // Access-Control-Allow-Headers'). Aplica al preflight y a toda respuesta.
 const CORS_ALLOW_HEADERS = 'Content-Type, Authorization';
 
+// Origen permitido para CORS. '*' (default) mantiene el deploy de Render tal
+// cual; un dominio ('https://fablab-web.onrender.com') restringe a ese sitio;
+// vacío ('') no manda el header: solo el mismo dominio, que es el caso del
+// stack Docker (nginx sirve la web y reenvía /api).
+const CORS_ORIGIN = process.env.CORS_ORIGIN ?? '*';
+const ORIGEN = CORS_ORIGIN ? { 'Access-Control-Allow-Origin': CORS_ORIGIN } : {};
+
+// Límite de escrituras por IP y minuto (429 al pasarse). Cuenta también los
+// intentos sin token, así que frena a quien pruebe tokens al azar.
+// ponytail: contador en memoria, por instancia; si hubiera varias réplicas, al proxy.
+const LIMITE_ESCRITURAS = Number(process.env.LIMITE_ESCRITURAS_MIN) || 120;
+let ventana = { inicio: Date.now(), cuentas: new Map() };
+function excedeLimite(req) {
+  if (Date.now() - ventana.inicio > 60_000) ventana = { inicio: Date.now(), cuentas: new Map() };
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '?';
+  const n = (ventana.cuentas.get(ip) || 0) + 1;
+  ventana.cuentas.set(ip, n);
+  return n > LIMITE_ESCRITURAS;
+}
+
 function json(res, status, data) {
   const body = Buffer.from(JSON.stringify(data), 'utf8');
   const acceptsGzip = String(res.req?.headers['accept-encoding'] || '').includes('gzip');
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    ...ORIGEN,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS,
   };
@@ -87,7 +108,7 @@ function csv(res, filename, filas) {
   res.writeHead(200, {
     'Content-Type': 'text/csv; charset=utf-8',
     'Content-Disposition': `attachment; filename="${filename}"`,
-    'Access-Control-Allow-Origin': '*',
+    ...ORIGEN,
   });
   res.end('\ufeff' + body);
 }
@@ -102,7 +123,7 @@ function binario(res, datos, mime, hash, req) {
     'Content-Length': datos.length,
     ETag: etag,
     'Cache-Control': 'public, max-age=31536000, immutable',
-    'Access-Control-Allow-Origin': '*',
+    ...ORIGEN,
     'Access-Control-Expose-Headers': 'ETag',
   };
   if (String(req?.headers['if-none-match'] || '').includes(etag)) {
@@ -199,7 +220,7 @@ function noAutorizado(res) {
   res.writeHead(401, {
     'Content-Type': 'application/json; charset=utf-8',
     'WWW-Authenticate': 'Bearer',
-    'Access-Control-Allow-Origin': '*',
+    ...ORIGEN,
   });
   res.end(JSON.stringify({ error: 'Escritura requiere Authorization: Bearer <API_TOKEN>' }));
 }
@@ -210,7 +231,7 @@ async function handleReq(req, res) {
   // CORS preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
+      ...ORIGEN,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS,
     });
@@ -224,8 +245,12 @@ async function handleReq(req, res) {
   try {
     // POST/PUT/DELETE requieren token si API_TOKEN está configurado. HEAD es
     // lectura (mismo pedido sin cuerpo): no puede exigir token.
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS' && !escribeAutorizado(req)) {
-      return noAutorizado(res);
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+      if (excedeLimite(req)) {
+        res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8', 'Retry-After': '60', ...ORIGEN });
+        return res.end(JSON.stringify({ error: 'Demasiadas escrituras: espera un minuto' }));
+      }
+      if (!escribeAutorizado(req)) return noAutorizado(res);
     }
 
     // GET /health  →  healthcheck para deploys (Render, etc.)
@@ -418,6 +443,8 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 try {
   await asegurarEsquemaFotos(conexionDesdeEnv());
   console.log('[esquema] elemento_fotos lista ✔');
+  await asegurarAuditoria(conexionDesdeEnv());
+  console.log('[esquema] auditoria lista ✔');
   const salasCreadas = await asegurarSalas(conexionDesdeEnv());
   if (salasCreadas) console.log(`[esquema] salas nuevas creadas: ${salasCreadas} ✔`);
   // Duplicados de `codigo` (el Excel original repitió IOT-79): se reparan ANTES

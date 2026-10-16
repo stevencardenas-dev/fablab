@@ -210,7 +210,7 @@ export async function registrarTraslado({ elementoId, salaNuevaId, nota = null }
   return conectar(cfg, async (conn) => {
     await conn.beginTransaction();
     try {
-      const [[el]] = await conn.query('SELECT sala_id FROM elementos WHERE id = ?', [elementoId]);
+      const [[el]] = await conn.query('SELECT sala_id, codigo FROM elementos WHERE id = ?', [elementoId]);
       if (!el) throw new ErrorApi(`El elemento ${elementoId} no existe`, 404);
       if (el.sala_id === salaNuevaId) throw new ErrorApi('El elemento ya esta en esa sala', 409);
       // Sala destino inexistente: la FK revientaría con 500; mejor un 404 claro.
@@ -221,6 +221,7 @@ export async function registrarTraslado({ elementoId, salaNuevaId, nota = null }
         [elementoId, el.sala_id, salaNuevaId, nota],
       );
       await conn.query('UPDATE elementos SET sala_id = ? WHERE id = ?', [salaNuevaId, elementoId]);
+      await auditar(conn, { accion: 'traslado', entidadId: elementoId, codigo: el.codigo, antes: { sala_id: el.sala_id }, despues: { sala_id: salaNuevaId, nota } });
       await conn.commit();
       return { id: res.insertId, salaAnteriorId: el.sala_id, salaNuevaId };
     } catch (e) {
@@ -319,6 +320,7 @@ export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
       const dueno = await idDuenoDelCodigo(conn, elemento.codigo);
       if (dueno != null) throw new ErrorApi(`El código ${elemento.codigo} ya existe (elemento ${dueno})`, 409);
     }
+    await conn.beginTransaction();
     try {
       const [res] = await conn.query(
         `INSERT INTO elementos (sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad)
@@ -334,8 +336,12 @@ export async function agregarElemento(elemento, cfg = conexionDesdeEnv()) {
           elemento.cantidad ?? null,
         ],
       );
+      const { sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad } = elemento;
+      await auditar(conn, { accion: 'alta', entidadId: res.insertId, codigo: codigo ?? null, despues: { sala_id, detalle, serial, inventario, estado, observaciones, cantidad } });
+      await conn.commit();
       return { id: res.insertId, ...elemento };
     } catch (e) {
+      await conn.rollback();
       if (e?.errno === 1062) throw await errorCodigoOcupado(conn, elemento.codigo);
       throw e;
     }
@@ -355,6 +361,8 @@ export async function eliminarElemento(codigo, cfg = conexionDesdeEnv()) {
     if (elId == null) return { deleted: false, codigo };
     await conn.beginTransaction();
     try {
+      const [[fila]] = await conn.query(`SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`, [elId]);
+      await auditar(conn, { accion: 'baja', entidadId: elId, codigo, antes: fila });
       await conn.query('DELETE FROM traslados WHERE elemento_id = ?', [elId]);
       const [res] = await conn.query('DELETE FROM elementos WHERE id = ?', [elId]);
       await conn.commit();
@@ -370,25 +378,38 @@ export async function eliminarElemento(codigo, cfg = conexionDesdeEnv()) {
 // Modifica los campos editables de un elemento por id. El codigo NO se toca
 // (es el identificador impreso en el Data Matrix); mover de sala es un traslado.
 const CAMPOS_EDITABLES = ['detalle', 'serial', 'inventario', 'estado', 'observaciones', 'cantidad'];
+const COLUMNAS_ELEMENTO = 'id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad';
 
 export async function actualizarElemento(id, campos, cfg = conexionDesdeEnv()) {
   invalidarCache();
   const set = CAMPOS_EDITABLES.filter((c) => campos[c] !== undefined);
   if (!set.length) throw new ErrorApi(`Campos editables: ${CAMPOS_EDITABLES.join(', ')}`, 400);
   return conectar(cfg, async (conn) => {
-    await conn.query(
-      `UPDATE elementos SET ${set.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
-      [...set.map((c) => campos[c]), id],
-    );
-    // affectedRows=0 también cuando el valor enviado es idéntico al guardado
-    // (MySQL cuenta filas *cambiadas*), así que la existencia se decide con el
-    // SELECT de abajo, no con affectedRows.
-    const [[elemento]] = await conn.query(
-      'SELECT id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad FROM elementos WHERE id = ?',
-      [id],
-    );
-    if (!elemento) throw new ErrorApi(`El elemento ${id} no existe`, 404);
-    return { updated: true, elemento };
+    await conn.beginTransaction();
+    try {
+      // La existencia se decide con este SELECT (affectedRows=0 también cuando el
+      // valor enviado es idéntico: MySQL cuenta filas *cambiadas*).
+      const [[previo]] = await conn.query(`SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`, [id]);
+      if (!previo) throw new ErrorApi(`El elemento ${id} no existe`, 404);
+      await conn.query(
+        `UPDATE elementos SET ${set.map((c) => `${c} = ?`).join(', ')} WHERE id = ?`,
+        [...set.map((c) => campos[c]), id],
+      );
+      const [[elemento]] = await conn.query(`SELECT ${COLUMNAS_ELEMENTO} FROM elementos WHERE id = ?`, [id]);
+      const cambiados = set.filter((c) => String(previo[c] ?? '') !== String(elemento[c] ?? ''));
+      if (cambiados.length) {
+        await auditar(conn, {
+          accion: 'edicion', entidadId: id, codigo: elemento.codigo,
+          antes: Object.fromEntries(cambiados.map((c) => [c, previo[c]])),
+          despues: Object.fromEntries(cambiados.map((c) => [c, elemento[c]])),
+        });
+      }
+      await conn.commit();
+      return { updated: true, elemento };
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    }
   });
 }
 
@@ -430,8 +451,6 @@ export function validarAsignacion({ id, codigoActual, codigoNuevo, idConEseCodig
   return nuevo;
 }
 
-const COLUMNAS_ELEMENTO = 'id, sala_id, codigo, detalle, serial, inventario, estado, observaciones, cantidad';
-
 export async function asignarCodigo(id, codigo, cfg = conexionDesdeEnv()) {
   if (idEntero(id) == null) throw new ErrorApi('ID de elemento inválido', 400);
   const nuevo = normalizarCodigo(codigo);
@@ -446,9 +465,13 @@ export async function asignarCodigo(id, codigo, cfg = conexionDesdeEnv()) {
     // recibiendo `idConEseCodigo`.
     const dueno = codigoUnicoEnBase ? null : await idDuenoDelCodigo(conn, nuevo);
     validarAsignacion({ id, codigoActual: actual.codigo, codigoNuevo: nuevo, idConEseCodigo: dueno });
+    await conn.beginTransaction();
     try {
       await conn.query('UPDATE elementos SET codigo = ? WHERE id = ?', [nuevo, id]);
+      await auditar(conn, { accion: 'codigo', entidadId: id, codigo: nuevo, antes: { codigo: actual.codigo }, despues: { codigo: nuevo } });
+      await conn.commit();
     } catch (e) {
+      await conn.rollback();
       if (e?.errno === 1062) throw await errorCodigoOcupado(conn, nuevo);
       throw e;
     }
@@ -494,6 +517,36 @@ export const DDL_FOTOS = `CREATE TABLE IF NOT EXISTS \`elemento_fotos\` (
 /** Crea `elemento_fotos` si falta. Idempotente: llamarlo en cada arranque es no-op. */
 export async function asegurarEsquemaFotos(cfg = conexionDesdeEnv()) {
   await conectar(cfg, (conn) => conn.query(DDL_FOTOS));
+}
+
+// --- Bitácora de auditoría ---
+// Una fila por escritura, en la MISMA transacción que el cambio: si el cambio se
+// revierte, su registro también. Guarda qué cambió y cuándo; `actor` queda vacío
+// hasta que exista inicio de sesión (decisión 2026-10-09). Nunca guarda bytes de fotos.
+export const DDL_AUDITORIA = `CREATE TABLE IF NOT EXISTS \`auditoria\` (
+  \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+  \`fecha\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  \`accion\` VARCHAR(20) NOT NULL,
+  \`entidad\` VARCHAR(20) NOT NULL,
+  \`entidad_id\` INT NULL,
+  \`codigo\` VARCHAR(64) NULL,
+  \`antes\` JSON NULL,
+  \`despues\` JSON NULL,
+  \`origen\` VARCHAR(20) NOT NULL DEFAULT 'api',
+  \`actor\` VARCHAR(100) NULL,
+  KEY \`ix_auditoria_fecha\` (\`fecha\`),
+  KEY \`ix_auditoria_entidad\` (\`entidad\`, \`entidad_id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
+
+export async function asegurarAuditoria(cfg = conexionDesdeEnv()) {
+  await conectar(cfg, (conn) => conn.query(DDL_AUDITORIA));
+}
+
+async function auditar(conn, { accion, entidad = 'elemento', entidadId = null, codigo = null, antes = null, despues = null }) {
+  await conn.query(
+    'INSERT INTO auditoria (accion, entidad, entidad_id, codigo, antes, despues) VALUES (?, ?, ?, ?, ?, ?)',
+    [accion, entidad, entidadId, codigo, antes == null ? null : JSON.stringify(antes), despues == null ? null : JSON.stringify(despues)],
+  );
 }
 
 // Salas que llegaron después del esquema inicial (archivo INVENTARIO ESTUDIO TV,
@@ -728,9 +781,11 @@ export async function guardarFoto(elementoId, datos, cfg = conexionDesdeEnv()) {
   invalidarCache();
   cacheFotoLimpiarElemento(elementoId);
   return conectar(cfg, async (conn) => {
-    const [[elemento]] = await conn.query('SELECT id FROM elementos WHERE id = ?', [elementoId]);
+    const [[elemento]] = await conn.query('SELECT id, codigo FROM elementos WHERE id = ?', [elementoId]);
     if (!elemento) throw new ErrorApi(`El elemento ${elementoId} no existe`, 404);
-    const [[actual]] = await conn.query('SELECT elemento_id FROM elemento_fotos WHERE elemento_id = ?', [elementoId]);
+    await conn.beginTransaction();
+    try {
+    const [[actual]] = await conn.query('SELECT elemento_id, hash FROM elemento_fotos WHERE elemento_id = ?', [elementoId]);
     if (actual) {
       await conn.query(
         'UPDATE elemento_fotos SET mime = ?, ancho = ?, alto = ?, bytes = ?, hash = ?, foto = ?, miniatura = ? WHERE elemento_id = ?',
@@ -741,6 +796,13 @@ export async function guardarFoto(elementoId, datos, cfg = conexionDesdeEnv()) {
         'INSERT INTO elemento_fotos (elemento_id, mime, ancho, alto, bytes, hash, foto, miniatura) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [elementoId, mime, ancho, alto, foto.length, hash, foto, miniatura],
       );
+    }
+    await auditar(conn, { accion: 'foto_subir', entidad: 'foto', entidadId: Number(elementoId), codigo: elemento.codigo,
+      antes: actual ? { hash: actual.hash } : null, despues: { hash, mime, bytes: foto.length } });
+    await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
     }
     return {
       guardada: true,
@@ -851,8 +913,16 @@ export async function borrarFoto(elementoId, cfg = conexionDesdeEnv()) {
   invalidarCache();
   cacheFotoLimpiarElemento(elementoId);
   return conectar(cfg, async (conn) => {
-    const [res] = await conn.query('DELETE FROM elemento_fotos WHERE elemento_id = ?', [elementoId]);
-    return { borrada: res.affectedRows > 0, elemento_id: elementoId };
+    await conn.beginTransaction();
+    try {
+      const [res] = await conn.query('DELETE FROM elemento_fotos WHERE elemento_id = ?', [elementoId]);
+      if (res.affectedRows > 0) await auditar(conn, { accion: 'foto_borrar', entidad: 'foto', entidadId: Number(elementoId) });
+      await conn.commit();
+      return { borrada: res.affectedRows > 0, elemento_id: elementoId };
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    }
   });
 }
 
@@ -1006,6 +1076,7 @@ export async function importarFilas(filas, cfg = conexionDesdeEnv()) {
             throw e;
           }
         }
+        await auditar(conn, { accion: 'importar', entidad: 'importacion', despues: { importados, omitidos: omitidos.length } });
         await conn.commit();
       } catch (e) {
         await conn.rollback();

@@ -42,6 +42,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
       MYSQL_DATABASE: fablab
       API_TOKEN: ${API_TOKEN:?define API_TOKEN en docker/.env}
+      # Mismo dominio (nginx reenvía /api): sin CORS para otros sitios
+      CORS_ORIGIN: ""
     # Sin "ports": la API solo se alcanza a través de web (/api)
 
   web:

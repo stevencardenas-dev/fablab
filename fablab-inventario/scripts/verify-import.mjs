@@ -17,7 +17,7 @@ const PUERTO = 34519;
 const TOKEN = 'verify-token';
 const base = { host: '127.0.0.1', port: 13306, user: 'root', password: 'fablab', multipleStatements: true };
 const cfg = { ...base, database: DB };
-const { importarElementos, importarArchivo, filasDeHoja, claveDeSala, listarElementos, asegurarCodigoUnico, cerrarPools, ErrorApi } =
+const { importarElementos, importarArchivo, filasDeHoja, claveDeSala, listarElementos, asegurarCodigoUnico, asegurarAuditoria, cerrarPools, ErrorApi } =
   await import(`${RAIZ}importer/api.mjs`);
 
 let ok = 0;
@@ -44,6 +44,7 @@ await carga.end();
 const db = await mysql.createConnection(cfg);
 // Igual que al arrancar el servidor: la base de prueba tiene el UNIQUE de producción.
 await asegurarCodigoUnico(cfg);
+await asegurarAuditoria(cfg); // como el arranque del server: la importación registra en auditoria
 const sql = async (q, p) => (await db.query(q, p))[0];
 const idSala = async (nombre, edificio) =>
   (await sql('SELECT s.id FROM salas s JOIN edificios e ON e.id = s.edificio_id WHERE s.nombre = ? AND e.nombre = ?', [nombre, edificio]))[0].id;
