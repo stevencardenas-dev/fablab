@@ -28,6 +28,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 40
+      # La primera carga (01-inventario.sql) puede pasar de los 200 s de arriba en
+      # un servidor lento; los fallos dentro de este margen no cuentan
+      start_period: 300s
 
   api:
     image: ghcr.io/stevencardenas-dev/fablab-api:${APP_VERSION:-estable}
