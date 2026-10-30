@@ -1,0 +1,53 @@
+# Publica las imágenes Docker (API y web) en GitHub Container Registry. El
+# servidor de la universidad las descarga solo (cron con `docker compose pull`,
+# ver fablab-inventario/docker/README.md), así que lo que se publique con la
+# etiqueta `estable` llega a producción en minutos.
+#
+# Publicar una versión:   git tag v1.2.0 && git push origin v1.2.0
+# Volver atrás:           Actions → imagenes → Run workflow sobre un tag viejo
+#                         (vuelve a apuntar `estable` a esa versión)
+name: imagenes
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fablab-inventario
+    env:
+      REG: ghcr.io/stevencardenas-dev
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Entrar a ghcr.io
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Construir API
+        run: |
+          docker build -f docker/api/Dockerfile --build-arg APP_VERSION="$VERSION" \
+            -t "$REG/fablab-api:$VERSION" -t "$REG/fablab-api:estable" .
+
+      # El sitekey de Turnstile es público y se hornea en el bundle; vacío = sin captcha.
+      # Se define en Settings → Variables → TURNSTILE_SITEKEY (no es un secreto).
+      - name: Construir web
+        run: |
+          docker build -f docker/web/Dockerfile --build-arg APP_VERSION="$VERSION" \
+            --build-arg EXPO_PUBLIC_TURNSTILE_SITEKEY="${{ vars.TURNSTILE_SITEKEY }}" \
+            -t "$REG/fablab-web:$VERSION" -t "$REG/fablab-web:estable" .
+
+      - name: Publicar
+        run: |
+          for img in fablab-api fablab-web; do
+            docker push "$REG/$img:$VERSION"
+            docker push "$REG/$img:estable"
+          done

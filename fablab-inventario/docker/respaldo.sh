@@ -7,8 +7,12 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p docker/respaldos
-archivo="docker/respaldos/fablab-$(date +%Y-%m-%d-%H%M).sql.gz"
+sql="docker/respaldos/fablab-$(date +%Y-%m-%d-%H%M).sql"
+# Sin tubería: si mysqldump falla, set -e corta aquí (sh no tiene pipefail y el
+# .gz vacío pasaba por respaldo bueno)
 docker compose -f docker/compose.yml --env-file docker/.env exec -T mysql \
-  sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -u root --single-transaction --no-tablespaces fablab' | gzip > "$archivo"
+  sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -u root --single-transaction --no-tablespaces fablab' > "$sql"
+gzip "$sql"
+archivo="$sql.gz"
 find docker/respaldos -name 'fablab-*.sql.gz' -mtime +30 -delete
 echo "respaldo: $archivo"

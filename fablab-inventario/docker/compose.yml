@@ -1,6 +1,8 @@
 # Stack completo: MySQL + API + web. Desde fablab-inventario/:
 #   cp docker/.env.example docker/.env   (y poner contraseñas reales)
-#   docker compose -f docker/compose.yml --env-file docker/.env up -d --build
+#   docker compose -f docker/compose.yml --env-file docker/.env up -d
+# Sin --build descarga las imágenes publicadas en ghcr.io (workflow imagenes.yml);
+# con --build las compila aquí mismo desde el código.
 name: fablab-stack
 
 services:
@@ -28,37 +30,66 @@ services:
       retries: 40
 
   api:
+    image: ghcr.io/stevencardenas-dev/fablab-api:${APP_VERSION:-estable}
     build:
       context: ..
       dockerfile: docker/api/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    # deploy:
+    #   resources:
+    #     limits: { cpus: '2.0', memory: 1G }
+    #     reservations: { cpus: '0.25', memory: 256M }
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: "3306"
       MYSQL_USER: fablab
-      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:?define MYSQL_APP_PASSWORD en docker/.env}
       MYSQL_DATABASE: fablab
+      LIMITE_ESCRITURAS_MIN: ${LIMITE_ESCRITURAS_MIN:-120}
       API_TOKEN: ${API_TOKEN:?define API_TOKEN en docker/.env}
       # Cuenta del laboratorio (inicio de sesión en la app)
       CUENTA_USUARIO: ${CUENTA_USUARIO:?define CUENTA_USUARIO en docker/.env}
       CUENTA_CLAVE_HASH: ${CUENTA_CLAVE_HASH:?define CUENTA_CLAVE_HASH en docker/.env}
       SESION_SECRETO: ${SESION_SECRETO:?define SESION_SECRETO en docker/.env}
+      # Turnstile (captcha del login). Vacíos = sin captcha. El secret y los
+      # hostnames solo los usa la API; el sitekey se hornea en el build de web.
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      TURNSTILE_HOSTNAMES: ${TURNSTILE_HOSTNAMES:-}
       # Mismo dominio (nginx reenvía /api): sin CORS para otros sitios
       CORS_ORIGIN: ""
     # Sin "ports": la API solo se alcanza a través de web (/api)
 
   web:
+    image: ghcr.io/stevencardenas-dev/fablab-web:${APP_VERSION:-estable}
     build:
       context: ..
       dockerfile: docker/web/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        EXPO_PUBLIC_TURNSTILE_SITEKEY: ${EXPO_PUBLIC_TURNSTILE_SITEKEY:-}
     restart: unless-stopped
+    # La API publica su propio healthcheck (Dockerfile HEALTHCHECK),
+    # así que esperamos una API realmente viva antes de arrancar nginx.
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "0.0.0.0:${WEB_PORT:-8080}:80"
+    # Reservas y tope de RAM/CPU: ajusta a tu servidor si hace falta.
+    # deploy:
+    #   resources:
+    #     limits: { cpus: '2.0', memory: 512M }
+    #     reservations: { cpus: '0.25', memory: 128M }
+
 
 volumes:
   mysql_data:

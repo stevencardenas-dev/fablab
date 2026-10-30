@@ -2,6 +2,12 @@
 #   docker build -f docker/api/Dockerfile -t fablab-api .
 FROM node:20-bookworm-slim
 
+ARG APP_VERSION=dev
+LABEL org.opencontainers.image.title="fablab-api" \
+      org.opencontainers.image.version="$APP_VERSION" \
+      org.opencontainers.image.source="https://github.com/stevencardenas-dev/fablab" \
+      org.opencontainers.image.licenses="MIT"
+
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3001
@@ -14,8 +20,6 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY server ./server
 COPY importer ./importer
-# Esquema y datos iniciales: el compose lo monta también en MySQL
-COPY ddl-data.sql ./data/ddl-data.sql
 
 # No correr como root
 USER node
