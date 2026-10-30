@@ -555,11 +555,18 @@ async function auditar(conn, { accion, entidad = 'elemento', entidadId = null, c
   );
 }
 
-// Salas que llegaron después del esquema inicial (archivo INVENTARIO ESTUDIO TV,
-// 2026-10-09). La API no tiene alta de salas: se aseguran al arrancar, por
-// nombre, así que un reinicio no las duplica. Devuelve cuántas creó.
+// Salas que llegaron después del esquema inicial (archivo INVENTARIO ESTUDIO TV
+// VIVE LAB, 2026-10-09). La API no tiene alta de salas: se aseguran al arrancar,
+// por nombre, así que un reinicio no las duplica. Devuelve cuántas creó.
+// Ojo con agregar acá una sala que no deba existir: la crea sola en cada
+// arranque.
+// "Estudio TV" se quitó de esta lista el 2026-10-28, cuando se eliminó de
+// producción: sus 26 elementos estaban duplicados en Lab Imagen (305) y Bodega
+// (24 copias iguales) y las dos baterías que solo estaban ahí (TV 9 y TV 10) se
+// movieron a Lab Imagen (305). Con la entrada acá, la sala volvía a aparecer
+// vacía en el siguiente deploy o reinicio del server. Respaldo previo:
+// `backups/elementos-2026-10-28-21-11.json`.
 export const SALAS_NUEVAS = [
-  { edificio: 'ViveLab', nombre: 'Estudio TV' },
   { edificio: 'ViveLab', nombre: 'Papeleria' },
 ];
 
