@@ -2,9 +2,10 @@
 // subirla. Nada de mandar el original: una foto de cámara son 1-2,5 MB y el
 // inventario tiene ~917 elementos (≈1-2 GB, más que el disco entero del plan).
 //
-// Salida por cada foto: una imagen de 800 px y su miniatura de 200 px, en WebP
-// (con caída a JPEG donde el dispositivo no sepa codificar WebP). Medido:
-// 800 px q0.6 ≈ 26 KB + 200 px ≈ 6 KB → ~31 KB por elemento.
+// Salida por cada foto: una imagen de 1200 px y su miniatura de 200 px, en WebP
+// (con caída a JPEG donde el dispositivo no sepa codificar WebP). Antes eran
+// 800/200 px con q0.6 y la ficha se veía suave; el ajuste actual pesa 1,6× y se
+// ve nítido incluso en pantalla retina.
 import { ImageManipulator, SaveFormat, type ImageRef } from 'expo-image-manipulator';
 
 import {
@@ -47,9 +48,9 @@ export type EntradaFoto = {
 };
 
 export type OpcionesFoto = {
-  /** Lado mayor del resultado (por defecto 800 px). */
+  /** Lado mayor del resultado (por defecto `LADO_FOTO`, 1200 px). */
   lado?: number;
-  /** Calidad inicial (por defecto 0.6); baja sola si no cabe en el límite. */
+  /** Calidad inicial (por defecto `CALIDAD_FOTO`, 0.7); baja sola si no cabe en el límite. */
   calidad?: number;
 };
 

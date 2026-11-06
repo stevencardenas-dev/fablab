@@ -5,8 +5,12 @@
 // Por qué optimizar en el teléfono y no en el servidor: la foto cruda de una
 // cámara moderna es 1-2,5 MB y el inventario tiene ~917 elementos. Subirlas
 // todas serían 1-2 GB — no cabe en el disco de 1 GB del plan de Aiven, ni se
-// termina de subir en una jornada de trabajo. Medido: 800 px WebP q0.6 ≈ 26 KB
-// y 200 px ≈ 6 KB → ~31 KB por elemento (~29 MB para los 917).
+// termina de subir en una jornada de trabajo. Pero bajar de más también se ve:
+// la ficha muestra la foto a ~550 px y en pantalla retina eso pide ~1100 px, así
+// que 800 px con q0.6 se veía suave y con bloques. Ajuste actual: 1200 px WebP
+// q0.7 + miniatura de 200 px. Medido con la foto de `scripts/demo-foto`:
+// 49,5 KB por elemento antes → 81 KB ahora (44 → 73 MB para los 917, contra
+// 1-2,5 MB del original; la escalera sostiene el tope de 400 KB).
 
 export type TamanoFoto = 'foto' | 'miniatura';
 
@@ -20,13 +24,19 @@ export type DatosFoto = {
   alto: number;
 };
 
-// Lado mayor de la foto guardada. 800 px es de sobra para identificar un
-// elemento en pantalla y es el punto donde la curva peso/calidad se aplana.
-export const LADO_FOTO = 800;
-// La miniatura es la que se pinta en las listas: 200 px basta para una tarjeta
-// y pesa ~4× menos que la foto.
+// Lado mayor de la foto guardada. 800 px alcanzaba para una pantalla de 1x, pero
+// la ficha muestra la foto a ~550 px CSS y en retina eso son ~1100 px reales:
+// con 800 se veía suave. 1200 px cubre ese caso con margen.
+export const LADO_FOTO = 1200;
+// La miniatura es la que se pinta en las listas (y como placeholder de la ficha):
+// es la que más se descarga, así que va al mínimo que se vea nítido. 200 px
+// cubre la tarjeta (~88 px CSS → 2,3× en pantalla retina) y pesa ~10× menos que
+// la foto; a 256 costaba +50 % en todas las listas sin ganancia a la vista.
 export const LADO_MINIATURA = 200;
-export const CALIDAD_FOTO = 0.6;
+// 0.7 es donde una foto en WebP deja de verse "procesada" en pantalla sin pagar
+// el sobrepeso de 0.75: a 0.6 se notaban los bloques en zonas planas (paredes,
+// mesas) y en el texto, y de 0.7 a 0.85 la diferencia es invisible al ojo.
+export const CALIDAD_FOTO = 0.7;
 
 // Los mismos límites que valida el servidor (importer/api.mjs). Se repiten aquí
 // para poder avisar antes de gastar la subida (el teléfono en datos móviles no
@@ -35,9 +45,9 @@ export const LIMITE_FOTO_BYTES = 400 * 1024;
 export const LIMITE_MINIATURA_BYTES = 80 * 1024;
 
 // Calidades por las que baja la foto si aún no cabe en el límite. Se recorre en
-// orden y se corta en la primera que cumpla; el escalón final sigue siendo
-// legible para identificar un elemento (que es el uso real de la foto).
-export const ESCALONES_CALIDAD = [0.6, 0.45, 0.32];
+// orden y se corta en la primera que cumpla; el escalón final (0.42) sigue
+// siendo legible para identificar un elemento, que es el uso real de la foto.
+export const ESCALONES_CALIDAD = [0.7, 0.55, 0.42];
 
 /**
  * Dimensiones de salida sin deformar y sin agrandar: si la imagen ya cabe, se

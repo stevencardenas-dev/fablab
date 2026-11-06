@@ -64,4 +64,24 @@ export const Spacing = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+/** Ancho máximo del contenido en celular y tableta: una columna cómoda de leer. */
 export const MaxContentWidth = 800;
+/**
+ * Ancho máximo en escritorio. La ventana puede medir 1920 px: sin esto el
+ * contenido queda como una franja de celular estirada en el centro.
+ */
+export const MaxContentWidthEscritorio = 1240;
+/**
+ * Ancho máximo de un campo de texto (y de los botones que van debajo, para que
+ * queden alineados) en escritorio. Vale justo el ancho que el campo ya ocupa en
+ * tableta, así el campo nunca se angosta al agrandar la ventana: con 560 el
+ * campo medía 720 px a 999 y 560 px a 1000, un salto hacia atrás al pasar el
+ * corte de escritorio.
+ */
+export const MaxAnchoControlEscritorio = 720;
+
+/** Puntos de corte, medidos sobre el ancho de la ventana (px CSS). */
+export const Breakpoints = {
+  /** Desde aquí la ventana es de escritorio: sobra ancho para varias columnas. */
+  escritorio: 1000,
+} as const;

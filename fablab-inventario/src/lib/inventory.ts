@@ -4,7 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { DatosFoto } from './foto';
-import { cerrarSesion, tokenDeSesion, tokenParaEnlace } from './sesion';
+import { leerCuerpoJson, mensajeDeEstado } from './mensajes';import { cerrarSesion, tokenDeSesion, tokenParaEnlace } from './sesion';
 // multiRemove existe en el mock de jest-expo; si no, cae a removeItem secuencial.
 if (!AsyncStorage.multiRemove) {
   (AsyncStorage as any).multiRemove = (keys: string[]) =>
@@ -74,19 +74,25 @@ export async function fetchConReintentos(
 /**
  * Error de una respuesta no exitosa. Un 401 significa que la sesión no existe, venció
  * o fue revocada: se cierra aquí mismo y la app vuelve a la pantalla de entrada.
+ * El mensaje que se muestra prefiere el del server (ya viene en español y explica
+ * el caso, p. ej. el peso de una foto); si no trae texto, se usa uno por estado. El
+ * código y la ruta quedan en la consola, nunca en pantalla.
  */
-function falla(res: Response, ruta: string): Error {
+async function falla(res: Response, ruta: string): Promise<Error> {
   if (res.status === 401) {
     void cerrarSesion();
     void resetCache();
     return new Error('Tu sesión terminó. Inicia sesión de nuevo.');
   }
-  return new Error(`API ${res.status}: ${ruta}`);
+  const cuerpo = await leerCuerpoJson<{ error?: unknown }>(res);
+  const delServer = typeof cuerpo?.error === 'string' ? cuerpo.error.trim() : '';
+  console.warn(`[api] ${res.status} ${ruta}${delServer ? ` — ${delServer}` : ''}`);
+  return new Error(delServer || mensajeDeEstado(res.status));
 }
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetchConReintentos(`${API_BASE}${path}`, { headers: authHeaders() });
-  if (!res.ok) throw falla(res, path);
+  if (!res.ok) throw await falla(res, path);
   return res.json();
 }
 
@@ -107,7 +113,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw falla(res, path);
+  if (!res.ok) throw await falla(res, path);
   return res.json();
 }
 
@@ -117,7 +123,7 @@ async function put<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw falla(res, path);
+  if (!res.ok) throw await falla(res, path);
   return res.json();
 }
 
@@ -265,7 +271,7 @@ export async function removeItem(codigo: string): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(),
   });
-  if (!res.ok) throw falla(res, `DELETE /elementos/${codigo}`);
+  if (!res.ok) throw await falla(res, `DELETE /elementos/${codigo}`);
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(cached.filter((item) => item.codigo !== codigo));
 }
@@ -290,8 +296,9 @@ export async function asignarCodigo(id: number, codigo: string): Promise<Invento
 
 // --- Fotos ---
 // La foto vive en su propia tabla y se sube YA reducida (ver `foto-optimizar.ts`).
-// Medido: ~31 KB por elemento entre foto y miniatura (≈29 MB para 917), contra
-// 1-2,5 MB del original — que además no cabe en el disco del plan.
+// 1200 px q0.7 + miniatura de 200 px: pesa 1,6× lo que antes (medido 49,5 → 81 KB
+// por elemento, 44 → 73 MB para los 917) y la escalera la deja siempre bajo el
+// tope de 400 KB, contra 1-2,5 MB del original — que además no cabe en el disco.
 
 /**
  * URL de la foto (o de su miniatura) de un elemento. Devuelve null si el
@@ -319,12 +326,7 @@ export async function subirFoto(id: number, datos: DatosFoto): Promise<string> {
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(datos),
   });
-  if (res.status === 401) throw falla(res, `POST /elementos/${id}/foto`);
-  if (!res.ok) {
-    const detalle = await res.json().catch(() => null);
-    const mensaje = detalle?.error ? `${detalle.error}` : `API ${res.status}: POST /elementos/${id}/foto`;
-    throw new Error(mensaje);
-  }
+  if (!res.ok) throw await falla(res, `POST /elementos/${id}/foto`);
   const respuesta = (await res.json()) as { hash?: string };
   // Write-through: la sala y el buscador ven la foto nueva sin re-descargar.
   const cached = memAll?.items ?? (await cacheAllFromStorage());
@@ -338,7 +340,7 @@ export async function eliminarFoto(id: number): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(),
   });
-  if (!res.ok) throw falla(res, `DELETE /elementos/${id}/foto`);
+  if (!res.ok) throw await falla(res, `DELETE /elementos/${id}/foto`);
   const cached = memAll?.items ?? (await cacheAllFromStorage());
   writeAllCache(
     cached.map((it) => (it.id === id ? { ...it, foto_hash: undefined } : it)),
@@ -391,9 +393,18 @@ function matchItem(item: InventoryItem, words: string[]): MatchResult | null {
 }
 
 export async function buscarElementos(query: string): Promise<InventoryItem[]> {
-  const items = await getAllItems();
+  return filtrarElementos(await getAllItems(), query);
+}
+
+/**
+ * Filtra una lista ya cargada con la misma regla que la búsqueda de Inicio
+ * (multi-palabra, sin tildes, ordenada por relevancia). La usa la sala para
+ * encontrar un elemento entre los suyos sin salir de la pantalla. Una consulta
+ * vacía devuelve la lista completa.
+ */
+export function filtrarElementos(items: InventoryItem[], query: string): InventoryItem[] {
   const words = normalize(query).split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [];
+  if (words.length === 0) return items;
   const results: MatchResult[] = [];
   for (const item of items) {
     const match = matchItem(item, words);
@@ -479,10 +490,30 @@ export async function historialElemento(elementoId: number): Promise<TrasladoHis
 // --- Export de inventario y traslados ---
 // URL de descarga del inventario/traslados. El CSV sale con BOM y
 // Content-Disposition desde el server (abre directo en Excel con acentos OK);
-// el JSON es para otros programas. La UI la abre con Linking.openURL.
+// el JSON es para otros programas. En nativo la UI la abre con Linking.openURL.
 export function exportarUrl(qué: 'elementos' | 'traslados', formato: 'csv' | 'json' = 'csv'): string {
   const sesion = tokenParaEnlace();
   return `${API_BASE}/export/${qué}.${formato}${sesion ? `?sesion=${encodeURIComponent(sesion)}` : ''}`;
+}
+
+/**
+ * Descarga una exportación por fetch en vez de abrir la URL en una pestaña: si el
+ * server responde error (sesión vencida, por ejemplo), el navegador mostraría el
+ * JSON crudo. Acá el error sale como mensaje legible y el archivo se baja con
+ * nombre propio. Devuelve el contenido como texto (CSV y JSON lo son).
+ */
+export async function descargarExportacion(
+  qué: 'elementos' | 'traslados',
+  formato: 'csv' | 'json' = 'csv',
+): Promise<{ contenido: string; nombre: string }> {
+  const res = await fetch(exportarUrl(qué, formato), { headers: authHeaders() });
+  if (!res.ok) throw await falla(res, `GET /export/${qué}.${formato}`);
+  const contenido = await res.text();
+  const adjunto = res.headers.get('Content-Disposition') ?? '';
+  const delServer = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(adjunto)?.[1];
+  const base = qué === 'elementos' ? 'inventario' : 'traslados';
+  const nombre = delServer?.trim() || `${base}-${new Date().toISOString().slice(0, 10)}.${formato}`;
+  return { contenido, nombre };
 }
 
 export type ResultadoImportacion = {

@@ -32,7 +32,7 @@ guarda el elemento entero, así que lo borrado sigue siendo consultable.
 | `codigo` | VARCHAR(64) | código del elemento en ese momento (sobrevive a la baja) |
 | `antes`, `despues` | JSON | valores |
 | `origen` | VARCHAR | `api` |
-| `actor` | VARCHAR | nombre de la cuenta del laboratorio (`lab` en el ejemplo) si la escritura vino de la app con sesión; `script` si vino del token de herramientas |
+| `actor` | VARCHAR | nombre de la cuenta del laboratorio (`laboratorio` por defecto) si la escritura vino de la app con sesión; `script` si vino del token de herramientas |
 
 La tabla se crea sola al arrancar el server (`asegurarAuditoria` en
 `importer/api.mjs`), con índices por fecha y por elemento.

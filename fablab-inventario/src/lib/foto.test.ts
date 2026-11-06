@@ -122,8 +122,8 @@ describe('siguienteCalidad (bajar calidad solo si hace falta)', () => {
   });
 
   it('baja al siguiente escalón si se pasa', () => {
-    expect(siguienteCalidad(LIMITE_FOTO_BYTES + 1, 0.6)).toBe(0.45);
-    expect(siguienteCalidad(LIMITE_FOTO_BYTES + 1, 0.45)).toBe(0.32);
+    expect(siguienteCalidad(LIMITE_FOTO_BYTES + 1, 0.7)).toBe(0.55);
+    expect(siguienteCalidad(LIMITE_FOTO_BYTES + 1, 0.55)).toBe(0.42);
   });
 
   it('se rinde en el último escalón (null = reportar error)', () => {
@@ -175,10 +175,12 @@ describe('dataUri', () => {
 });
 
 describe('revisarPayload (los mismos límites que el servidor)', () => {
-  const foto = Buffer.alloc(26 * 1024, 1).toString('base64');
-  const miniatura = Buffer.alloc(6 * 1024, 1).toString('base64');
+  // Escala realista con los ajustes nuevos (1200 px q0.7 + miniatura 200 px):
+  // una foto de cámara ronda las centenas de KB y la escalera la baja si se pasa.
+  const foto = Buffer.alloc(150 * 1024, 1).toString('base64');
+  const miniatura = Buffer.alloc(15 * 1024, 1).toString('base64');
 
-  it('acepta el caso medido real (~31 KB por elemento)', () => {
+  it('acepta el caso esperado con los ajustes actuales', () => {
     expect(revisarPayload({ foto, miniatura })).toBeNull();
     expect(LIMITE_FOTO_BYTES).toBe(400 * 1024);
     expect(LIMITE_MINIATURA_BYTES).toBe(80 * 1024);

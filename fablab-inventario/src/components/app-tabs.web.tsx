@@ -12,7 +12,8 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, MaxContentWidthEscritorio, Spacing } from '@/constants/theme';
+import { useDisposicion } from '@/hooks/use-disposicion';
 
 export default function AppTabs() {
   return (
@@ -47,9 +48,10 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 }
 
 export function CustomTabList(props: TabListProps) {
+  const { escritorio } = useDisposicion();
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
+      <ThemedView type="backgroundElement" style={[styles.innerContainer, escritorio && styles.innerContainerEscritorio]}>
         <ThemedText type="smallBold" style={styles.brandText}>
           FabLab UFPS
         </ThemedText>
@@ -79,6 +81,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
+  innerContainerEscritorio: { maxWidth: MaxContentWidthEscritorio },
   brandText: {
     marginRight: 'auto',
   },

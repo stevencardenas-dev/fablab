@@ -60,11 +60,14 @@ npm run migrar:esquema              # lo aplica
 ## Fotos de los elementos
 
 La foto se **reduce en el teléfono antes de subirla** (`src/lib/foto-optimizar.ts`,
-`expo-image-manipulator`): 800 px WebP q0.6 para la ficha y 200 px para las listas.
+`expo-image-manipulator`): 1200 px WebP q0.7 para la ficha y 200 px para las listas.
 El original de la cámara nunca se sube ni se guarda. Medido con una foto real de
-4000×3000 (3,4 MB): **13 KB de foto + 3 KB de miniatura = 16 KB, 99% menos**.
-El inventario completo con foto son ~30 MB, contra ~2 GB si se guardara el original
-(el plan de la base da 1 GB de disco).
+4000×3000 (3,4 MB): antes **49,5 KB por elemento**, ahora **81 KB** (foto de
+1200 px WebP q0,7 + miniatura de 200 px) — **~97% menos** que el original. Para
+los ~917 elementos del inventario son ~73 MB contra ~2 GB si se guardara el
+original (el plan de la base da 1 GB de disco); el peor caso con el tope de
+400 KB por foto son ~358 MB. Detalle de la tabla de pesos en
+[`docs/fotos.md`](docs/fotos.md).
 
 - `elemento_fotos` (1:1 con `elementos`, `ON DELETE CASCADE`) guarda `foto`
   (MEDIUMBLOB), `miniatura` (MEDIUMBLOB) y `hash` (sha1 corto).

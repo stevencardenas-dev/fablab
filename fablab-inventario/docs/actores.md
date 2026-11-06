@@ -10,10 +10,13 @@ no existe se declara como hueco en vez de darse por hecho.
 - **Fuentes:** §1.1 y §1.6 del documento integrador (proceso actual y alcances),
   `notes/05` y `notes/07` (cobertura declarada), y las dos fuentes de verdad del
   código: `server/index.mjs` + `importer/api.mjs` y `src/app/`.
-- **Aviso que ordena todo lo que sigue:** el sistema **no tiene usuarios,
-  contraseñas ni roles**. Los actores de abajo son roles *organizacionales*, no
-  cuentas. Hoy todos escriben con **un solo token compartido**. Lo que eso
-  implica está desarrollado en la última sección, no escondido.
+- **Aviso que ordena todo lo que sigue:** los actores de abajo son roles
+  *organizacionales*, no cuentas. Después del 2026-10-16 hay **una sola cuenta
+  compartida** (`laboratorio`) y un **token de herramientas** para scripts: no
+  hay usuarios individuales ni roles; por eso todo lo escribe la cuenta del
+  laboratorio y la bitácora no tiene autor individual (ver
+  [`auditoria.md`](auditoria.md)). Lo que esto implica está desarrollado en la
+  última sección, no se esconde.
 - **Desde el 2026-10-15 cada escritura queda en la bitácora** (`auditoria`): qué
   cambió, antes y después, y cuándo. Sin autor, por la misma razón: no hay cuentas
   ([`auditoria.md`](auditoria.md)).
@@ -93,8 +96,9 @@ sus acciones determinan lo que los demás pueden hacer, así que se documenta:
 
 - **Desplegar** la API y la PWA en Render, o el stack completo con Docker en un
   servidor propio ([`docker/README.md`](../docker/README.md)), y **rotar el token de
-  escritura** (exige volver a exportar y desplegar la web, porque el token viaja
-  dentro del bundle; se rotó el 2026-10-16).
+  herramientas** (ya no viaja en el bundle: desde el inicio de sesión la API solo lo
+  usa para scripts y el web no lo lleva; rotarlo solo exige cambiar la env var y
+  redesplegar la API, no la web; se rotó el 2026-10-16).
 - **Administrar el esquema:** crear/ajustar tablas e índices al arrancar el
   server (`asegurarCodigoUnico()` y compañía), siempre de forma idempotente.
 - **Respaldar** y verificar la base (`backup:remoto` en Render; `docker/respaldo.sh`

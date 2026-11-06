@@ -17,7 +17,7 @@ subir y la base guarda solo la versión reducida.
             │ HTTP/JSON  (todo con Bearer de sesión, salvo /health y /api/login)
             │ WebP/JPEG en base64 (POST foto)
 ┌───────────▼──────────────────┐
-│  API REST — Node (sin deps    │   server/index.mjs: 14 rutas, CORS, gzip,
+│  API REST — Node (sin deps    │   server/index.mjs: 15 rutas, CORS, gzip,
 │  de framework), mysql2        │   ETag/304, keep-alive del free tier
 │  Pool tibio + cachés en RAM   │   importer/api.mjs: SQL, validaciones,
 └───────────┬──────────────────┘   caché de fotos, ErrorApi(estatus)
@@ -76,7 +76,7 @@ el error.
 ### 3. Foto de un elemento
 
 ```
-cámara/galería → prepararFotoParaSubir()  (800 px WebP q0.6 + 200 px, ~31 KB)
+cámara/galería → prepararFotoParaSubir()  (1200 px WebP q0.7 + 200 px, ~81 KB)
    → POST /api/elementos/:id/foto (base64)
    → validarFoto(): firma de bytes, límites, hash sha1(16)
    → UPSERT en elemento_fotos, se limpia la caché del elemento
@@ -136,10 +136,14 @@ Cada decisión con su motivo (y el costo que se aceptó):
   `…/foto?tam=miniatura&v=<hash>`: al reemplazar la foto cambia la URL, y
   ninguna caché (navegador, service worker, RAM del server) sirve la vieja.
   El ETag es el mismo hash, así que la revalidación es exacta.
-- **Escrituras protegidas con token opcional.** Si `API_TOKEN` está definido, las
-  escrituras exigen `Authorization: Bearer`; la lectura sigue pública. Es un
-  freno al vandalismo casual, **no** seguridad real en la web (el token viaja en
-  un bundle público; ver [`problemas-conocidos.md`](problemas-conocidos.md)).
+- **Acceso con credencial.** Si `API_TOKEN`, `CUENTA_USUARIO`/`CUENTA_CLAVE_HASH`
+  y `SESION_SECRETO` están configurados (lo habitual en producción o Docker),
+  **todas** las rutas excepto `/health` y `POST /api/login` exigen una credencial.
+  El proyecto expone una sola cuenta compartida (sesión de 12 h, HMAC firmada) y
+  un token de herramientas para scripts. En modo del todo abierto (sin nada
+  configurado) lecturas y escrituras son públicas. Ver
+  [`operacion.md`](operacion.md#credenciales-y-accesos) y
+  [`problemas-conocidos.md`](problemas-conocidos.md#resuelto-el-token-de-escritura-viajaba-en-el-bundle-web).
 - **Código no editable.** `codigo` es el identificador impreso en la etiqueta
   Data Matrix: sobrescribirlo invalidaría etiquetas pegadas. Por eso existe
   `POST /api/elementos/:id/codigo`, que **solo rellena vacíos**.
@@ -162,3 +166,66 @@ Cada decisión con su motivo (y el costo que se aceptó):
 - **Datos de producción**: MySQL de Aiven (`defaultdb`) escrito por la API. El
   Excel de origen es un punto de partida histórico, **no** la verdad actual: la
   base ya tiene 35 códigos asignados y ediciones hechas por la app.
+
+## Mapa del código (qué hace cada archivo)
+
+### Rutas de la app (`src/app/`)
+| Archivo | Rol |
+|---|---|
+| `src/app/_layout.tsx` | Tema, splash animado, registro del service worker, `prewarmCache()` |
+| `src/app/+html.tsx` | Documento HTML completo del export web (meta, scripts) |
+| `src/app/(tabs)/_layout.tsx` | Tabs (Inicio, Inventario) |
+| `src/app/(tabs)/index.tsx` | **Inicio**: búsqueda viva, escaneo, alta y exportación |
+| `src/app/(tabs)/explore.tsx` | **Inventario**: lista de salas por edificio, con estados |
+| `src/app/sala/[nombre].tsx` | **Sala**: mosaico de chips, filtro, modal de detalle |
+
+### Componentes (`src/components/`)
+| Archivo | Rol |
+|---|---|
+| `src/components/animated-icon*.tsx` | Icono animado del splash |
+| `src/components/app-tabs*.tsx` | Barra de pestañas (web + nativo) |
+| `src/components/data-matrix.tsx` | Descarga de etiquetas y hojas de impresión (web/nativo) |
+| `src/components/external-link.tsx` | Abrir enlaces externos |
+| `src/components/pantalla-entrada.tsx` | Pantalla de entrada (inicio de sesión) + captcha |
+| `src/components/scanner.tsx` | Lector Data Matrix por cámara (`expo-camera`) |
+| `src/components/service-worker.ts` | Registro del SW (maneja `document.readyState`) |
+| `src/components/themed-text.tsx`, `themed-view.tsx` | Texto/vista tematicados |
+| `src/components/ui/collapsible.tsx` | Bloque colapsable reutilizable |
+| `src/components/_unused/*` | Sobrantes del template de Expo (excluidos de Jest) |
+
+### Hooks y constantes
+| Archivo | Rol |
+|---|---|
+| `src/hooks/use-color-scheme*.ts` | Detectar modo claro/oscuro |
+| `src/hooks/use-disposicion.ts` | Desborde por ancho (escritorio vs móvil) |
+| `src/hooks/use-sesion.ts` | Estado de sesión del laboratorio |
+| `src/hooks/use-theme.ts` | Contexto de modo light/dark |
+| `src/constants/theme.ts` | Tokens de color, espaciado, tipografía |
+| `src/global.css` | Estilos globales (web) |
+
+### Librerías (`src/lib/`)
+| Archivo | Rol |
+|---|---|
+| `src/lib/data-matrix-svg.ts` | Armado del SVG de la etiqueta Data Matrix (mm) y del plan de hoja |
+| `src/lib/foto.ts` | Constantes y helpers de compresión de foto (LADO*, CALIDAD*) |
+| `src/lib/foto-optimizar.ts` | Puente con `expo-image-manipulator` (redimensionar/comprimir) |
+| `src/lib/hoja-imprimible.ts` | Pestaña HTML imprimible de etiquetas |
+| `src/lib/inventory.ts` | Acceso a la API, caché SWR, write-through, búsquedas,deep links |
+| `src/lib/mensajes.ts` | Mensajes de la app al usuario (fallback por estatus) |
+| `src/lib/sesion.ts` | Token de sesión, `iniciarSesion`, `authHeaders`, `?sesion=` |
+
+### Servidor, importer y scripts
+| Archivo | Rol |
+|---|---|
+| `server/index.mjs` | Rutas, CORS, compresión, ETag, autenticación, esquema al arrancar |
+| `server/sesion.mjs` | Hash scrypt, firma HMAC, verificación (puro, compartido) |
+| `importer/api.mjs` | SQL, validaciones (`validarFoto`, `validarAsignacion`), cachés, `ErrorApi` |
+| `importer/importar.mjs` | `conexionDesdeEnv()` + SQL de la importación |
+| `importer/normalizado.mjs`, `schema.mjs`, `gen-normalizado.mjs`, `cli.mjs` | xlsx → SQL normalizado/legacy |
+| `importer/self-check.mjs` | Validaciones sin base (corre en el gate) |
+| `scripts/*` | seed, migrar-esquema, asignar-codigos, fix-mojibake, backup, qa, benchmark, fotos-demo, sync-deploy, verificar-docs, verificar-impresion, verify-* |
+| `public/sw.js` | Service worker (cache-first shell, network-first `/api/`) |
+| `public/manifest.json` | Manifest de la PWA |
+
+Todo archivo de `src/` no listado es accesorio (temas, offline). Si agregas uno,
+añádelo a esta tabla — `docs:check` valida enlaces pero **no** la cobertura.

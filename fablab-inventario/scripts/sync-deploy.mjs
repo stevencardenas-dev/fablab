@@ -37,6 +37,9 @@ const SYNC_PREFIX = 'Sync desde monorepo';
 // URL de la API horneada en el bundle web (sin ella el PWA no sabe dónde está
 // la API y el inventario queda vacío). Override: EXPO_PUBLIC_API_URL=... npm run sync:deploy
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://fablab-api-sr1q.onrender.com/api';
+// Sitekey del captcha Turnstile (PÚBLICO, se horna igual que la URL). Vacío =
+// el bundle sale sin captcha y el login queda como antes. Override: env var igual.
+const TURNSTILE_SITEKEY = process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY || '';
 
 const TARGETS = {
   api: {
@@ -136,8 +139,9 @@ function syncWeb(t) {
   // cacheado y el deploy sube la URL/token VIEJOS sin avisar — solo se detecta
   // si cambió el host (la verificación de abajo).
   const tokenPart = process.env.EXPO_PUBLIC_API_TOKEN ? `EXPO_PUBLIC_API_TOKEN=${process.env.EXPO_PUBLIC_API_TOKEN} ` : '';
-  console.log(`[web] exportando con EXPO_PUBLIC_API_URL=${API_URL}${process.env.EXPO_PUBLIC_API_TOKEN ? ' + token de escritura' : ''} ...`);
-  sh(`${tokenPart}EXPO_PUBLIC_API_URL=${API_URL} npx expo export --platform web --clear`, APP_ROOT);
+  const turnstilePart = TURNSTILE_SITEKEY ? `EXPO_PUBLIC_TURNSTILE_SITEKEY=${TURNSTILE_SITEKEY} ` : '';
+  console.log(`[web] exportando con EXPO_PUBLIC_API_URL=${API_URL}${process.env.EXPO_PUBLIC_API_TOKEN ? ' + token de escritura' : ''}${TURNSTILE_SITEKEY ? ' + sitekey Turnstile' : ''} ...`);
+  sh(`${tokenPart}${turnstilePart}EXPO_PUBLIC_API_URL=${API_URL} npx expo export --platform web --clear`, APP_ROOT);
   const dist = join(APP_ROOT, 'dist');
   if (!existsSync(dist)) {
     console.error('[web] el export no generó dist/');

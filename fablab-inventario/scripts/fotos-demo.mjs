@@ -34,13 +34,13 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEMO_DIR = path.join(RAIZ, 'scripts', 'demo-foto');
 
 // Los dos tamaños salen del mismo PNG de origen con cwebp:
-//   cwebp -q 82 -resize 800 800 origen.png -o foto.webp        (800×800, ~26 KB)
-//   cwebp -q 95 -resize 200 200 origen.png -o miniatura.webp   (200×200, ~5 KB)
+//   cwebp -q 70 -resize 1200 1200 origen.png -o foto.webp      (1200×1200, ~75 KB)
+//   cwebp -q 70 -resize 200 200 origen.png -o miniatura.webp   (200×200, ~7 KB)
 // Las calidades se eligieron para caer en el MISMO peso que una foto de cámara
-// ya optimizada por la app (800 px q0.6 ≈ 26 KB + miniatura ≈ 6 KB = ~31 KB):
+// ya optimizada por la app (1200 px q0.7 ≈ 75 KB + miniatura ≈ 7 KB = ~81 KB):
 // con una imagen más liviana la medición de carga saldría mejor que la realidad.
 const MIME = 'image/webp';
-const LADO_FOTO = 800;
+const LADO_FOTO = 1200;
 const LADO_MINIATURA = 200;
 
 const args = process.argv.slice(2);
@@ -334,7 +334,7 @@ async function medirLatencia() {
 
   const tFoto = [];
   for (const e of muestra.slice(0, 6)) tFoto.push(await cronometrar(() => fetch(url(e, 'foto'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer())));
-  console.log(`foto (800 px, en serie):          ${stats(tFoto)}`);
+  console.log(`foto (1200 px, en serie):         ${stats(tFoto)}`);
 
   const tSala = await cronometrar(() => Promise.all(muestra.map((e) => fetch(url(e, 'miniatura'), { headers: cabeceraLectura() }).then((r) => r.arrayBuffer()))));
   console.log(`sala completa (${muestra.length} miniaturas a la vez): ${ms(tSala)} en total`);

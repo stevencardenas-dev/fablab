@@ -18,7 +18,7 @@ edificios ──1:N──► salas ──1:N──► elementos ──1:1──�
 | `salas` | 13 | Cada hoja 2026 del Excel es una sala (Estudio TV y Papeleria desde 2026-10-09) |
 | `elementos` | **1 450** | El inventario (una fila por elemento/fila de la hoja) |
 | `traslados` | variable | Historial de movimientos entre salas |
-| `elemento_fotos` | 0 (ver [`fotos.md`](fotos.md)) | Foto 800 px + miniatura 200 px por elemento |
+| `elemento_fotos` | 0 (ver [`fotos.md`](fotos.md)) | Foto 1200 px + miniatura 200 px por elemento |
 | `auditoria` | crece con cada escritura | Bitácora de cambios (ver [`auditoria.md`](auditoria.md)) |
 
 ## DDL

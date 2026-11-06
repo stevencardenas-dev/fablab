@@ -12,7 +12,7 @@ Hay dos importadores y **no se mezclan en la misma base**:
 | | `importer/schema.mjs` (vía `cli.mjs`) | `importer/normalizado.mjs` (vía `gen-normalizado.mjs`) |
 |---|---|---|
 | Forma | una hoja = una tabla | `edificios → salas → elementos` + `traslados` |
-| Hojas | las que pases por `--hojas` | las 11 de `HOJAS` (FabLab + ViveLab) |
+| Hojas | las que pases por `--hojas` | las 13 de `HOJAS` (FabLab + ViveLab) |
 | Traslados | no | sí (historias de movimiento) |
 | Escribe en MySQL | sí | no: imprime SQL |
 
@@ -38,8 +38,10 @@ del Excel es qué sala. Agregar una sala es agregar una línea ahí:
 | `VIVE LAB-BODEGA ` *(espacio final)* | ViveLab | Bodega |
 | `VIVE LAB-AULA 303` | ViveLab | Aula 303 |
 | `VIVE LAB-AULA 304` | ViveLab | Aula 304 |
+| `ESTUDIO TV ` *(espacio final)* | ViveLab | Estudio TV |
+| `PAPELERIA 2026` | ViveLab | Papeleria |
 
-Las 7 hojas `* 2026` comparten el encabezado canónico
+Las 8 hojas `* 2026` comparten el encabezado canónico
 (`CODIGO, DETALLE, SERIAL, INVENTARIO, ESTADO, OBSERVACIONES, CANTIDAD`);
 `ALMACEN 2026` y las 4 de ViveLab traen las mismas menos `ESTADO`, que queda
 `NULL`. Los encabezados se normalizan con alias (`NOMBRE`→`detalle`,

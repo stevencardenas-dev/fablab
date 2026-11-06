@@ -41,6 +41,10 @@ import { leerSesion, firmarSesion, verificarClave } from './sesion.mjs';
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// Lo que ve el usuario cuando una falla nuestra (5xx) llega a la app. El detalle
+// real va al log del server, no al cuerpo de la respuesta.
+const mensajeDeFalla = 'El servidor tuvo un problema.';
+
 // --- Helpers ---
 
 // Respuestas >1KB se comprimen si el cliente acepta gzip: el JSON del
@@ -222,6 +226,45 @@ const CUENTA_CLAVE_HASH = process.env.CUENTA_CLAVE_HASH || '';
 const SESION_SECRETO = process.env.SESION_SECRETO || '';
 const LOGIN_ACTIVO = Boolean(CUENTA_USUARIO && CUENTA_CLAVE_HASH && SESION_SECRETO);
 
+// Cloudflare Turnstile (captcha del login). Sin TURNSTILE_SECRET el login es el
+// de siempre (nadie exige captcha); con él, TODO /api/login exige un token válido.
+// TURNSTILE_HOSTNAMES es la lista blanca de dominios del frontend (coma): siteverify
+// devuelve el hostname de la página que renderizó el widget y debe coincidir.
+// Obligatoria junto al secret — sin ella el login queda bloqueado (fail-closed).
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET || '';
+// Acción asignada al widget en la pantalla de entrada (data-action / render action).
+const TURNSTILE_ACCION = 'login';
+const TURNSTILE_HOSTNAMES = new Set(
+  (process.env.TURNSTILE_HOSTNAMES || '').split(',').map((h) => h.trim()).filter(Boolean),
+);
+
+/**
+ * Valida el token de Turnstile contra el endpoint canónico siteverify.
+ * Fail-closed: sin token, sin hostnames o ante cualquier red/respuesta rara → false.
+ * El canje es de uso único: un token no se puede reusar.
+ */
+async function verificarTurnstile(token, ip) {
+  if (!TURNSTILE_SECRET) return true; // captcha no configurado: no se exige
+  if (typeof token !== 'string' || !token || token.length > 2048) return false;
+  if (TURNSTILE_HOSTNAMES.size === 0) return false; // secret sin allowlist: no se arriesga
+  let resultado;
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: AbortSignal.timeout(10_000),
+      body: new URLSearchParams({ secret: TURNSTILE_SECRET, response: token, remoteip: ip || '' }),
+    });
+    if (!r.ok) throw new Error(`siteverify ${r.status}`);
+    resultado = await r.json();
+  } catch {
+    return false;
+  }
+  return Boolean(resultado.success)
+    && resultado.action === TURNSTILE_ACCION
+    && TURNSTILE_HOSTNAMES.has(resultado.hostname);
+}
+
 /** Credencial de la petición: header Bearer o, solo donde se permite, `?sesion=`. */
 function credencial(req, query, permiteQuery) {
   const m = /^Bearer\s+(.+)$/.exec(req.headers['authorization'] || '');
@@ -280,6 +323,11 @@ async function handleReq(req, res) {
     if (req.method === 'POST' && parts.join('/') === 'api/login') {
       if (!LOGIN_ACTIVO) return json(res, 404, { error: 'Inicio de sesión no configurado en este server' });
       const body = await readBody(req);
+      // Captcha: con TURNSTILE_SECRET, el token es obligatorio y se valida ANTES
+      // de las credenciales (fail-closed: 403 sin token o si siteverify falla).
+      const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+      const captchaOk = await verificarTurnstile(body.turnstileToken, ip);
+      if (!captchaOk) return json(res, 403, { error: 'Verificación de seguridad fallida: intenta de nuevo' });
       const ok = String(body.usuario ?? '') === CUENTA_USUARIO && verificarClave(body.clave ?? '', CUENTA_CLAVE_HASH);
       if (!ok) return json(res, 401, { error: 'Usuario o contraseña incorrectos' });
       const horas = 12;
@@ -462,9 +510,14 @@ async function handleReq(req, res) {
     notFound(res);
   } catch (e) {
     // ErrorApi (importer/api.mjs) trae estatus de cliente: 400 campo inválido,
-    // 404 inexistente, 409 conflicto. Lo demás sí es un 500 del servidor.
+    // 404 inexistente, 409 conflicto. Esos mensajes sí son para el usuario y van
+    // tal cual; un 5xx es falla nuestra y su detalle (SQL, conexión) se queda en
+    // el log: la app mostraría "connect ECONNREFUSED 127.0.0.1:3306" en pantalla.
     const status = Number.isFinite(e?.status) ? e.status : 500;
-    if (status >= 500) console.error(`[api] ${req.method} ${pathname}:`, e.message);
+    if (status >= 500) {
+      console.error(`[api] ${req.method} ${pathname}:`, e.message);
+      return json(res, status, { error: mensajeDeFalla });
+    }
     json(res, status, { error: e.message });
   }
 }
@@ -527,6 +580,7 @@ server.listen(PORT, HOST, () => {
   console.log(`  GET    /api/elementos/:id/foto[?tam=miniatura]`);
   console.log(`  POST   /api/elementos/:id/foto    (WebP/JPEG ya reducidos; límite 400 KB)`);
   console.log(`  DELETE /api/elementos/:id/foto`);
+  console.log(`  POST   /api/import/elementos     (CSV o libro; cada hoja es una sala)`);
   console.log(`  GET    /api/export/{elementos,traslados}.{csv,json}`);
   console.log(`  DELETE /api/elementos/:codigo`);
   console.log(`  POST   /api/traslados`);

@@ -19,16 +19,35 @@ estático y se instala como PWA (`https://fablab-web.onrender.com`).
 
 ### Inicio (`index.tsx`)
 
-- **Buscar**: campo siempre visible (código, nombre o serial); los resultados salen debajo con la opción de imprimir etiquetas.
+- **Disposición**: desde 1000 px la barra de búsqueda pone el campo, el botón
+  Buscar y «Limpiar» en la misma fila (el campo llena el ancho y los botones
+  miden lo que su texto), las tres fichas van en fila y el formulario de alta
+  pone los campos de a dos por fila; debajo de 1000 px todo se apila y los
+  botones ocupan el ancho, que es lo que alcanza el pulgar. Cada ficha es un
+  solo botón (icono, título, pista y chevron) con el borde del acento al pasar
+  el cursor o mientras su panel está abierto.
+- **Buscar**: búsqueda viva: busca sola 250 ms después de la última tecla, y
+  también con el botón o con Enter. Trae «Limpiar» para vaciar, avisa
+  «Buscando…» mientras resuelve y con el campo vacío no busca, en vez de decir
+  "sin resultados" de algo que nadie escribió. Cada resultado ofrece **Ver
+  ficha** (abre la ficha de ese elemento en su sala) y su etiqueta descargable.
+  La barra vive fuera de los paneles: la consulta y sus resultados no se pierden
+  al abrir Escanear, Agregar o Exportar.
 - **Escanear**: `Scanner` (expo-camera) lee **solo Data Matrix**
-  (`barcodeTypes: ['datamatrix']`), con permiso explícito y botón "Escanear otro";
-  al leer busca el código en el inventario y muestra la ficha (o avisa que no
-  existe) con su botón de etiqueta.
-- **Agregar**: formulario con los campos del inventario, **selector de sala**
-  (chips; sin él el server responde 400 y nada se guarda), generación automática
-  de código (`generateCodigo()` → `FL-…`) y foto opcional.
+  (`barcodeTypes: ['datamatrix']`). Al leer se apaga la cámara y se busca el
+  código: **si existe, su sala se abre con la ficha ya desplegada** (mismo camino
+  que **Ver ficha**) y al volver el panel ya está en la cámara para la siguiente
+  etiqueta; si el código no existe se avisa en un recuadro acentuado con la
+  tarjeta (código, sala, estado, serial, cantidad, observaciones, **Ver ficha** y
+  la etiqueta) y queda «Escanear otro» para volver a la cámara. Mientras resuelve
+  se muestra «Buscando el elemento…», y si la consulta falla (sin red) se explica
+  el fallo en vez de afirmar que el código no existe.
+- **Agregar**: formulario con los campos del inventario —de a dos por fila
+  desde 1000 px— y **selector de sala**, ambos requeridos y rotulados
+  «(obligatorio)» (chips; sin sala el server responde 400 y nada se guarda),
+  generación automática de código (`generateCodigo()` → `FL-…`) y foto opcional.
   - La foto se **optimiza al capturarla** y se muestra el ahorro
-    (`"3.4 MB → 13 KB (-99%) · 800×600"`).
+    (`"3.4 MB → 13 KB (-99%) · 1200×900"`).
   - La foto se sube **después** del alta (necesita el `id`); el cartel de
     "Guardado" sale recién cuando no queda nada pendiente. Si la subida falla, el
     elemento igual quedó guardado y se avisa aparte.
@@ -39,12 +58,24 @@ estático y se instala como PWA (`https://fablab-web.onrender.com`).
   acentos y espacios; puntúa coincidencia exacta (100) > empieza con (50) >
   contiene (10) y ordena por relevancia. Cada resultado trae su etiqueta
   descargable y el botón "Imprimir etiquetas de los resultados (N)".
-- **Exportar**: 4 botones (inventario/traslados × CSV/JSON) que abren la URL de
-  export con `Linking.openURL`; el CSV viene con BOM y se abre directo en Excel.
+- **Exportar**: 4 botones (inventario/traslados × CSV/JSON). En web la descarga
+  la hace la app y confirma «Listo: \<archivo\>» en el panel; en nativo abre la
+  URL de export con `Linking.openURL`. El CSV viene con BOM y se abre directo en
+  Excel.
+- **Importar** (solo web): los botones de exportación incluyen "Importar inventario",
+  que abre el selector de archivos del navegador (`.csv`, `.xlsx`, `.xls`, `.ods`);
+  cada hoja del libro se trata como una sala y solo se crean los códigos nuevos, el
+  resto se reporta. Requiere red (y servidor) y muestra el resumen legible o el error.
 
 ### Sala (`sala/[nombre].tsx`)
 
 - Lista de chips: miniatura (`?tam=miniatura&v=<hash>`) + código + detalle.
+- Llega desde la búsqueda de Inicio con `?elemento=<id>` (el botón «Ver ficha»):
+  abre esa ficha una sola vez, para que al volver a la sala no se repita sola.
+- **Filtro**: con más de 8 elementos aparece «Filtrar por nombre, código o
+  serial», con la misma regla que la búsqueda de Inicio pero solo sobre los
+  elementos de esta sala; el resumen pasa a "N de M elementos", hay «Limpiar» y
+  un aviso acentuado cuando nada coincide.
 - **Modal de detalle** con la foto grande (`?tam=foto`), botones para
   reemplazar/elegir/quitar foto, edición de campos (PUT solo de los tocados),
   traslado a otra sala (POST `/traslados`, con nota) e historial de movimientos.
@@ -138,7 +169,7 @@ Es el único punto de contacto con la API desde la app.
 - `public/sw.js`: cache-first para el **shell** (`/`, `/index.html`) y para los
   bundles que el navegador pida; **network-first para `/api/`** (si no hay red
   devuelve `503`, y la caché SWR de la app responde con lo último conocido).
-- **Versión de caché**: `CACHE_NAME = 'fablab-v20'`. Al desplegar un bundle
+- **Versión de caché**: `CACHE_NAME = 'fablab-v31'`. Al desplegar un bundle
   nuevo hay que **subir el número**, o los clientes con el SW viejo quedan con la
   UI vieja para siempre (el `activate` borra las cachés de nombres distintos).
 - `src/components/service-worker.ts` registra el SW y ya no se pierde la primera
@@ -161,6 +192,7 @@ Es el único punto de contacto con la API desde la app.
 |---|---|
 | `EXPO_PUBLIC_API_URL` | URL de la API (horneada en el build). **Obligatoria** en el export web |
 | `EXPO_PUBLIC_API_TOKEN` | Solo desarrollo local. **No definir en el build de producción**: quedaría en el bundle público |
+| `EXPO_PUBLIC_TURNSTILE_SITEKEY` | (Opcional) Sitekey pública de Cloudflare Turnstile; se hornea en el bundle web (`EXPO_PUBLIC_*`). Vacío = login sin captcha en la app |
 
 `eas.json` define los perfiles de build: `development` (dev client),
 `preview` (APK interno con la URL de producción), `production`

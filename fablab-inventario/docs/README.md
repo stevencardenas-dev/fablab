@@ -37,7 +37,7 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
   objetivo, más los cuatro declarados y no implementados.
 - **[arquitectura.md](arquitectura.md)** — componentes del monorepo, flujo de
   datos, stack y versiones, decisiones de diseño con su motivo.
-- **[api.md](api.md)** — contrato completo de las 14 rutas HTTP: autenticación,
+- **[api.md](api.md)** — contrato completo de las 15 rutas HTTP: autenticación,
   CORS, límite de escrituras, gzip, ETag, códigos de estado, ejemplos `curl` y errores.
 - **[auditoria.md](auditoria.md)** — bitácora de cambios: qué se registra, cómo
   consultarla y qué falta (el *quién* llega con el inicio de sesión).
@@ -48,6 +48,8 @@ datos MySQL, pipeline de fotos, importación desde Excel, despliegue y pruebas.
   del servidor, hash/ETag, cachés en RAM y cómo se ve en la UI.
 - **[app.md](app.md)** — pantallas (Inicio, Inventario, Sala), caché
   stale-while-revalidate, búsqueda, Data Matrix/etiquetas, PWA y service worker.
+- **[movil.md](movil.md)** — build nativo Android/iOS (C) contra el stack Docker
+  desplegado: `EXPO_PUBLIC_API_URL`, permisos, distribución sin tienda, HTTPS.
 - **[importacion.md](importacion.md)** — xlsx → MySQL: los dos generadores,
   `seed`, asignación de códigos, reparación de mojibake y `self-check`.
 - **[operacion.md](operacion.md)** — entornos, credenciales, `sync:deploy`,

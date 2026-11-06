@@ -43,7 +43,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = <Image style={styles.splashImage} source={require('@/assets/images/logo-fablab.png')} />;
 
   return animate ? (
     <Animated.View
@@ -141,6 +141,11 @@ const styles = StyleSheet.create({
     width: 76,
     height: 71,
   },
+  // El splash de arranque muestra el logo del FabLab, no el de Expo.
+  splashImage: {
+    width: 140,
+    height: 163,
+  },
   background: {
     borderRadius: 40,
     experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
@@ -150,7 +155,7 @@ const styles = StyleSheet.create({
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,

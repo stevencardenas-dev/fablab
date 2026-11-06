@@ -7,13 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "fablabinventario",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "package": "com.fablabufps.inventario",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -31,27 +28,35 @@
         "manifest": "./public/manifest.json",
         "splash": {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76,
-          "backgroundColor": "#208AEF"
+          "imageWidth": 300,
+          "backgroundColor": "#FFFFFF"
         },
         "themeColor": "#C8102E",
         "orientation": "portrait",
         "icons": [
           {
-            "src": "./assets/images/icon.png",
-            "sizes": "any"
+            "src": "./icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+          },
+          {
+            "src": "./icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
           }
         ]
       }
     },
     "plugins": [
+      "expo-updates",
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 300
         }
       ],
       [
@@ -73,6 +78,16 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "updates": {
+      "url": "https://u.expo.dev/289400ee-11a5-4feb-9d30-63b1aa36703a",
+      "fallbackToCacheTimeout": 0,
+      "requestHeaders": {
+        "expo-channel-name": "universidad"
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "extra": {
       "router": {},

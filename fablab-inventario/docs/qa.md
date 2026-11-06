@@ -5,7 +5,7 @@ salvo el QA y el benchmark (que también aceptan un server local).
 
 | Nivel | Comando | Qué cubre | Estado |
 |---|---|---|---|
-| Unitarias | `npm test` | Lógica pura y cliente (`inventory`, `foto`, `data-matrix-svg`, `hoja-imprimible`) | **117/117** |
+| Unitarias | `npm test` | Lógica pura y cliente (`inventory`, `foto`, `data-matrix-svg`, `hoja-imprimible`, `mensajes`) | **140/140** |
 | Sin base | `node importer/self-check.mjs` | DDL/DML, capa de API, códigos, ids | **OK** (5 bloques) |
 | Tipos/lint | `npx tsc --noEmit` · `npm run lint` | TypeScript y ESLint | limpios |
 | Simbología | `npm run verify:datamatrix` | Los Data Matrix son decodificables | OK (con limitación) |
@@ -16,7 +16,7 @@ salvo el QA y el benchmark (que también aceptan un server local).
 
 ## Unitarias (`npm test`)
 
-Jest con `jest-expo`, 4 suites:
+Jest con `jest-expo`, 5 suites:
 
 - **`src/lib/inventory.test.ts`** — cliente de la API: `urlFoto` (null sin foto,
   cambio de URL al cambiar el hash), retry con backoff solo en GET,
@@ -33,6 +33,8 @@ Jest con `jest-expo`, 4 suites:
   hoja de una pieza que crece hacia abajo, mezcla de matrices de distinto tamaño
   sin solapes, y que la celda se ensancha con el **texto** cuando el código es
   más ancho que el símbolo (un `FL-…` de 15 caracteres pide ~18 mm).
+- **`src/lib/mensajes.test.ts`** — helpers de mensajes: preferencia del texto del
+  server, fallback por estatus, guardas para cuerpo no-JSON, 5xx genérico.
 - **`src/lib/hoja-imprimible.test.ts`** — la pestaña que se imprime: una sección
   por papel, una caja por página, un SVG por caja con la medida del papel, sin
   declaración XML embebida, selector con Carta por defecto y arranque en el

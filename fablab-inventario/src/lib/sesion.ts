@@ -5,6 +5,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { leerCuerpoJson, mensajeDeEstado } from './mensajes';
+
 const CLAVE = 'fablab.sesion.v1';
 
 type Sesion = { token: string; expira: number; usuario: string };
@@ -66,16 +68,22 @@ export function expiraSesion(): number | null {
   return vigente(actual) ? actual.expira : null;
 }
 
-/** Pide la sesión al server. Lanza error con el mensaje del server si la clave no sirve. */
-export async function iniciarSesion(base: string, usuario: string, clave: string): Promise<void> {
+/**
+ * Pide la sesión al server. Lanza error con el mensaje del server si la clave no sirve.
+ * `turnstileToken` (web) es el captcha de Cloudflare Turnstile de uso único: el
+ * server lo valida contra siteverify solo si tiene TURNSTILE_SECRET configurado.
+ */
+export async function iniciarSesion(base: string, usuario: string, clave: string, turnstileToken?: string): Promise<void> {
   const res = await fetch(`${base}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usuario, clave }),
+    body: JSON.stringify(turnstileToken ? { usuario, clave, turnstileToken } : { usuario, clave }),
   });
-  const cuerpo = await res.json().catch(() => ({}));
+  const cuerpo = (await leerCuerpoJson<{ token?: string; usuario?: string; error?: string; expira_horas?: number }>(res)) ?? {};
   if (!res.ok || !cuerpo.token) {
-    throw new Error(cuerpo.error || `No se pudo iniciar sesión (${res.status})`);
+    // El server explica en español por qué (clave mala, captcha, límite). Si no manda
+    // texto, se traduce el estado: "(502)" no le dice nada a quien está entrando.
+    throw new Error(cuerpo.error || mensajeDeEstado(res.status));
   }
   const sesion: Sesion = {
     token: cuerpo.token,

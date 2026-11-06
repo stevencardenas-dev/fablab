@@ -13,6 +13,18 @@
       },
       "distribution": "internal"
     },
+    "universidad": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://INVENTARIO_FABLAB_UFPS/api"
+      },
+      "distribution": "internal"
+    },
     "production": {
       "android": {
         "buildType": "app-bundle"

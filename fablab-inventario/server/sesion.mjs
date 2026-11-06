@@ -1,5 +1,6 @@
 // Cuenta del laboratorio e inicio de sesión. Funciones puras (sin red ni base),
-// para que el server, scripts/crear-cuenta.mjs y el self-check usen las mismas.
+// para que el server, el comando de `docker/.env.example` y el self-check usen
+// las mismas.
 //
 // Una sola cuenta compartida (decisión con los usuarios, 2026-10-16). La clave
 // se guarda como hash scrypt en CUENTA_CLAVE_HASH; nunca en claro. La sesión es

@@ -15,6 +15,7 @@ import {
   findByCodigo,
   findByDetalle,
   findByRoom,
+  filtrarElementos,
   listarSalas,
   registrarTraslado,
   historialElemento,
@@ -280,6 +281,40 @@ describe('findByDetalle', () => {
   });
 });
 
+describe('filtrarElementos (filtro de una sala)', () => {
+  const sala: InventoryItem[] = [
+    { codigo: 'CNC-001', detalle: 'Torno CNC', serial: 'SN100', inventario: 'INV001', estado: 'Bueno', observaciones: '', cantidad: '1', sala_id: 1 },
+    { codigo: 'CNC-002', detalle: 'Lámina de madera', serial: '', inventario: '', estado: 'Malo', observaciones: 'rayada', cantidad: '4', sala_id: 1 },
+    { codigo: '', detalle: 'Foami azul', serial: 'SN200', inventario: '', estado: '', observaciones: '', cantidad: '', sala_id: 1 },
+  ];
+
+  it('sin consulta devuelve la lista tal cual', () => {
+    expect(filtrarElementos(sala, '   ')).toHaveLength(3);
+  });
+
+  it('ignora tildes y mayúsculas', () => {
+    const r = filtrarElementos(sala, 'LAMINA');
+    expect(r).toHaveLength(1);
+    expect(r[0].detalle).toBe('Lámina de madera');
+  });
+
+  it('exige que coincidan todas las palabras', () => {
+    expect(filtrarElementos(sala, 'cnc bueno')).toHaveLength(1);
+    // «cnc» está en el código y «rayada» en observaciones: coinciden, pero no
+    // en el mismo campo, así que la búsqueda multi-palabra las cruza.
+    expect(filtrarElementos(sala, 'cnc rayada')).toHaveLength(1);
+    expect(filtrarElementos(sala, 'cnc soldador')).toHaveLength(0);
+  });
+
+  it('busca también por serial y en elementos sin código', () => {
+    expect(filtrarElementos(sala, 'SN200')[0].detalle).toBe('Foami azul');
+  });
+
+  it('sin coincidencias devuelve vacío', () => {
+    expect(filtrarElementos(sala, 'soldador')).toHaveLength(0);
+  });
+});
+
 describe('findByRoom', () => {
   it('returns empty when API is unreachable', async () => {
     const results = await findByRoom(1);
@@ -437,8 +472,21 @@ describe('updateItem', () => {
 
   it('propaga el error si el PUT falla (sin fallback silencioso)', async () => {
     (globalThis as any).fetch = jest.fn(() =>
-      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: 'x' }) }));
-    await expect(updateItem(1, { detalle: 'x' })).rejects.toThrow('API 500');
+      Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }));
+    // El usuario nunca ve "API 500: /elementos/1": se traduce el estado.
+    await expect(updateItem(1, { detalle: 'x' })).rejects.toThrow('El servidor tuvo un problema.');
+  });
+
+  it('prefiere el mensaje del server cuando lo manda', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 502, json: () => Promise.resolve({ error: 'La base está reiniciando' }) }));
+    await expect(updateItem(1, { detalle: 'x' })).rejects.toThrow('La base está reiniciando');
+  });
+
+  it('traduce un 502 sin cuerpo (Render despertando)', async () => {
+    (globalThis as any).fetch = jest.fn(() =>
+      Promise.resolve({ ok: false, status: 502, json: () => Promise.resolve(null) }));
+    await expect(updateItem(1, { detalle: 'x' })).rejects.toThrow('El servidor no está disponible en este momento.');
   });
 });
 
@@ -475,7 +523,7 @@ describe('asignarCodigo', () => {
   it('propaga el 409 si el elemento ya tiene código', async () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 409, json: () => Promise.resolve({ error: 'ya tiene código' }) }));
-    await expect(asignarCodigo(1, 'CNC-137')).rejects.toThrow('API 409');
+    await expect(asignarCodigo(1, 'CNC-137')).rejects.toThrow('ya tiene código');
   });
 });
 
@@ -635,7 +683,7 @@ describe('eliminarFoto', () => {
   it('propaga el error si el DELETE falla (sin fallback silencioso)', async () => {
     (globalThis as any).fetch = jest.fn(() =>
       Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({}) }));
-    await expect(eliminarFoto(1)).rejects.toThrow('API 500');
+    await expect(eliminarFoto(1)).rejects.toThrow('El servidor tuvo un problema.');
   });
 });
 
@@ -669,9 +717,11 @@ describe('importarInventario', () => {
     expect(decodificarBase64(JSON.parse(opts.body).archivo)).toEqual(Array.from(bytes));
   });
 
-  it('un error del servidor se propaga con su estatus', async () => {
-    (globalThis as any).fetch = jest.fn(() => Promise.resolve({ ok: false, status: 400 }));
-    await expect(importarInventario(new Uint8Array([1]).buffer)).rejects.toThrow('API 400');
+  it('un error del servidor se propaga con un mensaje legible', async () => {
+    // Sin cuerpo: un 502 de Render llega con HTML y `res.json()` no existe.
+    (globalThis as any).fetch = jest.fn(() => Promise.resolve({ ok: false, status: 502 }));
+    await expect(importarInventario(new Uint8Array([1]).buffer))
+      .rejects.toThrow('El servidor no está disponible en este momento.');
   });
 });
 

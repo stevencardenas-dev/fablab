@@ -20,6 +20,7 @@ import {
   type OpcionesSvgDataMatrix,
 } from '@/lib/data-matrix-svg';
 import { hojasImprimibles, htmlHojaImprimible, type HojaImprimible } from '@/lib/hoja-imprimible';
+import { mensajeDeError } from '@/lib/mensajes';
 
 export function DataMatrixCode({ value, size = 160 }: { value: string; size?: number }) {
   const { matrix, width, height } = encodeToMatrix(value);
@@ -182,7 +183,7 @@ export function DataMatrixDownloadButton({
     try {
       await descargarDataMatrix(codigo);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo descargar el Data Matrix.');
+      setError(mensajeDeError(e, 'No se pudo descargar el Data Matrix.'));
     } finally {
       setDescargando(false);
     }
@@ -245,7 +246,7 @@ export function DataMatrixSheetButton({
       );
     } catch (e) {
       setEsError(true);
-      setAviso(e instanceof Error ? e.message : 'No se pudieron preparar las etiquetas.');
+      setAviso(mensajeDeError(e, 'No se pudieron preparar las etiquetas.'));
     } finally {
       setTrabajando(false);
     }

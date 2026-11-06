@@ -70,10 +70,13 @@ Abrir `https://fablab-web.onrender.com/sala/1` **renderiza bien** pero la
 respuesta HTTP es `404` (Render sirve `404.html`, que es copia de `index.html`,
 y el router resuelve la ruta en el cliente).
 
-- `public/_redirects` existe con `/*  /index.html  200`, pero **Render no lo
-  aplica** en sitios estáticos.
-- Fix correcto: **Rewrite Rule en el Dashboard de Render** (`/*` → `/index.html`,
-  acción *Rewrite*; los archivos reales siguen ganando).
+- En **Render** (`public/_redirects`) no aplica, y el estatus HTTP sigue siendo
+  `404` aunque renderiza bien. El fix ahí es una **Rewrite Rule en el Dashboard de
+  Render** (`/*` → `/index.html`, acción *Rewrite*, los archivos reales siguen
+  ganando).
+- En el **stack Docker** no hay ese problema: `docker/web/nginx.conf` hace
+  `try_files $uri $uri.html $uri/ /index.html`, así que las rutas se resuelven con
+  estatus `200` (conviene dejar la regla en su proxy inverso con *rewrite* igual).
 - Impacto: cosmético para un usuario, pero molesto para enlaces compartidos y
   para herramientas que miran el estatus.
 
@@ -124,7 +127,7 @@ Discord/Slack/correo. Ver *Traspaso al FabLab* en [`operacion.md`](operacion.md)
 ### Subir el número de caché del SW al desplegar
 
 El service worker es cache-first sobre el shell y los bundles. Si despliegas un
-bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v20` hoy),
+bundle nuevo y **no** subes `CACHE_NAME` en `public/sw.js` (`fablab-v31` hoy),
 los clientes con el SW viejo quedan con la UI vieja para siempre.
 
 ### Resuelto: el token de escritura viajaba en el bundle web

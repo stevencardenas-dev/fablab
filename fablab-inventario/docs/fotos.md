@@ -12,19 +12,39 @@ La foto cruda de una cámara moderna pesa 1-2,5 MB. Con 917 elementos eso sería
 usados por InnoDB/binlogs). Además, subirlas todas no termina en una jornada de
 trabajo con la red del campus.
 
-Medido con una foto real de 4000×3000 (3,4 MB):
+Medido con la foto de prueba de `scripts/demo-foto` (calibrada con `cwebp` para
+pesar lo mismo que una de cámara ya optimizada), más el original real de
+4000×3000 (3,4 MB) como referencia:
 
 | Resultado | Peso | Total 917 |
 |---|---|---|
-| Original | 3,4 MB | ~3,1 GB |
+| Original de cámara | 3,4 MB | ~3,1 GB |
 | Reducida sin redimensionar (q0.6) | 599 KB | ~0,55 GB |
-| **800 px WebP q0.6 (foto)** | **~26 KB** | |
-| **200 px WebP q0.95 (miniatura)** | **~6 KB** | |
-| **Foto + miniatura** | **~31 KB** | **~29 MB** |
+| 800 px WebP q0.6 + 200 px (antes) | 49,5 KB | ~44 MB |
+| **1200 px WebP q0.7 + 200 px (ahora)** | **81,0 KB** | **~73 MB** |
+| Peor caso con el tope de 400 KB | 400 KB | ~358 MB |
 
 Decisión: **la foto se reduce en el dispositivo y el original nunca sale de
-él**. Dos salidas por foto: una de 800 px para la ficha/modal y una de 200 px
+él**. Dos salidas por foto: una de 1200 px para la ficha/modal y una de 200 px
 para las listas (chips).
+
+## Por qué se subió de 800 px q0.6 a 1200 px q0.7
+
+La ficha muestra la foto a ~550 px CSS: en un monitor retina eso son ~1100 px
+reales, así que una de 800 px se pintaba **estirada**, y q0.6 le sumaba bloques
+en las zonas planas (paredes, mesas) y en el texto. El ajuste nuevo pesa 1,6×
+(medido con la foto de prueba: 49,5 → 81,0 KB por elemento) y se ve nítido. A
+igual resolución, bajar de 0.75 a 0.7 ahorra 6 % y de 0.7 a 0.6 ahorra otro 10 %
+a cambio de volver a ver bloques, así que 0.7 es el punto que se sostiene sin
+artefactos. El tope de 400 KB no cambió y la escalera (0.7 → 0.55 → 0.42) sigue
+garantizando que ninguna foto lo pase.
+
+La miniatura se queda en 200 px (solo subió la calidad): es la que más se
+descarga —todas las listas la piden— y a 2,3× la tarjeta ya se veía nítida, así
+que llevarla a 256 px costaba +50 % en cada lista sin ganancia a la vista.
+
+Las fotos que ya están guardadas con los ajustes anteriores **no se pueden
+recomprimir** (el original nunca se guarda): hay que volver a subirlas.
 
 ## Pipeline en la app
 
@@ -32,8 +52,8 @@ Dos módulos, a propósito:
 
 - **`src/lib/foto.ts` — puro y testeado** (`foto.test.ts`), todo lo que se puede
   calcular sin cámara ni sistema de archivos:
-  - `LADO_FOTO = 800`, `LADO_MINIATURA = 200`, `CALIDAD_FOTO = 0.6`,
-    `ESCALONES_CALIDAD = [0.6, 0.45, 0.32]`.
+  - `LADO_FOTO = 1200`, `LADO_MINIATURA = 200`, `CALIDAD_FOTO = 0.7`,
+    `ESCALONES_CALIDAD = [0.7, 0.55, 0.42]`.
   - `LIMITE_FOTO_BYTES = 400 KB` y `LIMITE_MINIATURA_BYTES = 80 KB` — los mismos
     que valida el servidor, repetidos para avisar **antes** de gastar la subida.
   - `dimensionesReducidas()` no deforma ni agranda (una foto de 320×240 se queda
@@ -52,7 +72,7 @@ Dos módulos, a propósito:
     (`saveAsync` lanza error; la caída es explícita, no silenciosa — pasa en
     Safari). El `mime` final lo deciden **los bytes**, no lo que se pidió: iOS
     puede devolver JPEG aunque se pida WebP.
-  - Si la foto no cabe en 400 KB, reintenta en 0.6 → 0.45 → 0.32; si aún así no
+  - Si la foto no cabe en 400 KB, reintenta en 0.55 → 0.42; si aún así no
     cabe, lanza error en español.
   - La miniatura nunca puede pesar más que la foto (el server lo rechaza): si el
     original ya era diminuto y ambos tamaños coinciden, la miniatura se guarda
@@ -91,7 +111,7 @@ artefactos.
 - **`?v=<hash>` es cache-buster.** Al reemplazar la foto cambia el hash y la URL:
   ni el navegador ni el service worker sirven la vieja. El mismo hash es el
   `ETag`, así que la revalidación es exacta, no por fecha.
-- `binario()` en `server/index.mjs` responde `Cache-Control: public,
+- `binario()` en `server/index.mjs` responde `Cache-Control: private,
   max-age=31536000, immutable` + `ETag`, y **no** comprime (WebP/JPEG ya están
   comprimidos).
 - **`304`/`HEAD` sin leer el blob**: `obtenerHashFoto()` consulta solo
@@ -110,7 +130,7 @@ artefactos.
 
 - **Chips de la sala**: `expo-image` con la miniatura, `loading="lazy"` (solo
   se descargan las visibles: 39 de 171 en la primera pantalla de la sala CNC).
-- **Modal/ficha**: la foto de 800 px con la **miniatura como placeholder**
+- **Modal/ficha**: la foto de 1200 px con la **miniatura como placeholder**
   (`placeholder`, `placeholderContentFit`, `transition={150}`,
   `cachePolicy="memory"`) — así no aparece un cuadrado vacío mientras carga.
 - **Precarga al tocar el chip**: `Image.prefetch(url, 'memory-disk')` en
@@ -132,8 +152,8 @@ npm run fotos:demo -- --escribir --limite 5 # prueba corta
 npm run fotos:demo -- --revertir            # deshace (último manifiesto)
 ```
 
-- Los binarios viven en `scripts/demo-foto/` (`foto.webp` 25.610 B + miniatura
-  5.498 B = 31 KB, calibrados con `cwebp` para pesar **lo mismo que una foto de
+- Los binarios viven en `scripts/demo-foto/` (`foto.webp` 75.506 B + miniatura
+  7.398 B = ~81 KB, calibrados con `cwebp` para pesar **lo mismo que una foto de
   cámara ya optimizada**: con una imagen más liviana la medición saldría
   mejor que la realidad). No entran al bundle: `sync:deploy` solo copia `dist/`.
 - Es reversible por diseño: escribe un **manifiesto** en
@@ -153,6 +173,10 @@ npm run fotos:demo -- --revertir            # deshace (último manifiesto)
 | Foto 800 px fría | p50 357 ms | con LRU, reabrir un modal reciente: +0 |
 | Foto + revalidación por ETag | 629 ms | ~200 ms, y desde RAM ~0 |
 | Primera carga de la PWA tras idle | ~0,43-0,47 s | igual: es despertar de CPU de Render, no la BD |
+
+> Medido con los ajustes anteriores (800 px + 200 px). Los binarios de hoy pesan
+> 1,6× más, así que las transferencias suben en esa proporción (el piso de red y
+> las cachés no cambian): falta re-medir con `npm run fotos:demo -- --medir`.
 
 Detalle y trampas de medición en [`rendimiento.md`](rendimiento.md).
 

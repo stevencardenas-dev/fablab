@@ -20,7 +20,7 @@ Servidor HTTP en Node puro (`server/index.mjs`) sobre la capa de datos de
 | Auditoría | Toda escritura que cambia algo deja una fila en `auditoria`, en la misma transacción. Ver [`auditoria.md`](auditoria.md) |
 | Acceso | **Todo exige credencial** (lecturas y escrituras) salvo `GET /health` y `POST /api/login`. La credencial es la **sesión** de la cuenta del laboratorio (`POST /api/login`, dura 12 h) o el `API_TOKEN` de herramientas, en `Authorization: Bearer <credencial>`. Sin credencial → `401` con `WWW-Authenticate: Bearer` |
 | Enlaces sin header | Las fotos (`GET …/foto`) y las exportaciones (`GET /api/export/…`) se abren con `<img>` o un enlace, que no pueden mandar header: ahí también vale `?sesion=<credencial>`, y solo ahí |
-| Errores | `{"error": "<mensaje en español>"}`. `400` campo inválido/faltante, `404` inexistente, `409` conflicto, `413` demasiado grande, `503` bloqueo ocupado, `500` fallo real del server (se registra en el log) |
+| Errores | `{"error": "<mensaje en español>"}`. `400` campo inválido/faltante, `404` inexistente, `409` conflicto, `413` demasiado grande, `429` demasiadas escrituras, `500` fallo real del server (se registra en el log), `401` sin credencial. Los `502/503/504` los devuelven el proxy/Render y no forman parte del contrato |
 | Cuerpo | Máximo **1 MB** por petición. Más grande (por `Content-Length` o por chunked) → `413`, y se rechaza **sin** bufferizarlo entero en memoria |
 | JSON | Un cuerpo que no parsea → `400` "JSON inválido" (antes llegaba como `500`) |
 | Ids de ruta | Enteros positivos (`1`…`2147483647`). `1.5`, `abc`, `0` o un id fuera de rango → `400`, no un `404`/`200 []` engañoso |
@@ -53,8 +53,19 @@ curl -s -X POST https://fablab-api-sr1q.onrender.com/api/traslados \
 | 12 | POST | `/api/elementos/:id/codigo` | Asignar código a un elemento **sin** código |
 | 13 | GET | `/api/export/{elementos,traslados}.{csv,json}` | Exportar inventario o traslados |
 | 14 | DELETE | `/api/elementos/:codigo` | Eliminar elemento (y su historial) |
+| 15 | POST | `/api/import/elementos` | Importar en lote desde CSV (o base64 de un `.csv`/`.xlsx`/`.xls`/`.ods`, cada hoja una sala) |
 
 ---
+
+### 15. `POST /api/import/elementos`
+
+```json
+{ "archivo": "<base64 del csv o del libro>" }   // o { "csv": "<texto CSV>" }
+```
+
+Una importación grande (4 MB) va con `Content-Length` dentro del tope de import. Devuelve
+un resumen con cuántas filas se insertaron/actualizaron y cuáles se saltaron. Requiere
+credencial; la base se carga una sola vez por sala (todo dentro de una transacción).
 
 ### 1. `GET /health`
 
@@ -118,14 +129,14 @@ Devuelve la imagen **tal cual se guardó** (WebP o JPEG, sin gzip) con:
 
 ```
 Content-Type: image/webp
-Content-Length: 25610
+Content-Length: 75506
 ETag: "1dbd184729bf496e"
-Cache-Control: public, max-age=31536000, immutable
+Cache-Control: private, max-age=31536000, immutable
 Access-Control-Expose-Headers: ETag
 ```
 
 - `?tam=miniatura` sirve la versión de 200 px (para listas); sin el parámetro,
-  la de 800 px (ficha/modal).
+  la de 1200 px (ficha/modal).
 - Si `If-None-Match` incluye el ETag → **`304`** (sin cuerpo). El server resuelve
   el 304 con **solo el hash**, sin leer el blob de la base.
 - `HEAD` responde metadatos sin cuerpo (mismo ETag): es un GET sin cuerpo y no
@@ -144,14 +155,14 @@ curl -s -o mini.webp "https://…/api/elementos/7/foto?tam=miniatura"
 Alta o reemplazo (upsert) de la foto. Cuerpo **ya reducido en el dispositivo**:
 
 ```json
-{ "mime": "image/webp", "foto": "<base64>", "miniatura": "<base64>", "ancho": 800, "alto": 600 }
+{ "mime": "image/webp", "foto": "<base64>", "miniatura": "<base64>", "ancho": 1200, "alto": 900 }
 ```
 
 Respuesta `201`:
 
 ```json
 { "guardada": true, "elemento_id": 7, "hash": "1dbd184729bf496e",
-  "bytes": 25610, "miniatura_bytes": 5498, "mime": "image/webp" }
+  "bytes": 75506, "miniatura_bytes": 11158, "mime": "image/webp" }
 ```
 
 Validaciones (`validarFoto`, en `importer/api.mjs`), todas con mensaje que dice
